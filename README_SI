@@ -1,0 +1,118 @@
+Nov/2/2009
+
+Building and running OpenWF Composition and Display SI's 
+=========================================================
+
+This README is about the Linux implementation of sample implementations.
+
+Build system
+------------
+
+The OpenWF Sample Implementations use CMake as build system. At least CMake 
+version 2.4 is required. 
+
+It is possible to use other build system of your choice. 
+
+Brief folder structure explanation
+----------------------------------
+The SI package is structured as follows: 
+
+SI_Adaptation - OpenWF Sample implementation porting layer
+SI_Common - Platform independent (ANSI C89) functions shared Sample Implementations
+SI_Composition - OpenWF Composition Sample Implementation
+SI_Display  - OpenWF Display Sample implementation
+
+Prerequisites
+-------------
+OpenWF Sample Implementations rely on an adaptation layer (SI_Adaptation) to provide any 
+OS specific functions. An example adaptation layer implementation for desktop Linux is 
+provided with SI package. If the adopter wishes to run the SI on another platform the adopter
+must provide an implementation of the adaptation layer for the target platform. 
+
+The OpenWF SIs use a thin abstraction layer to access native displays.
+This abstraction layer can be found in file SI_Adaptation/include/owfscreen.h
+
+By default the Composition SI uses SDL library (Simple DirectMedia Layer) to create 
+on-screen contexts and act as a replacement of real display hardware. 
+To use the SI with SDL both the SDL library and the SDL development files (SDL.h) must be 
+present. SDL development files should be installed to /usr/include/SDL or /usr/local/include/SDL.
+
+By default the Display SI uses direct X11 calls to emulate output devices.
+
+Display SI uses an XML based configuration file to configure the system at run-time.
+By default Display SI requires libxml2 library and development files to be present in the system.
+If libxml2 cannot be used on target system the adopter must provide an alternative implementation of
+the configuration API described in SI_Adaptation/include/owfconfig.h
+
+EGLSync
+-------
+The implementation of EGLSync provided in the Composition SI is a cut-down prototype, as opposed 
+to being a full implementation. It exists purely to allow the OpenWF Conformance Test Suite (CT) 
+to exercise the Composition SI.
+
+The CT uses EGLSync via the CT Porting API.
+
+Example applications
+--------------------
+Both Composition SI and Display SI come with a simple example application demonstrating basic usage of
+the API. The example applications are located in following directories:
+SI_Composition/example
+SI_Display/example
+
+By default, the examples are included in the SI build. To disable building of the example, comment out
+or remove the following line in SI_Composition/CMakeLists.txt and SI_Display/CMakeLists.txt:
+ADD_SUBDIRECTORY(example) 
+
+Note that the examples have been provided for demonstration purposes only, and they may be lacking in
+advanced features and error handling. The examples have been tested on Ubuntu Linux 8.04 with GCC 4.2.4.
+and Cygwin 1.7 with GCC 3.4.4.
+
+To run the Composition example application:
+	Compile SI and example (see chapter "How to build using CMake")
+	>cd [build dir]/SI_Composition/example/
+	>./wfc_example
+
+To run the Display example application:
+	Compile SI and example (see chapter "How to build using CMake")
+	>cd [build dir]/SI_Display/example/
+	>./wfd_example
+
+Configuring the Sample Implementations
+--------------------------------------
+It is possible to configure the Sample Implementations to a certain extent.
+
+Composition SI can be configured before complication to use different display size.
+To do this modify the #defines in the file SI_Adaptation/include/owfscreen.h
+
+Display SI uses an XML based configuration file to configure the system at run-time.
+See the configuration file located in SI_Display/src/display_config.xml for more information.   
+
+How to build using CMake
+-------------------------
+
+% cd <source root>
+% mkdir -p build/debug
+% cd build/debug
+% cmake ../..
+% make all
+
+
+Building without debugging messages, asserts and memory leak reports
+--------------------------------------------------------------------
+
+% cd <source root>
+% mkdir -p build/release
+% cd build/release
+% cmake -DCMAKE_BUILD_TYPE="Release" ../..
+% make all
+
+
+Building documentation
+----------------------
+% cd <source root>
+% doxygen doxygen.conf
+
+Doxygen is needed to build the html formatted documentation.
+Documentation is compiled in doc/html folder. See index.html
+and dirs.html.
+

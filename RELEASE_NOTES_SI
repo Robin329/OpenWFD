@@ -1,0 +1,19 @@
+ 
+OPENWF SI RELEASE OF 1.0, November 2, 2009
+=========================================
+
+Brief folder structure explanation
+----------------------------------
+The SI package is structured as follows: 
+
+SI_Adaptation - OpenWF Sample implementation porting layer 
+SI_Common - Platform independent (ANSI C89) functions shared Sample Implementations 
+SI_Composition - OpenWF Composition Sample Implementation 
+SI_Display  - OpenWF Display Sample implementation
+
+All files provided in this package are covered under the Khronos Free Use License.
+
+The SI package is not executable in isolation.
+
+www.khronos.org
+
