@@ -20,8 +20,7 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
-
+#define DEBUG
 #ifdef DEBUG
 
 #include <pthread.h>

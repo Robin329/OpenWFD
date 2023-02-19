@@ -36,7 +36,8 @@ typedef khronos_int32_t     OWFint;
 typedef khronos_uint8_t     OWFuint8;
 typedef khronos_uint16_t    OWFuint16;
 typedef khronos_uint32_t    OWFuint32;
-typedef khronos_uint32_t    OWFuint;
+typedef khronos_uint32_t OWFuint;
+typedef khronos_uint64_t OWFuint64;
 typedef khronos_float_t     OWFfloat;
 
 typedef khronos_utime_nanoseconds_t OWFtime;
@@ -145,7 +146,7 @@ typedef struct
     void*                   data;
 } OWFStreamCallbackData;
 
-#define OWF_RESERVED_BAD_SCREEN_NUMBER (-1)  
+#define OWF_RESERVED_BAD_SCREEN_NUMBER (-1)
 
 #ifdef __cplusplus
 }

@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-
+#define DEBUG
 #ifdef DEBUG
 
 /*

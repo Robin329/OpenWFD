@@ -607,65 +607,59 @@ WFD_Port_Allocate(WFD_DEVICE* device,
     }
 
     pPort = CREATE(WFD_PORT);
-    if (pPort)
-    {
-        ADDREF(pPort->device,device);
-        OWF_Array_AppendItem(&device->ports, pPort);
+    if (pPort) {
+      printf("111\n");
+      ADDREF(pPort->device, device);
+      printf("222\n");
+      OWF_Array_AppendItem(&device->ports, pPort);
 
-        /* mark the port allocated */
-        prtConfig->inUse = pPort;
+      /* mark the port allocated */
+      prtConfig->inUse = pPort;
 
-        /* make copy of the static config are. this holds
-         * committed port attributes during port's life-time
-         */
-        pPort->config = NEW0(WFD_PORT_CONFIG);
-        ok = (pPort->config != NULL);
+      /* make copy of the static config are. this holds
+       * committed port attributes during port's life-time
+       */
+      pPort->config = NEW0(WFD_PORT_CONFIG);
+      ok = (pPort->config != NULL);
 
-        if (ok)
-        {
-            memcpy(pPort->config, prtConfig, sizeof(WFD_PORT_CONFIG));
-        }
+      if (ok) {
+        memcpy(pPort->config, prtConfig, sizeof(WFD_PORT_CONFIG));
+      }
 
-        ok = WFD_Port_InitAttributes(pPort);
-        if (ok)
-        {
-            ok = WFD_Port_InitScratchBuffers(pPort);
-        }
+      ok = WFD_Port_InitAttributes(pPort);
+      if (ok) {
+        ok = WFD_Port_InitScratchBuffers(pPort);
+      }
 
-        if (ok)
-        {
-            ok = WFD_Port_InitFrameBuffers(pPort);
-        }
+      if (ok) {
+        ok = WFD_Port_InitFrameBuffers(pPort);
+      }
 
-        /* this mutex is used for frame buffer updates */
-        if (ok)
-        {
-            ok = (OWF_Mutex_Init(&pPort->frMutex) == 0);
-        }
+      /* this mutex is used for frame buffer updates */
+      if (ok) {
+        ok = (OWF_Mutex_Init(&pPort->frMutex) == 0);
+      }
 
-        /* busy flag tells that port busy doing commit or
-         * rendering. both are not allowed at the same time */
-        if (ok)
-        {
-            ok = (OWF_Mutex_Init(&pPort->portMutex) == 0);
-        }
+      /* busy flag tells that port busy doing commit or
+       * rendering. both are not allowed at the same time */
+      if (ok) {
+        ok = (OWF_Mutex_Init(&pPort->portMutex) == 0);
+      }
 
-        if (ok)
-        {
-            ok = (OWF_Cond_Init(&pPort->busyCond, pPort->portMutex) == 0);
-            pPort->portBusy = WFD_FALSE;
-        }
+      if (ok) {
+        ok = (OWF_Cond_Init(&pPort->busyCond, pPort->portMutex) == 0);
+        pPort->portBusy = WFD_FALSE;
+      }
 
-        /* initialize bindings structure - in bindings array
-         * there is a item per bindable pipeline. Items are
-         * in the layer order, bottom layer first
-         */
-        if (ok)
-        {
-            ok = WFD_Port_InitBindings(pPort);
-        }
+      /* initialize bindings structure - in bindings array
+       * there is a item per bindable pipeline. Items are
+       * in the layer order, bottom layer first
+       */
+      if (ok) {
+        ok = WFD_Port_InitBindings(pPort);
+      }
 
-        /* launch port threads - rendering and vsync thread */
+      /* launch port threads - rendering and vsync thread */
 #if ENABLE_SYNCHRONOUS_PIPELINES
         /* synchronous pipelines can be enabled for debugging purposes */
         if (ok && !synchronousPipelines)
@@ -2267,8 +2261,6 @@ WFD_Port_DoCommit(WFD_PORT* port)
 
     WFD_Port_CommitPortMode(port);
 
-      
-
     currentPower = port->config->powerMode;
     newPower = OWF_Attribute_GetValuei(&port->attributes, WFD_PORT_POWER_MODE);
 
@@ -3221,8 +3213,7 @@ WFD_Port_Blit(WFD_PORT* port)
         }
 
         OWF_Screen_Blit(port->screenNumber,
-                        port->surface[port->frameBuffer]->data, 
-                        OWF_ROTATION_0);
+                        port->surface[port->frameBuffer]->data, OWF_ROTATION_0);
     }
     OWF_Mutex_Unlock(&port->frMutex);
 }

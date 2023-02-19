@@ -136,7 +136,10 @@ OWF_Memory_Alloc(const char* file, OWFint line, OWFuint32 size)
 #define INT_SIZE sizeof(OWFint)
 
     BLOCK* block = NULL;
-
+#ifdef DEBUG
+    printf("[%s]%d file:%s line:%d size:%d\n", __FUNCTION__, __LINE__, file,
+           line, size);
+#endif
     /* size rounded to nearest sizeof(int)*n + 2*sizeof(int) for fences */
     OWFuint32 nInts = 2 + (((size + INT_SIZE-1) &~ (INT_SIZE-1)) >> 2);
     OWFuint32 realSize = nInts * INT_SIZE + sizeof(BLOCK);

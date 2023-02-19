@@ -1,4 +1,4 @@
-############################################################################ 
+############################################################################
 # OpenWF: Common library (libcommon)
 # - common routines for composition, display and conformance tests
 #
@@ -11,12 +11,13 @@ INCLUDE_DIRECTORIES(${OPENWF_SI_COMMON_INC}
                     ${OPENWF_SI_ADAPTATION_PLATFORM_INC}
                     ${OPENWF_KHRONOS_INC}
                     ${OPENWF_SRC_ROOT})
+add_definitions(-DDEBUG)
 
 SET(OWFCOMMON_SOURCES
     src/owfhandle.c
 	src/owfimage.c
     src/owfattributes.c
-    src/owfutils.c 
+    src/owfutils.c
     src/owflinkedlist.c
     src/owfmemory.c
     src/owfarray.c

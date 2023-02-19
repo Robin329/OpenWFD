@@ -51,8 +51,7 @@ typedef struct {
 #define FOFF(x,y)           ((OWFuint32) &(((x*) 0x1000)->y) - 0x1000)
 
 /*! returns pointer to wrapper object which holds object x */
-#define _O(x)               ((OWF_OBJECT*) ((OWFuint32)(x) -\
-                                           FOFF(OWF_OBJECT,payload)))
+#define _O(x) ((OWF_OBJECT *)((OWFuint64)(x)-FOFF(OWF_OBJECT, payload)))
 
 /*! create new object instance */
 #define CREATE(x)           (x*) OWF_Object_Construct(sizeof(x), TYPE(x), \
@@ -64,13 +63,16 @@ typedef struct {
 #define TYPEOF(x)           (_O(x)->type)
 
 /*! increment object reference count  */
-#define ADDREF(x,y) \
-    if (y) {\
-         _O(y)->referenceCount++; \
-         DPRINT(("ADDREF: ref count of %s(%p) is now %d\n", TYPEOF(y), y, \
-                 REFCOUNT(y)));\
-    }\
-    x = y;
+#define ADDREF(x, y)                                                           \
+  if (y) {                                                                     \
+    printf("333 x:%#x %p _0(y):%#x\n", y, y, _O(y));                           \
+    _O(y)->referenceCount++;                                                   \
+    printf("444\n");                                                           \
+    DPRINT(("ADDREF: ref count of %s(%p) is now %d\n", TYPEOF(y), y,           \
+            REFCOUNT(y)));                                                     \
+  }                                                                            \
+  printf("555\n");                                                             \
+  x = y;
 
 /*! decrement object reference count, call destructor if count reaches zero  */
 #define REMREF(x) \
