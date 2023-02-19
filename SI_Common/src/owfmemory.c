@@ -20,76 +20,60 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <pthread.h>
-
 #include "owfmemory.h"
+
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "owfdebug.h"
 
-#define MAGIK   0x05EAF00D
-#define FENCE1  0xFACED00D
-#define FENCE2  0xFACE50FF
+#define MAGIK 0x05EAF00D
+#define FENCE1 0xFACED00D
+#define FENCE2 0xFACE50FF
 
-#define OFFSET(x,y) ((OWFuint32)&(((x*) 0x1000)->y) - 0x1000)
+#define OFFSET(x, y) ((OWFuint32) & (((x *)0x1000)->y) - 0x1000)
 
 typedef struct BLOCK_ {
-    OWFint                      magik;
-    struct BLOCK_*              next;
-    const char*                 file;
-    OWFint                      line;
-    OWFuint32                   size;
-    OWFuint32                   nInts;
-    OWFint                      memory[2];
+    OWFint magik;
+    struct BLOCK_ *next;
+    const char *file;
+    OWFint line;
+    OWFuint32 size;
+    OWFuint32 nInts;
+    OWFint memory[2];
 } BLOCK;
 
+static void OWF_Memory_Shutdown();
 
-static void
-OWF_Memory_Shutdown();
-
-static void
-OWF_Memory_LockUnlockManagedBlocks(OWFboolean lock)
-{
+static void OWF_Memory_LockUnlockManagedBlocks(OWFboolean lock) {
 #ifdef DEBUG
     /* cannot use OWF_MUTEX because it uses managed memory */
     static pthread_mutex_t mem_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-    if (lock)
-    {
+    if (lock) {
         pthread_mutex_lock(&mem_mutex);
-    }
-    else
-    {
+    } else {
         pthread_mutex_unlock(&mem_mutex);
     }
 #endif
 }
 
-static void
-OWF_Memory_LockManagedBlocks()
-{
+static void OWF_Memory_LockManagedBlocks() {
     OWF_Memory_LockUnlockManagedBlocks(OWF_TRUE);
 }
 
-static void
-OWF_Memory_UnlockManagedBlocks()
-{
+static void OWF_Memory_UnlockManagedBlocks() {
     OWF_Memory_LockUnlockManagedBlocks(OWF_FALSE);
 }
 
-
-OWF_PUBLIC BLOCK*
-OWF_Memory_GetSetManagedBlocks(BLOCK* b, OWFboolean set)
-{
-    static BLOCK* managed_blocks = NULL;
+OWF_PUBLIC BLOCK *OWF_Memory_GetSetManagedBlocks(BLOCK *b, OWFboolean set) {
+    static BLOCK *managed_blocks = NULL;
     static OWFboolean initialized = OWF_FALSE;
 
 #ifdef DEBUG
@@ -100,57 +84,47 @@ OWF_Memory_GetSetManagedBlocks(BLOCK* b, OWFboolean set)
         initialized = OWF_TRUE;
     }
 
-    if (set)
-    {
+    if (set) {
         managed_blocks = b;
         return b;
-    }
-    else
-    {
+    } else {
         return managed_blocks;
     }
 #else
-    if (set)
-    {
+    if (set) {
         b = b; /* dummy code */
     }
     return NULL;
 #endif
 }
 
-static BLOCK*
-OWF_Memory_GetManagedBlocks()
-{
+static BLOCK *OWF_Memory_GetManagedBlocks() {
     return OWF_Memory_GetSetManagedBlocks(NULL, OWF_FALSE);
 }
 
-static void
-OWF_Memory_SetManagedBlocks(BLOCK* b)
-{
+static void OWF_Memory_SetManagedBlocks(BLOCK *b) {
     OWF_Memory_GetSetManagedBlocks(b, OWF_TRUE);
 }
 
-OWF_API_CALL void*
-OWF_Memory_Alloc(const char* file, OWFint line, OWFuint32 size)
-{
+OWF_API_CALL void *OWF_Memory_Alloc(const char *file, OWFint line,
+                                    OWFuint32 size) {
 #define INT_SIZE sizeof(OWFint)
 
-    BLOCK* block = NULL;
+    BLOCK *block = NULL;
 #ifdef DEBUG
     printf("[%s]%d file:%s line:%d size:%d\n", __FUNCTION__, __LINE__, file,
            line, size);
 #endif
     /* size rounded to nearest sizeof(int)*n + 2*sizeof(int) for fences */
-    OWFuint32 nInts = 2 + (((size + INT_SIZE-1) &~ (INT_SIZE-1)) >> 2);
+    OWFuint32 nInts = 2 + (((size + INT_SIZE - 1) & ~(INT_SIZE - 1)) >> 2);
     OWFuint32 realSize = nInts * INT_SIZE + sizeof(BLOCK);
 
     if (realSize > size) /* not int overflow */
     {
-        block = (BLOCK*) malloc(realSize);
+        block = (BLOCK *)malloc(realSize);
     }
 
-    if (!block)
-    {
+    if (!block) {
         DPRINT(("Couldn't alloc %u bytes\n", size));
         return NULL;
     }
@@ -163,12 +137,12 @@ OWF_Memory_Alloc(const char* file, OWFint line, OWFuint32 size)
     block->size = size;
     block->nInts = nInts;
     block->memory[0] = FENCE1;
-    block->memory[nInts-1] = FENCE2;
+    block->memory[nInts - 1] = FENCE2;
 
     OWF_Memory_LockManagedBlocks();
     {
         /* insert to list at position 0 */
-        block->next = (BLOCK*) OWF_Memory_GetManagedBlocks();
+        block->next = (BLOCK *)OWF_Memory_GetManagedBlocks();
         OWF_Memory_SetManagedBlocks(block);
     }
     OWF_Memory_UnlockManagedBlocks();
@@ -176,37 +150,32 @@ OWF_Memory_Alloc(const char* file, OWFint line, OWFuint32 size)
     return &block->memory[1];
 }
 
-OWF_API_CALL void
-OWF_Memory_Free(void* ptr)
-{
-    BLOCK* block        = NULL;
+OWF_API_CALL void OWF_Memory_Free(void *ptr) {
+    BLOCK *block = NULL;
 
     if (!ptr) {
         return;
     }
 
     /* POINTER ARITHMETIC HAZARD */
-    block = (BLOCK*) ((OWFuint32) ptr - (OWFuint32) OFFSET(BLOCK,memory[1]));
+    block = (BLOCK *)((OWFuint32)ptr - (OWFuint32)OFFSET(BLOCK, memory[1]));
 
-    if (!block)
-    {
+    if (!block) {
         DPRINT(("Sanity check failed. Ptr was zero....\n"));
         return;
     }
 
     OWF_Memory_LockManagedBlocks();
     {
-        BLOCK* temp             = NULL;
-        BLOCK* prev             = NULL;
-        OWFboolean stillExists  = OWF_FALSE;
+        BLOCK *temp = NULL;
+        BLOCK *prev = NULL;
+        OWFboolean stillExists = OWF_FALSE;
 
         temp = OWF_Memory_GetManagedBlocks();
 
-        while (temp)
-        {
+        while (temp) {
             /* the block is on the list? */
-            if (temp == block && ptr == &temp->memory[1])
-            {
+            if (temp == block && ptr == &temp->memory[1]) {
                 stillExists = OWF_TRUE;
                 break;
             }
@@ -214,103 +183,83 @@ OWF_Memory_Free(void* ptr)
             temp = temp->next;
         }
 
-        if (stillExists == OWF_TRUE)
-        {
-            if (MAGIK != temp->magik)
-            {
+        if (stillExists == OWF_TRUE) {
+            if (MAGIK != temp->magik) {
                 DPRINT(("Possibly corrupt or invalid block, addr = %p\n", ptr));
             }
-            if (block->memory[0] != (OWFint)FENCE1)
-            {
+            if (block->memory[0] != (OWFint)FENCE1) {
                 DPRINT(("Block's start fence corrupted, addr = %p\n", ptr));
             }
-            if (block->memory[block->nInts-1] != (OWFint)FENCE2)
-            {
+            if (block->memory[block->nInts - 1] != (OWFint)FENCE2) {
                 DPRINT(("Block's end fence corrupted, addr = %p\n", ptr));
             }
 
             /* valid block, unlink & free it */
-            if (prev)
-            {
+            if (prev) {
                 prev->next = temp->next;
-            }
-            else
-            {
+            } else {
                 OWF_Memory_SetManagedBlocks(temp->next);
             }
             free(block);
-        }
-        else
-        {
+        } else {
             /* possibly already freed, strangled pointer. complain. */
             DPRINT(("Block possibly freed already! (block = %p, addr = %p)\n",
-                    (void*) block, ptr));
+                    (void *)block, ptr));
         }
     }
     OWF_Memory_UnlockManagedBlocks();
-
 }
 
-OWF_API_CALL void
-OWF_Memory_BlockDump()
-{
-    BLOCK* block = NULL;
+OWF_API_CALL void OWF_Memory_BlockDump() {
+    BLOCK *block = NULL;
 
     /* managed blocks locked when this is executed */
 
-    if ((block = OWF_Memory_GetManagedBlocks()))
-    {
-        while (block)
-        {
-            BLOCK* next = (BLOCK*) block->next;
-            if (MAGIK == block->magik)
-            {
+    if ((block = OWF_Memory_GetManagedBlocks())) {
+        while (block) {
+            BLOCK *next = (BLOCK *)block->next;
+            if (MAGIK == block->magik) {
                 DPRINT(("Block: %p\nFile: %s(%d)\nSize: %u bytes\n",
-                                (void*) &block->memory[1],
-                                block->file,
-                                block->line,
-                                block->size));
-            }
-            else
-            {
+                        (void *)&block->memory[1], block->file, block->line,
+                        block->size));
+            } else {
                 DPRINT(("Possibly corrupt or invalid block (addr = %p)\n",
-                                (void*) block));
+                        (void *)block));
             }
             block = next;
         }
     }
 }
 
-
-static void
-OWF_Memory_Shutdown()
-{
-    BLOCK* block = NULL;
+static void OWF_Memory_Shutdown() {
+    BLOCK *block = NULL;
 
     OWF_Memory_LockManagedBlocks();
     {
-
-        if (OWF_Memory_GetManagedBlocks())
-        {
-            DPRINT(("======================================================================\n"));DPRINT(("MEMORY LEAK REPORT\n"));DPRINT(("======================================================================\n"));
+        if (OWF_Memory_GetManagedBlocks()) {
+            DPRINT(
+                ("============================================================="
+                 "==="
+                 "======\n"));
+            DPRINT(("MEMORY LEAK REPORT\n"));
+            DPRINT(
+                ("============================================================="
+                 "==="
+                 "======\n"));
             OWF_Memory_BlockDump();
             block = OWF_Memory_GetManagedBlocks();
-            while (block)
-            {
-                BLOCK* next = (BLOCK*) block->next;
-                if (MAGIK == block->magik)
-                {
+            while (block) {
+                BLOCK *next = (BLOCK *)block->next;
+                if (MAGIK == block->magik) {
                     free(block);
                 }
                 block = next;
             }
             OWF_Memory_SetManagedBlocks(NULL);
         }
-
     }
     OWF_Memory_UnlockManagedBlocks();
 }
-
 
 #ifdef __cplusplus
 }

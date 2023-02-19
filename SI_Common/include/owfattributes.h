@@ -26,12 +26,9 @@
 #include "owftypes.h"
 #include "owfutils.h"
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
 
 /*!
  *  \file Attribute interface
@@ -41,9 +38,9 @@ extern "C"
  *  object instances' properties.
  *
  */
-#define RANGE_UNDEFINED     0xFFFFFFFF
-#define ATTR_LENGTH_BITS    20
-#define MAX_ATTR_LENGTH     (1 << ATTR_LENGTH_BITS)-1
+#define RANGE_UNDEFINED 0xFFFFFFFF
+#define ATTR_LENGTH_BITS 20
+#define MAX_ATTR_LENGTH (1 << ATTR_LENGTH_BITS) - 1
 #define NUM_ATTR_VALUE_COPIES 3
 #define COMMITTED_ATTR_VALUE_INDEX 0
 #define WORKING_ATTR_VALUE_INDEX 1
@@ -51,18 +48,18 @@ extern "C"
 #define COMMIT_ATTR_DIRECT_FROM_WORKING -1
 
 typedef enum {
-    ATTR_ERROR_NONE             = 0,
-    ATTR_ERROR_NOT_FOUND        = -1,
-    ATTR_ERROR_ALREADY_IN_USE   = -2,
-    ATTR_ERROR_INVALID_ATTRIBUTE= -3,
-    ATTR_ERROR_INVALID_VALUE    = -4,
+    ATTR_ERROR_NONE = 0,
+    ATTR_ERROR_NOT_FOUND = -1,
+    ATTR_ERROR_ALREADY_IN_USE = -2,
+    ATTR_ERROR_INVALID_ATTRIBUTE = -3,
+    ATTR_ERROR_INVALID_VALUE = -4,
     ATTR_ERROR_INVALID_ARGUMENT = -5,
-    ATTR_ERROR_INVALID_CONTEXT  = -6,
-    ATTR_ERROR_NO_MEMORY        = -7,
-    ATTR_ERROR_INSANE           = -8,
-    ATTR_ERROR_ACCESS_DENIED    = -9,
-    ATTR_ERROR_INVALID_TYPE     = -10,
-    ATTR_ERROR_CANT_HANDLE      = -11
+    ATTR_ERROR_INVALID_CONTEXT = -6,
+    ATTR_ERROR_NO_MEMORY = -7,
+    ATTR_ERROR_INSANE = -8,
+    ATTR_ERROR_ACCESS_DENIED = -9,
+    ATTR_ERROR_INVALID_TYPE = -10,
+    ATTR_ERROR_CANT_HANDLE = -11
 } OWF_ATTRIBUTE_LIST_STATUS;
 
 /* Attribute value element types */
@@ -73,23 +70,23 @@ typedef enum {
     AT_BOOLEAN = 3
 } OWF_ATTRIBUTE_TYPE;
 
-
 /*
  * Attribute information (header)
  *
  * Dirty field is internal. Do not fiddle with it.
- * 
- * Comment on use of bitfields: 
+ *
+ * Comment on use of bitfields:
  * 1: It stops generic use of split dirty flag
- * 2: Some compilers will not reorder members to merge length into earier fields.
+ * 2: Some compilers will not reorder members to merge length into earier
+ * fields.
  */
 typedef struct {
-    OWFuint                 type: 2;
-    OWFuint                 dirty: 1;
-    OWFuint                 dirtysnapshot: 1;
-    OWFuint                 readonly: 1;
-    OWFuint                 size;                       /* Size of one primitive */
-    OWFuint                 length: ATTR_LENGTH_BITS;   /* Number of primitives in vector */
+    OWFuint type : 2;
+    OWFuint dirty : 1;
+    OWFuint dirtysnapshot : 1;
+    OWFuint readonly : 1;
+    OWFuint size;                      /* Size of one primitive */
+    OWFuint length : ATTR_LENGTH_BITS; /* Number of primitives in vector */
 } OWF_ATTRIBUTE_INFO;
 
 /*
@@ -101,18 +98,18 @@ typedef struct {
  * control the reading and writing of the data they refer to.
  */
 
-typedef OWFfloat*           OWF_FLOAT_REF;
-typedef OWFint*             OWF_INT_REF;
-typedef OWFboolean*         OWF_BOOL_REF;
-typedef OWFfloat*           OWF_FLOAT_VECTOR_REF;
-typedef OWFint*             OWF_INT_VECTOR_REF;
+typedef OWFfloat *OWF_FLOAT_REF;
+typedef OWFint *OWF_INT_REF;
+typedef OWFboolean *OWF_BOOL_REF;
+typedef OWFfloat *OWF_FLOAT_VECTOR_REF;
+typedef OWFint *OWF_INT_VECTOR_REF;
 
 typedef struct {
-    OWF_ATTRIBUTE_INFO      attr_info;
+    OWF_ATTRIBUTE_INFO attr_info;
     union {
-        OWF_INT_REF             int_value;
-        OWF_FLOAT_REF           float_value;
-        void*                   gen_ptr;
+        OWF_INT_REF int_value;
+        OWF_FLOAT_REF float_value;
+        void *gen_ptr;
         /*
         OWF_INT_VECTOR_REF      int_vector_value;
         OWF_FLOAT_VECTOR_REF    float_vector_value;
@@ -128,10 +125,10 @@ typedef struct {
  * time)
  */
 typedef struct {
-    OWFint                  range_start;
-    OWFint                  range_end;
-    OWF_ATTRIBUTE*          attributes;
-    OWFint                  last_error;
+    OWFint range_start;
+    OWFint range_end;
+    OWF_ATTRIBUTE *attributes;
+    OWFint last_error;
 } OWF_ATTRIBUTE_LIST;
 
 /*
@@ -144,10 +141,8 @@ typedef struct {
  * \return ERR_INVALID_ARGUMENT
  * ERR_NO_MEMORY
  */
-OWF_API_CALL void
-OWF_AttributeList_Create(OWF_ATTRIBUTE_LIST* aContext,
-                         OWFint aStart,
-                         OWFint aEnd);
+OWF_API_CALL void OWF_AttributeList_Create(OWF_ATTRIBUTE_LIST *aContext,
+                                           OWFint aStart, OWFint aEnd);
 
 /*
  * \brief Destroy attribute context and free any resources (memory
@@ -158,11 +153,10 @@ OWF_AttributeList_Create(OWF_ATTRIBUTE_LIST* aContext,
  * \return ERR_INVALID_ARGUMENT
  * ERR_INVALID_CONTEXT
  */
-OWF_API_CALL void
-OWF_AttributeList_Destroy(OWF_ATTRIBUTE_LIST* aContext);
+OWF_API_CALL void OWF_AttributeList_Destroy(OWF_ATTRIBUTE_LIST *aContext);
 
 OWF_API_CALL OWF_ATTRIBUTE_LIST_STATUS
-OWF_AttributeList_GetError(OWF_ATTRIBUTE_LIST* aContext);
+OWF_AttributeList_GetError(OWF_ATTRIBUTE_LIST *aContext);
 
 /*
  * \brief Intialize integer attribute
@@ -176,11 +170,9 @@ OWF_AttributeList_GetError(OWF_ATTRIBUTE_LIST* aContext);
  * ERR_INVALID_ATTRIBUTE
  * ERR_INVALID_CONTEXT
  */
-OWF_API_CALL void
-OWF_Attribute_Initi(OWF_ATTRIBUTE_LIST* aContext,
-                    OWFint aName,
-                    OWF_INT_REF aValue,
-                    OWFboolean aRdOnly);
+OWF_API_CALL void OWF_Attribute_Initi(OWF_ATTRIBUTE_LIST *aContext,
+                                      OWFint aName, OWF_INT_REF aValue,
+                                      OWFboolean aRdOnly);
 
 /*
  * \brief Initialize float attribute
@@ -194,11 +186,9 @@ OWF_Attribute_Initi(OWF_ATTRIBUTE_LIST* aContext,
  * ERR_INVALID_ATTRIBUTE
  * ERR_INVALID_CONTEXT
  */
-OWF_API_CALL void
-OWF_Attribute_Initf(OWF_ATTRIBUTE_LIST* aContext,
-                    OWFint aName,
-                    OWF_FLOAT_REF aValue,
-                    OWFboolean aRdOnly);
+OWF_API_CALL void OWF_Attribute_Initf(OWF_ATTRIBUTE_LIST *aContext,
+                                      OWFint aName, OWF_FLOAT_REF aValue,
+                                      OWFboolean aRdOnly);
 
 /*
  * \brief Initialize boolean attribute
@@ -212,11 +202,9 @@ OWF_Attribute_Initf(OWF_ATTRIBUTE_LIST* aContext,
  * ERR_INVALID_ATTRIBUTE
  * ERR_INVALID_CONTEXT
  */
-OWF_API_CALL void
-OWF_Attribute_Initb(OWF_ATTRIBUTE_LIST* aContext,
-                    OWFint aName,
-                    OWF_BOOL_REF aValue,
-                    OWFboolean aRdOnly);
+OWF_API_CALL void OWF_Attribute_Initb(OWF_ATTRIBUTE_LIST *aContext,
+                                      OWFint aName, OWF_BOOL_REF aValue,
+                                      OWFboolean aRdOnly);
 
 /*
  * \brief Initialize vector attribute
@@ -232,12 +220,10 @@ OWF_Attribute_Initb(OWF_ATTRIBUTE_LIST* aContext,
  * ERR_INVALID_CONTEXT
  * ERR_CANT_HANDLE
  */
-OWF_API_CALL void
-OWF_Attribute_Initiv(OWF_ATTRIBUTE_LIST* aContext,
-                     OWFint aName,
-                     OWFint aLength,
-                     OWF_INT_VECTOR_REF aValues,
-                     OWFboolean aRdOnly);
+OWF_API_CALL void OWF_Attribute_Initiv(OWF_ATTRIBUTE_LIST *aContext,
+                                       OWFint aName, OWFint aLength,
+                                       OWF_INT_VECTOR_REF aValues,
+                                       OWFboolean aRdOnly);
 
 /*
  * \brief Initialize vector attribute
@@ -250,12 +236,10 @@ OWF_Attribute_Initiv(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL void
-OWF_Attribute_Initfv(OWF_ATTRIBUTE_LIST* aContext,
-                     OWFint aName,
-                     OWFint aLength,
-                     OWF_FLOAT_VECTOR_REF aValues,
-                     OWFboolean aRdOnly);
+OWF_API_CALL void OWF_Attribute_Initfv(OWF_ATTRIBUTE_LIST *aContext,
+                                       OWFint aName, OWFint aLength,
+                                       OWF_FLOAT_VECTOR_REF aValues,
+                                       OWFboolean aRdOnly);
 
 /*
  * \brief Get attribute integer value.
@@ -268,9 +252,8 @@ OWF_Attribute_Initfv(OWF_ATTRIBUTE_LIST* aContext,
  * ERR_INVALID_ATTRIBUTE
  * ERR_INVALID_CONTEXT
  */
-OWF_API_CALL OWFint
-OWF_Attribute_GetValuei(OWF_ATTRIBUTE_LIST* aContext,
-                        OWFint aName);
+OWF_API_CALL OWFint OWF_Attribute_GetValuei(OWF_ATTRIBUTE_LIST *aContext,
+                                            OWFint aName);
 
 /*
  * \brief Return boolean attribute value
@@ -282,9 +265,8 @@ OWF_Attribute_GetValuei(OWF_ATTRIBUTE_LIST* aContext,
  * ERR_INVALID_ATTRIBUTE
  * ERR_INVALID_TYPE
  */
-OWF_API_CALL OWFboolean
-OWF_Attribute_GetValueb(OWF_ATTRIBUTE_LIST* aContext,
-                        OWFint aName);
+OWF_API_CALL OWFboolean OWF_Attribute_GetValueb(OWF_ATTRIBUTE_LIST *aContext,
+                                                OWFint aName);
 
 /*
  * \brief Get attribute float value
@@ -295,9 +277,8 @@ OWF_Attribute_GetValueb(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return Attribute
  */
-OWF_API_CALL OWFfloat
-OWF_Attribute_GetValuef(OWF_ATTRIBUTE_LIST* aContext,
-                        OWFint aName);
+OWF_API_CALL OWFfloat OWF_Attribute_GetValuef(OWF_ATTRIBUTE_LIST *aContext,
+                                              OWFint aName);
 
 /*
  * \brief
@@ -309,11 +290,9 @@ OWF_Attribute_GetValuef(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL OWFint
-OWF_Attribute_GetValueiv(OWF_ATTRIBUTE_LIST* aContext,
-                         OWFint aName,
-                         OWFint aLength,
-                         OWFint* aValue);
+OWF_API_CALL OWFint OWF_Attribute_GetValueiv(OWF_ATTRIBUTE_LIST *aContext,
+                                             OWFint aName, OWFint aLength,
+                                             OWFint *aValue);
 
 /*
  * \brief
@@ -325,11 +304,9 @@ OWF_Attribute_GetValueiv(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL OWFint
-OWF_Attribute_GetValuefv(OWF_ATTRIBUTE_LIST* aContext,
-                         OWFint aName,
-                         OWFint aLength,
-                         OWFfloat* aValue);
+OWF_API_CALL OWFint OWF_Attribute_GetValuefv(OWF_ATTRIBUTE_LIST *aContext,
+                                             OWFint aName, OWFint aLength,
+                                             OWFfloat *aValue);
 
 /*
  * \brief
@@ -340,10 +317,8 @@ OWF_Attribute_GetValuefv(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL void
-OWF_Attribute_SetValuei(OWF_ATTRIBUTE_LIST* aContext,
-                        OWFint aName,
-                        OWFint aValue);
+OWF_API_CALL void OWF_Attribute_SetValuei(OWF_ATTRIBUTE_LIST *aContext,
+                                          OWFint aName, OWFint aValue);
 
 /*
  * \brief
@@ -354,10 +329,8 @@ OWF_Attribute_SetValuei(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL void
-OWF_Attribute_SetValuef(OWF_ATTRIBUTE_LIST* aContext,
-                        OWFint aName,
-                        OWFfloat aValue);
+OWF_API_CALL void OWF_Attribute_SetValuef(OWF_ATTRIBUTE_LIST *aContext,
+                                          OWFint aName, OWFfloat aValue);
 
 /*
  * \brief
@@ -368,10 +341,8 @@ OWF_Attribute_SetValuef(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL void
-OWF_Attribute_SetValueb(OWF_ATTRIBUTE_LIST* aContext,
-                        OWFint aName,
-                        OWFboolean aValue);
+OWF_API_CALL void OWF_Attribute_SetValueb(OWF_ATTRIBUTE_LIST *aContext,
+                                          OWFint aName, OWFboolean aValue);
 
 /*
  * \brief
@@ -382,11 +353,9 @@ OWF_Attribute_SetValueb(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL void
-OWF_Attribute_SetValueiv(OWF_ATTRIBUTE_LIST* aContext,
-                         OWFint aName,
-                         OWFint aLength,
-                         const OWFint* aValue);
+OWF_API_CALL void OWF_Attribute_SetValueiv(OWF_ATTRIBUTE_LIST *aContext,
+                                           OWFint aName, OWFint aLength,
+                                           const OWFint *aValue);
 
 /*
  * \brief
@@ -397,16 +366,13 @@ OWF_Attribute_SetValueiv(OWF_ATTRIBUTE_LIST* aContext,
  *
  * \return
  */
-OWF_API_CALL void
-OWF_Attribute_SetValuefv(OWF_ATTRIBUTE_LIST* aContext,
-                         OWFint aName,
-                         OWFint aLength,
-                         const OWFfloat* aValue);
+OWF_API_CALL void OWF_Attribute_SetValuefv(OWF_ATTRIBUTE_LIST *aContext,
+                                           OWFint aName, OWFint aLength,
+                                           const OWFfloat *aValue);
 
-
-OWF_API_CALL void
-OWF_AttributeList_Commit(OWF_ATTRIBUTE_LIST* aContext, OWFint aStart, OWFint aEnd, OWFint aCopyTo );
-
+OWF_API_CALL void OWF_AttributeList_Commit(OWF_ATTRIBUTE_LIST *aContext,
+                                           OWFint aStart, OWFint aEnd,
+                                           OWFint aCopyTo);
 
 #ifdef __cplusplus
 }

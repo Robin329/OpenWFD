@@ -31,8 +31,7 @@
 #include "wfcstructs.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*!
@@ -42,44 +41,34 @@ extern "C"
  *
  *  \return New element object or NULL
  */
-OWF_API_CALL WFC_ELEMENT*
-WFC_Element_Create(WFC_CONTEXT* context);
+OWF_API_CALL WFC_ELEMENT* WFC_Element_Create(WFC_CONTEXT* context);
 
-OWF_API_CALL WFC_ELEMENT*
-WFC_Element_Clone(WFC_ELEMENT* element);
+OWF_API_CALL WFC_ELEMENT* WFC_Element_Clone(WFC_ELEMENT* element);
 
-OWF_API_CALL void
-WFC_Element_Destroy(WFC_ELEMENT* element);
+OWF_API_CALL void WFC_Element_Destroy(WFC_ELEMENT* element);
 
-OWF_API_CALL WFCErrorCode
-WFC_Element_SetAttribiv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        const WFCint* values);
+OWF_API_CALL WFCErrorCode WFC_Element_SetAttribiv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  const WFCint* values);
 
-OWF_API_CALL WFCErrorCode
-WFC_Element_SetAttribfv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        const WFCfloat* values);
+OWF_API_CALL WFCErrorCode WFC_Element_SetAttribfv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  const WFCfloat* values);
 
-OWF_API_CALL WFCErrorCode
-WFC_Element_GetAttribiv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        WFCint* values);
+OWF_API_CALL WFCErrorCode WFC_Element_GetAttribiv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count, WFCint* values);
 
-OWF_API_CALL WFCErrorCode
-WFC_Element_GetAttribfv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        WFCfloat* values);
+OWF_API_CALL WFCErrorCode WFC_Element_GetAttribfv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  WFCfloat* values);
 
-OWF_API_CALL WFCboolean
-WFC_Element_HasConflicts(WFC_ELEMENT* element);
+OWF_API_CALL WFCboolean WFC_Element_HasConflicts(WFC_ELEMENT* element);
 
-OWF_API_CALL void
-WFC_Element_Commit(WFC_ELEMENT* element);
+OWF_API_CALL void WFC_Element_Commit(WFC_ELEMENT* element);
 
 #ifdef __cplusplus
 }

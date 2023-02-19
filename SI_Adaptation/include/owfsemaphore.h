@@ -25,34 +25,24 @@
 
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+OWF_API_CALL OWFint OWF_Semaphore_Init(OWF_SEMAPHORE *sem, OWFint val);
 
-OWF_API_CALL OWFint
-OWF_Semaphore_Init(OWF_SEMAPHORE* sem, OWFint val);
+OWF_API_CALL OWFint OWF_Semaphore_Wait(OWF_SEMAPHORE *sem);
 
-OWF_API_CALL OWFint
-OWF_Semaphore_Wait(OWF_SEMAPHORE* sem);
+OWF_API_CALL OWFint OWF_Semaphore_TryWait(OWF_SEMAPHORE *sem);
 
-OWF_API_CALL OWFint
-OWF_Semaphore_TryWait(OWF_SEMAPHORE* sem);
+OWF_API_CALL void OWF_Semaphore_Post(OWF_SEMAPHORE *sem);
 
-OWF_API_CALL void
-OWF_Semaphore_Post(OWF_SEMAPHORE* sem);
+OWF_API_CALL OWFint OWF_Semaphore_GetValue(OWF_SEMAPHORE *sem, OWFint *val);
 
-OWF_API_CALL OWFint
-OWF_Semaphore_GetValue(OWF_SEMAPHORE* sem, OWFint* val);
-
-OWF_API_CALL OWFint
-OWF_Semaphore_Destroy(OWF_SEMAPHORE* sem);
-
+OWF_API_CALL OWFint OWF_Semaphore_Destroy(OWF_SEMAPHORE *sem);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

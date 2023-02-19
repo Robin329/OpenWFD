@@ -25,27 +25,20 @@
 
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-OWF_API_CALL OWFint
-OWF_Mutex_Init(OWF_MUTEX* mutex);
+OWF_API_CALL OWFint OWF_Mutex_Init(OWF_MUTEX *mutex);
 
-OWF_API_CALL OWFint
-OWF_Mutex_Destroy(OWF_MUTEX* mutex);
+OWF_API_CALL OWFint OWF_Mutex_Destroy(OWF_MUTEX *mutex);
 
-OWF_API_CALL OWFint
-OWF_Mutex_Lock(OWF_MUTEX* mutex);
+OWF_API_CALL OWFint OWF_Mutex_Lock(OWF_MUTEX *mutex);
 
-OWF_API_CALL OWFint
-OWF_Mutex_Unlock(OWF_MUTEX* mutex);
-
+OWF_API_CALL OWFint OWF_Mutex_Unlock(OWF_MUTEX *mutex);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

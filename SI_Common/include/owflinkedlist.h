@@ -26,10 +26,8 @@
 #include "owfpool.h"
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*!
@@ -40,16 +38,14 @@ extern "C"
  *
  *  \return New node containing data or NULL
  */
-OWF_API_CALL OWF_NODE*
-OWF_Node_Create(OWF_POOL* pool, void* data);
+OWF_API_CALL OWF_NODE *OWF_Node_Create(OWF_POOL *pool, void *data);
 
 /*!
  *  Returns node to pool it was allocated from.
  *
  *  \param node Node to "destroy"
  */
-OWF_API_CALL void
-OWF_Node_Destroy(OWF_NODE* node);
+OWF_API_CALL void OWF_Node_Destroy(OWF_NODE *node);
 
 /*!
  *  Returns list's tail node.
@@ -58,8 +54,7 @@ OWF_Node_Destroy(OWF_NODE* node);
  *
  *  \return List's tail (last) node
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Tail(OWF_NODE* root);
+OWF_API_CALL OWF_NODE *OWF_List_Tail(OWF_NODE *root);
 
 /*!
  *  Append node to list.
@@ -68,8 +63,7 @@ OWF_List_Tail(OWF_NODE* root);
  *
  *  \return New list root node
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Append(OWF_NODE* root, OWF_NODE* node);
+OWF_API_CALL OWF_NODE *OWF_List_Append(OWF_NODE *root, OWF_NODE *node);
 
 /*!
  *  Insert node to list front. I.e. current root becomes
@@ -80,8 +74,7 @@ OWF_List_Append(OWF_NODE* root, OWF_NODE* node);
  *
  *  \return New list root (inserted node)
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Insert(OWF_NODE* root, OWF_NODE* node);
+OWF_API_CALL OWF_NODE *OWF_List_Insert(OWF_NODE *root, OWF_NODE *node);
 
 /*!
  *  Inserts node into list, immediately after node "pred".
@@ -89,8 +82,7 @@ OWF_List_Insert(OWF_NODE* root, OWF_NODE* node);
  *  \param pred Node after which the newcomer should be placed.
  *  \param node Node to add.
  */
-OWF_API_CALL void
-OWF_List_InsertAfter(OWF_NODE* pred, OWF_NODE* node);
+OWF_API_CALL void OWF_List_InsertAfter(OWF_NODE *pred, OWF_NODE *node);
 
 /*!
  *  Searches the list for data ptr. Returns the node
@@ -102,8 +94,7 @@ OWF_List_InsertAfter(OWF_NODE* pred, OWF_NODE* node);
  *
  *  \return Node containing the data ptr or NULL.
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Contains(OWF_NODE* root, void* data);
+OWF_API_CALL OWF_NODE *OWF_List_Contains(OWF_NODE *root, void *data);
 
 /*!
  *  Remove node from list. Obs! The node isn't freed,
@@ -117,8 +108,7 @@ OWF_List_Contains(OWF_NODE* root, void* data);
  *
  *  \return New list root after removal
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Remove(OWF_NODE* root, OWF_NODE* node);
+OWF_API_CALL OWF_NODE *OWF_List_Remove(OWF_NODE *root, OWF_NODE *node);
 
 /*!
  *  Remove all nodes from the list. Equals to
@@ -128,8 +118,7 @@ OWF_List_Remove(OWF_NODE* root, OWF_NODE* node);
  *
  *  \return NULL.
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Clear(OWF_NODE* root);
+OWF_API_CALL OWF_NODE *OWF_List_Clear(OWF_NODE *root);
 
 /*!
  *  Calls given callback function for each node in the list
@@ -141,8 +130,8 @@ OWF_List_Clear(OWF_NODE* root);
  *  \param func Callback function
  *  \param data Data to be passed to callback function
  */
-OWF_API_CALL void
-OWF_List_ForEach(OWF_NODE* root, NODEITERFUNC func, void* data);
+OWF_API_CALL void OWF_List_ForEach(OWF_NODE *root, NODEITERFUNC func,
+                                   void *data);
 
 /*
  *  Returns first node for which given comparison function
@@ -162,13 +151,11 @@ OWF_List_ForEach(OWF_NODE* root, NODEITERFUNC func, void* data);
  *
  *  \return Node that matches in comparison.
  */
-OWF_API_CALL OWF_NODE*
-OWF_List_Find(OWF_NODE* root, NODECMPFUNC func, void* data);
-
+OWF_API_CALL OWF_NODE *OWF_List_Find(OWF_NODE *root, NODECMPFUNC func,
+                                     void *data);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #endif

@@ -31,16 +31,12 @@ extern "C" {
 
 OWF_API_CALL OWFint min(OWFint aLhs, OWFint aRhs);
 
-OWF_API_CALL void OWF_Rect_Set(OWF_RECTANGLE* rect,
-                         OWFint left,
-                         OWFint top,
-                         OWFint width,
-                         OWFint height);
+OWF_API_CALL void OWF_Rect_Set(OWF_RECTANGLE *rect, OWFint left, OWFint top,
+                               OWFint width, OWFint height);
 
-OWF_API_CALL OWFboolean OWF_Rect_Clip(OWF_RECTANGLE* clipped,
-                                      OWF_RECTANGLE* rect,
-                                      OWF_RECTANGLE* bounds);
-
+OWF_API_CALL OWFboolean OWF_Rect_Clip(OWF_RECTANGLE *clipped,
+                                      OWF_RECTANGLE *rect,
+                                      OWF_RECTANGLE *bounds);
 
 #ifdef __cplusplus
 }

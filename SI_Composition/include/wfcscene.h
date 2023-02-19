@@ -30,9 +30,8 @@
 #define WFCSCENE_H_
 
 #include "WF/wfc.h"
-#include "wfcelement.h"
-
 #include "owfpool.h"
+#include "wfcelement.h"
 
 /*!
  *  \brief Clone a scene
@@ -40,8 +39,7 @@
  *  \param scene Pointer to scene to clone
  *  \returns cloned scene
  */
-OWF_API_CALL WFC_SCENE*
-WFC_Scene_Clone(WFC_SCENE* scene);
+OWF_API_CALL WFC_SCENE* WFC_Scene_Clone(WFC_SCENE* scene);
 
 /*!
  *  \brief Create new scene in a context
@@ -50,8 +48,7 @@ WFC_Scene_Clone(WFC_SCENE* scene);
  *
  *  \return New scene object
  */
-OWF_API_CALL WFC_SCENE*
-WFC_Scene_Create(WFC_CONTEXT* context);
+OWF_API_CALL WFC_SCENE* WFC_Scene_Create(WFC_CONTEXT* context);
 
 /*!
  *  \brief Destroy a scene.
@@ -62,8 +59,7 @@ WFC_Scene_Create(WFC_CONTEXT* context);
  *  \param scene            Scene
  */
 
-OWF_API_CALL void
-WFC_Scene_Destroy(WFC_SCENE* scene);
+OWF_API_CALL void WFC_Scene_Destroy(WFC_SCENE* scene);
 
 /*!
  *  \brief Insert element to scene above given element
@@ -75,10 +71,9 @@ WFC_Scene_Destroy(WFC_SCENE* scene);
  *  \return WFCErrorCode
  */
 
-OWF_API_CALL WFCErrorCode
-WFC_Scene_InsertElement(WFC_SCENE* scene,
-                        WFC_ELEMENT* element,
-                        WFCElement elementBelow);
+OWF_API_CALL WFCErrorCode WFC_Scene_InsertElement(WFC_SCENE* scene,
+                                                  WFC_ELEMENT* element,
+                                                  WFCElement elementBelow);
 
 /*!
  *  \brief Remove element from scene
@@ -88,10 +83,7 @@ WFC_Scene_InsertElement(WFC_SCENE* scene,
  *
  *  \return WFCErrorCode
  */
-OWF_API_CALL void
-WFC_Scene_RemoveElement(WFC_SCENE* scene,
-                        WFCElement element);
-
+OWF_API_CALL void WFC_Scene_RemoveElement(WFC_SCENE* scene, WFCElement element);
 
 /*!
  *  \brief Get element's neighbour element (i.e. element on top of it
@@ -104,8 +96,9 @@ WFC_Scene_RemoveElement(WFC_SCENE* scene,
  *
  *  \return Neigbour element id or WFC_INVALID_HANDLE
  */
-OWF_API_CALL WFCElement
-WFC_Scene_GetNeighbourElement(WFC_SCENE* scene, WFCElement element, WFCint n);
+OWF_API_CALL WFCElement WFC_Scene_GetNeighbourElement(WFC_SCENE* scene,
+                                                      WFCElement element,
+                                                      WFCint n);
 
 /*!
  *  \brief Search the scene for given element.
@@ -114,16 +107,14 @@ WFC_Scene_GetNeighbourElement(WFC_SCENE* scene, WFCElement element, WFCint n);
  *  \param element          Handle of the element to find
  *
  */
-OWF_API_CALL WFC_ELEMENT*
-WFC_Scene_FindElement(WFC_SCENE* scene,
-                      WFCElement element);
+OWF_API_CALL WFC_ELEMENT* WFC_Scene_FindElement(WFC_SCENE* scene,
+                                                WFCElement element);
 /*!
  *  \brief Unlock scene sources & masks.
  *
  *  \param scene            Scene
  */
-OWF_API_CALL void
-WFC_Scene_UnlockSourcesAndMasks(WFC_SCENE* scene);
+OWF_API_CALL void WFC_Scene_UnlockSourcesAndMasks(WFC_SCENE* scene);
 
 /*!
  *  \brief Lock all sources' & masks' streams for reading prior to rendering.
@@ -141,8 +132,7 @@ WFC_Scene_UnlockSourcesAndMasks(WFC_SCENE* scene);
  *
  *  \param scene            Scene
  */
-OWF_API_CALL void
-WFC_Scene_LockSourcesAndMasks(WFC_SCENE* scene);
+OWF_API_CALL void WFC_Scene_LockSourcesAndMasks(WFC_SCENE* scene);
 
 /*!
  *  \brief Check scene for conflicts
@@ -152,16 +142,14 @@ WFC_Scene_LockSourcesAndMasks(WFC_SCENE* scene);
  *  \return WFC_TRUE if there's a conflict (inconsistency) in the
  *  scene graph, WFC_FALSE otherwise.
  */
-OWF_API_CALL WFCboolean
-WFC_Scene_HasConflicts(WFC_SCENE* scene);
+OWF_API_CALL WFCboolean WFC_Scene_HasConflicts(WFC_SCENE* scene);
 
 /*!
  *  \brief Commit changes to scene
  *
  *  \param scene            Scene
  */
-OWF_API_CALL void
-WFC_Scene_Commit(WFC_SCENE* scene);
+OWF_API_CALL void WFC_Scene_Commit(WFC_SCENE* scene);
 
 /*!
  *  Return handle of the lowest element in the scene.
@@ -169,7 +157,6 @@ WFC_Scene_Commit(WFC_SCENE* scene);
  *  \param scene Scene
  *  \return Handle of the bottom element
  */
-OWF_API_CALL WFCElement
-WFC_Scene_LowestElement(WFC_SCENE* scene);
+OWF_API_CALL WFCElement WFC_Scene_LowestElement(WFC_SCENE* scene);
 
 #endif /* WFCSCENE_H_ */

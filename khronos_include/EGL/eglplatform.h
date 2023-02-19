@@ -6,9 +6,9 @@
 #ifndef __eglplatform_h_
 #define __eglplatform_h_
 
-
 /* Windows calling convention boilerplate */
-#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
+#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && \
+    !defined(__SCITECH_SNAP__)
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #endif
@@ -34,17 +34,14 @@
 #define EGLAPI extern
 #endif
 
-
 /* EGL Types */
 typedef khronos_int32_t EGLint;
 typedef unsigned int EGLBoolean;
 typedef unsigned int EGLenum;
 
 /* EGL 1.2 types, renamed for consistency in EGL 1.3 */
-typedef void* EGLNativeDisplayType;
-typedef void* EGLNativePixmapType;
-typedef void* EGLNativeWindowType;
-
+typedef void *EGLNativeDisplayType;
+typedef void *EGLNativePixmapType;
+typedef void *EGLNativeWindowType;
 
 #endif /* __eglplatform_h */
-

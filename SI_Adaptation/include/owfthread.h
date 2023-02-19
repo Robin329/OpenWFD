@@ -29,34 +29,25 @@
 extern "C" {
 #endif
 
+typedef void *OWF_THREAD;
 
-typedef void*               OWF_THREAD;
+OWF_API_CALL void OWF_Thread_Destroy(OWF_THREAD thread);
 
-OWF_API_CALL void
-OWF_Thread_Destroy(OWF_THREAD thread);
+OWF_API_CALL OWF_THREAD OWF_Thread_Create(void *(*threadfunc)(void *),
+                                          void *data);
 
-OWF_API_CALL OWF_THREAD
-OWF_Thread_Create(void* (*threadfunc)(void*), void* data);
+OWF_API_CALL OWFint OWF_Thread_Join(OWF_THREAD thread, void **retval);
 
-OWF_API_CALL OWFint
-OWF_Thread_Join(OWF_THREAD thread, void** retval);
+OWF_API_CALL OWFint OWF_Thread_Cancel(OWF_THREAD thread);
 
-OWF_API_CALL OWFint
-OWF_Thread_Cancel(OWF_THREAD thread);
+OWF_API_CALL void OWF_Thread_Exit(void *retval);
 
-OWF_API_CALL void
-OWF_Thread_Exit(void* retval);
+OWF_API_CALL void OWF_Thread_MicroSleep(OWFuint32 usecs);
 
-OWF_API_CALL void
-OWF_Thread_MicroSleep(OWFuint32 usecs);
-
-OWF_API_CALL void
-OWF_Thread_Sleep(OWFuint32 secs);
-
+OWF_API_CALL void OWF_Thread_Sleep(OWFuint32 secs);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

@@ -26,7 +26,6 @@
  *
  */
 
-
 #ifndef WFDEVENT_H_
 #define WFDEVENT_H_
 
@@ -37,7 +36,6 @@
 extern "C" {
 #endif
 
-
 /*! \brief Create an event container
  *
  *  \param pDevice Pointer to device object
@@ -46,16 +44,16 @@ extern "C" {
  *  \return Handle to the created container of WFD_INVALID_HANDLE
  *  if creation fails.
  */
-OWF_API_CALL WFDEvent OWF_APIENTRY
-WFD_Event_CreateContainer(WFD_DEVICE* pDevice, const WFDint* attribList) OWF_APIEXIT;
+OWF_API_CALL WFDEvent OWF_APIENTRY WFD_Event_CreateContainer(
+    WFD_DEVICE* pDevice, const WFDint* attribList) OWF_APIEXIT;
 
 /*! \brief Destroy an event container
  *
  *  \param pDevice Pointer to device object
  *  \param pEventCont Pointer to an event container
-  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Event_DestroyContainer(WFD_DEVICE* pDevice, WFD_EVENT_CONTAINER* pEventCont) OWF_APIEXIT;
+ */
+OWF_API_CALL void OWF_APIENTRY WFD_Event_DestroyContainer(
+    WFD_DEVICE* pDevice, WFD_EVENT_CONTAINER* pEventCont) OWF_APIEXIT;
 
 /*! \brief Find an event container object by handle
  *
@@ -74,9 +72,8 @@ WFD_Event_FindByHandle(WFD_DEVICE* pDevice, WFDEvent event) OWF_APIEXIT;
  *
  *  \return Value of the attribute
  */
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Event_GetAttribi (WFD_EVENT_CONTAINER* pEventCont,
-                      WFDEventAttrib attrib) OWF_APIEXIT;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Event_GetAttribi(
+    WFD_EVENT_CONTAINER* pEventCont, WFDEventAttrib attrib) OWF_APIEXIT;
 
 /*! \brief Set event filter
  *
@@ -88,10 +85,9 @@ WFD_Event_GetAttribi (WFD_EVENT_CONTAINER* pEventCont,
  *  \param pEventCont Pointer to an event container
  *  \param filter An array of event types terminated by
  *  WFD_NONE.
-  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Event_SetFilter (WFD_EVENT_CONTAINER* pEventCont,
-                     const WFDEventType* filter) OWF_APIEXIT;
+ */
+OWF_API_CALL void OWF_APIENTRY WFD_Event_SetFilter(
+    WFD_EVENT_CONTAINER* pEventCont, const WFDEventType* filter) OWF_APIEXIT;
 
 /*! \brief Set-up asynchronic notification
  *
@@ -104,10 +100,9 @@ WFD_Event_SetFilter (WFD_EVENT_CONTAINER* pEventCont,
  *
  *
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Event_Async(WFD_EVENT_CONTAINER* pEventCont,
-                WFDEGLDisplay display,
-                WFDEGLSync sync) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Event_Async(WFD_EVENT_CONTAINER* pEventCont,
+                                               WFDEGLDisplay display,
+                                               WFDEGLSync sync) OWF_APIEXIT;
 
 /*! \brief Wait on event queue
  *
@@ -126,10 +121,10 @@ WFD_Event_Async(WFD_EVENT_CONTAINER* pEventCont,
  *
  */
 OWF_API_CALL WFDEventType OWF_APIENTRY
-WFD_Event_Wait(WFD_EVENT_CONTAINER* pEventCont,
-               WFDtime timeout) OWF_APIEXIT;
+WFD_Event_Wait(WFD_EVENT_CONTAINER* pEventCont, WFDtime timeout) OWF_APIEXIT;
 
-/*! \brief Append an event to event queues of all event containers created for the device
+/*! \brief Append an event to event queues of all event containers created for
+ * the device
  *
  *  This routine is called by a event generating routine and
  *  is used to record an event for all event listeners. For
@@ -140,8 +135,7 @@ WFD_Event_Wait(WFD_EVENT_CONTAINER* pEventCont,
  *  \param pEvent Pointer to an event object
  */
 OWF_API_CALL void OWF_APIENTRY
-WFD_Event_InsertAll(WFD_DEVICE* pDevice,
-                    const WFD_EVENT* pEvent) OWF_APIEXIT;
+WFD_Event_InsertAll(WFD_DEVICE* pDevice, const WFD_EVENT* pEvent) OWF_APIEXIT;
 
 /*! \brief Append an event to the event queue of an event container
  *
@@ -159,9 +153,8 @@ WFD_Event_InsertAll(WFD_DEVICE* pDevice,
  *
  *  \return
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Event_Insert(WFD_EVENT_CONTAINER* pEventCont,
-                 const WFD_EVENT* pEvent) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Event_Insert(
+    WFD_EVENT_CONTAINER* pEventCont, const WFD_EVENT* pEvent) OWF_APIEXIT;
 
 #ifdef __cplusplus
 }

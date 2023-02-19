@@ -24,12 +24,12 @@
 extern "C" {
 #endif
 
+#include "owfhandle.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "owfdebug.h"
-#include "owfhandle.h"
 #include "owfmutex.h"
 
 #define HANDLE_MAX 0xFFFFFFul
@@ -46,50 +46,40 @@ extern "C" {
  *  \param n handle sequence number
  *  \param type Type identifier
  */
-static OWFHandle
-OWF_Handle_Construct(OWFuint32 n, OWFuint8 type);
+static OWFHandle OWF_Handle_Construct(OWFuint32 n, OWFuint8 type);
 
 /*! \brief Extract type identifier from handle
  *
  *  \param h Handle
  *
  */
-static OWFuint8
-OWF_Handle_GetType(OWFHandle h);
+static OWFuint8 OWF_Handle_GetType(OWFHandle h);
 
-static OWFuint32
-OWF_Handle_GetNext(OWF_HANDLE_DESC* hDesc)
-{
+static OWFuint32 OWF_Handle_GetNext(OWF_HANDLE_DESC *hDesc) {
     OWFuint32 ret;
 
     OWF_Mutex_Lock(&hDesc->mutex);
 
-    if (hDesc->next == HANDLE_MAX)
-    {
+    if (hDesc->next == HANDLE_MAX) {
         hDesc->next = 0;
     }
-    ret =  ++hDesc->next;
+    ret = ++hDesc->next;
 
     OWF_Mutex_Unlock(&hDesc->mutex);
 
     return ret;
 }
 
-static OWFHandle
-OWF_Handle_Construct(OWFuint32 n, OWFuint8 t)
-{
+static OWFHandle OWF_Handle_Construct(OWFuint32 n, OWFuint8 t) {
     return (n & HANDLE_MAX) | (OWFuint32)t << HANDLE_BITS;
 }
 
-static OWFuint8
-OWF_Handle_GetType(OWFHandle h)
-{
+static OWFuint8 OWF_Handle_GetType(OWFHandle h) {
     return (OWFuint8)(h >> HANDLE_BITS);
 }
 
-OWF_API_CALL OWFHandle
-OWF_Handle_Create(OWF_HANDLE_DESC* hDesc, OWFuint8 objType, void* obj)
-{
+OWF_API_CALL OWFHandle OWF_Handle_Create(OWF_HANDLE_DESC *hDesc,
+                                         OWFuint8 objType, void *obj) {
     OWFuint32 rounds = 0;
     OWFHandle h;
 
@@ -97,14 +87,12 @@ OWF_Handle_Create(OWF_HANDLE_DESC* hDesc, OWFuint8 objType, void* obj)
 
     h = OWF_Handle_Construct(OWF_Handle_GetNext(hDesc), objType);
 
-    while (OWF_Hash_Lookup(hDesc->hash, h)!=NULL)
-    {
+    while (OWF_Hash_Lookup(hDesc->hash, h) != NULL) {
         /* Created handle must be unambiguous
          * If handle already exists, allocate next  */
         rounds++;
 
-        if (rounds > HANDLE_MAX)
-        {
+        if (rounds > HANDLE_MAX) {
             /* all possible values checked */
             return OWF_INVALID_HANDLE;
         }
@@ -116,26 +104,21 @@ OWF_Handle_Create(OWF_HANDLE_DESC* hDesc, OWFuint8 objType, void* obj)
     return h;
 }
 
-OWF_API_CALL void*
-OWF_Handle_GetObj(OWF_HANDLE_DESC* hDesc, OWFuint32 h, OWFuint8 objType)
-{
+OWF_API_CALL void *OWF_Handle_GetObj(OWF_HANDLE_DESC *hDesc, OWFuint32 h,
+                                     OWFuint8 objType) {
     OWF_ASSERT(hDesc && hDesc->hash);
 
     /* check that handle matches required type */
-    if ((OWFuint32)objType != OWF_Handle_GetType(h))
-    {
+    if ((OWFuint32)objType != OWF_Handle_GetType(h)) {
         return NULL;
     }
     return OWF_Hash_Lookup(hDesc->hash, h);
 }
 
-OWF_API_CALL void
-OWF_Handle_Delete(OWF_HANDLE_DESC* hDesc, OWFuint32 h)
-{
+OWF_API_CALL void OWF_Handle_Delete(OWF_HANDLE_DESC *hDesc, OWFuint32 h) {
     OWF_ASSERT(hDesc && hDesc->hash);
 
-    if (hDesc->hash)
-    {
+    if (hDesc->hash) {
         OWF_Hash_Delete(hDesc->hash, h);
     }
 }
@@ -143,4 +126,3 @@ OWF_Handle_Delete(OWF_HANDLE_DESC* hDesc, OWFuint32 h)
 #ifdef __cplusplus
 }
 #endif
-

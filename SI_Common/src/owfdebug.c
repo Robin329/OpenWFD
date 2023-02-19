@@ -23,66 +23,50 @@
 #define DEBUG
 #ifdef DEBUG
 
+#include "owfdebug.h"
+
 #include <pthread.h>
 
-#include "owfdebug.h"
 #include "owftypes.h"
-#include "owfdebug.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 #ifndef OWF_DEBUG_PREFIX
 #define OWF_DEBUG_PREFIX "OWF: "
 #endif
 
-OWF_API_CALL void OWF_Debug_Print(const char* format, ...)
-{
-    va_list                 ap;
-    char                    __spager[512];
+OWF_API_CALL void OWF_Debug_Print(const char *format, ...) {
+    va_list ap;
+    char __spager[512];
 
     va_start(ap, format);
     __spager[0] = 0;
     vsnprintf(__spager, 511, format, ap);
     fprintf(stderr, "%s %s\n", OWF_DEBUG_PREFIX, __spager);
     va_end(ap);
-
 }
 
+OWF_API_CALL void OWF_Debug_Trace(const char *fmt, ...) { fmt = fmt; }
 
-OWF_API_CALL void OWF_Debug_Trace(const char* fmt, ...)
-{
-    fmt = fmt;
-}
+OWF_API_CALL void OWF_Debug_TraceIndent() {}
 
-OWF_API_CALL void OWF_Debug_TraceIndent()
-{
-}
+OWF_API_CALL void OWF_Debug_TraceUndent() {}
 
-OWF_API_CALL void OWF_Debug_TraceUndent()
-{
-}
-
-OWF_API_CALL void OWF_Debug_TraceEnter(const char* func)
-{
-    if (func)
-    {
+OWF_API_CALL void OWF_Debug_TraceEnter(const char *func) {
+    if (func) {
         OWF_Debug_Trace("ENTER %s", func);
     }
     OWF_Debug_TraceIndent();
 }
 
-OWF_API_CALL void OWF_Debug_TraceExit(const char* func)
-{
+OWF_API_CALL void OWF_Debug_TraceExit(const char *func) {
     OWF_Debug_TraceUndent();
-    if (func)
-    {
+    if (func) {
         OWF_Debug_Trace("EXIT %s", func);
     }
 }
-
 
 #ifdef __cplusplus
 }
@@ -90,6 +74,8 @@ OWF_API_CALL void OWF_Debug_TraceExit(const char* func)
 
 #else
 
-static const int this_is_to_keep_the_compiler_happy_and_not_complaining_about_empty_source_file = 0xBAD0F00D;
+static const int
+    this_is_to_keep_the_compiler_happy_and_not_complaining_about_empty_source_file =
+        0xBAD0F00D;
 
 #endif /* DEBUG */

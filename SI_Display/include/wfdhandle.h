@@ -26,20 +26,18 @@
  *
  */
 
-
 #ifndef WFDHANDLE_H_
 #define WFDHANDLE_H_
 
-#include "owftypes.h"
 #include "owfhandle.h"
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*!  \brief Allowed handle (object) types */
-typedef enum
-{
+typedef enum {
     WFD_DEVICE_HANDLE = 0xE0,
     WFD_EVENT_HANDLE,
     WFD_PORT_HANDLE,
@@ -59,8 +57,7 @@ typedef enum
  *
  *  \return Created handle or OWF_INVALID_HANDLE is creation failed
  */
-OWF_API_CALL OWFHandle
-WFD_Handle_Create(WFD_HANDLE_TYPE objType, void* obj);
+OWF_API_CALL OWFHandle WFD_Handle_Create(WFD_HANDLE_TYPE objType, void* obj);
 
 /*! \brief Retrieve an object by handle
  *
@@ -73,21 +70,16 @@ WFD_Handle_Create(WFD_HANDLE_TYPE objType, void* obj);
  *  \return pointer to an object or NULL if handle is invalid or the
  *  object does not match the given type.
  */
-OWF_API_CALL void*
-WFD_Handle_GetObj(OWFHandle handle, WFD_HANDLE_TYPE objType);
+OWF_API_CALL void* WFD_Handle_GetObj(OWFHandle handle, WFD_HANDLE_TYPE objType);
 
 /*! \brief Delete a handle
  *
  *  \param  handle Handle
  */
-OWF_API_CALL void
-WFD_Handle_Delete(OWFHandle handle);
-
+OWF_API_CALL void WFD_Handle_Delete(OWFHandle handle);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* WFDHANDLE_H_ */

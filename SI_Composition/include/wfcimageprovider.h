@@ -32,32 +32,27 @@
 #include <stdlib.h>
 
 #include "WF/wfc.h"
-#include "owfobject.h"
-#include "owfimage.h"
 #include "owfarray.h"
+#include "owfimage.h"
 #include "owfmemory.h"
+#include "owfobject.h"
 #include "wfcstructs.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_ImageProvider_Create(void* owner, /*WFC_CONTEXT* context,*/
-                         OWF_STREAM* stream,
-                         WFC_IMAGE_PROVIDER_TYPE type);
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_ImageProvider_Create(
+    void* owner, /*WFC_CONTEXT* context,*/
+    OWF_STREAM* stream, WFC_IMAGE_PROVIDER_TYPE type);
 
-OWF_API_CALL void
-WFC_ImageProvider_LockForReading(WFC_IMAGE_PROVIDER* provider);
+OWF_API_CALL void WFC_ImageProvider_LockForReading(
+    WFC_IMAGE_PROVIDER* provider);
 
-OWF_API_CALL void
-WFC_ImageProvider_Unlock(WFC_IMAGE_PROVIDER* provider);
+OWF_API_CALL void WFC_ImageProvider_Unlock(WFC_IMAGE_PROVIDER* provider);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* WFCIMAGEPROVIDER_H_ */

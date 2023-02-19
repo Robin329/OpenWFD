@@ -25,65 +25,62 @@
  *  \brief SI Device handling
  */
 
+#include "wfcdevice.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-
-#include "wfcdevice.h"
-#include "wfcelement.h"
-#include "wfccontext.h"
-#include "wfcimageprovider.h"
+#include <string.h>
 
 #include "owfarray.h"
+#include "owfdebug.h"
 #include "owfmemory.h"
 #include "owfmutex.h"
-#include "owfscreen.h"
-#include "owftypes.h"
 #include "owfobject.h"
+#include "owfscreen.h"
 #include "owfstream.h"
-#include "owfdebug.h"
+#include "owftypes.h"
+#include "wfccontext.h"
+#include "wfcelement.h"
+#include "wfcimageprovider.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define MAX_NUM_DEVICE_IDS  3     
-#define MAX_ATTRIBUTES      32
+#define MAX_NUM_DEVICE_IDS 3
+#define MAX_ATTRIBUTES 32
 
-#define FAIL_IF(c,e)        if (c) { LEAVE(0); return e; }
+#define FAIL_IF(c, e) \
+    if (c) {          \
+        LEAVE(0);     \
+        return e;     \
+    }
 
 #define FIRST_DEVICE_HANDLE 1000
 #define FIRST_DEVICEINSTANCE_HANDLE 3000
 
-
 /*! Array of available devices */
 DEVICE_INSTANCE_LIST gPhyDevice;
 
-
-static void
-WFC_Device_RemoveUnusedStreams(WFC_DEVICE* device);
+static void WFC_Device_RemoveUnusedStreams(WFC_DEVICE* device);
 
 /*-------------------------------------------------------------------------*//*!
  *  \internal
  *
  *  Initialize devices list with default parameters.
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Devices_Initialize()
-{
-    static WFCboolean initialised=WFC_FALSE;
-    if (!initialised)
-        {
+OWF_API_CALL void WFC_Devices_Initialize() {
+    static WFCboolean initialised = WFC_FALSE;
+    if (!initialised) {
         DPRINT(("WFC_Devices_Initialize (Enter)"));
         /* Initialize video 'hardware' */
         OWF_Screen_Initialize();
-    
+
         /* initialise the array of device instances */
         OWF_Array_Initialize(&(gPhyDevice.iDeviceInstanceArray));
-        gPhyDevice.gDeviceHandleID=FIRST_DEVICEINSTANCE_HANDLE;
-        initialised=WFC_TRUE;
-        }
+        gPhyDevice.gDeviceHandleID = FIRST_DEVICEINSTANCE_HANDLE;
+        initialised = WFC_TRUE;
+    }
 }
 
 /*-------------------------------------------------------------------------*//*!
@@ -91,27 +88,28 @@ WFC_Devices_Initialize()
  *
  *  Initialize new device with default parameters.
  *//*-------------------------------------------------------------------------*/
-static void
-WFC_Device_Initialize(WFC_DEVICE* device,OWFint deviceid)
-{
-    OWF_SCREEN              screen;
+static void WFC_Device_Initialize(WFC_DEVICE* device, OWFint deviceid) {
+    OWF_SCREEN screen;
     DPRINT(("WFC_Device_Initialize (Enter)"));
     memset(device, 0, sizeof(WFC_DEVICE));
 
     device->handle = WFC_INVALID_HANDLE;
     device->deviceId = deviceid;
     device->latestUnreadError = WFC_ERROR_NONE;
-    /* There are many possible device:context mappings possible with OpenWF-C API */
+    /* There are many possible device:context mappings possible with OpenWF-C
+     * API */
     /* This SI implementation assigns 1 screen-number per device ID */
-    device->screenNumber = deviceid-FIRST_DEVICE_HANDLE;
+    device->screenNumber = deviceid - FIRST_DEVICE_HANDLE;
     OWF_Array_Initialize(&device->contexts);
     OWF_Array_Initialize(&device->providers);
     OWF_Array_Initialize(&device->elements);
-    if (!OWF_Screen_GetHeader(device->screenNumber, &screen))
-    {   /* If the given screen number can't be opened then the device must be off-screen only */
+    if (!OWF_Screen_GetHeader(
+            device->screenNumber,
+            &screen)) { /* If the given screen number can't be opened then the
+                           device must be off-screen only */
         device->screenNumber = OWF_RESERVED_BAD_SCREEN_NUMBER;
     }
-    
+
     device->handle = ++gPhyDevice.gDeviceHandleID;
 }
 
@@ -120,42 +118,31 @@ WFC_Device_Initialize(WFC_DEVICE* device,OWFint deviceid)
  *
  *----------------------------------------------------------------------------*/
 
-
-OWF_API_CALL WFCint
-WFC_Devices_GetIds(WFCint* idList,
-                   WFCint listCapacity,
-                   const WFCint* filterList)
-{
-                            /* #4584: initialized here */
-    WFCint                  screenNumber = OWF_RESERVED_BAD_SCREEN_NUMBER /* -1 = all screens */,
-                            n = MAX_ATTRIBUTES,
-                            i = 0;
-    OWF_SCREEN              screen;
-    WFCboolean              hasFilter;
+OWF_API_CALL WFCint WFC_Devices_GetIds(WFCint* idList, WFCint listCapacity,
+                                       const WFCint* filterList) {
+    /* #4584: initialized here */
+    WFCint screenNumber = OWF_RESERVED_BAD_SCREEN_NUMBER /* -1 = all screens */,
+           n = MAX_ATTRIBUTES, i = 0;
+    OWF_SCREEN screen;
+    WFCboolean hasFilter;
 
     WFC_Devices_Initialize();
 
-    hasFilter = (filterList && (*filterList != WFC_NONE)) ?
-                WFC_TRUE :
-                WFC_FALSE;
+    hasFilter =
+        (filterList && (*filterList != WFC_NONE)) ? WFC_TRUE : WFC_FALSE;
 
     /* handle filter list, if given */
-    if (hasFilter)
-    {
+    if (hasFilter) {
         /* scan filter list (up to 32 attributes) */
-        while (n > 0 && WFC_NONE != filterList[0])
-        {
-            switch (filterList[0])
-            {
+        while (n > 0 && WFC_NONE != filterList[0]) {
+            switch (filterList[0]) {
                 case WFC_DEVICE_FILTER_SCREEN_NUMBER:
-                    if (screenNumber!=OWF_RESERVED_BAD_SCREEN_NUMBER)
-                        {
+                    if (screenNumber != OWF_RESERVED_BAD_SCREEN_NUMBER) {
                         /* invalid repeated filter on screen number */
-                         return 0;
-                        }
+                        return 0;
+                    }
                     screenNumber = filterList[1];
-                    if (!OWF_Screen_GetHeader(screenNumber, &screen))
-                    {
+                    if (!OWF_Screen_GetHeader(screenNumber, &screen)) {
                         /* invalid screen number */
                         return 0;
                     }
@@ -176,35 +163,28 @@ WFC_Devices_GetIds(WFCint* idList,
         }
     }
 
-    
-
-    
-    /* There are many possible device:context mappings allowed with OpenWF-C API */
+    /* There are many possible device:context mappings allowed with OpenWF-C API
+     */
     /* This SI implementation assigns 1 screen-number per device ID */
     for (i = 0, n = 0; i < MAX_NUM_DEVICE_IDS && listCapacity >= 0; i++) {
         /* if screen number filter is specified, use it */
-        if (screenNumber != OWF_RESERVED_BAD_SCREEN_NUMBER)
-        {
-            if (i != screenNumber)
-            {
-            DPRINT(("Continue (i != screenNumber) (i=%i n=%i)", i, n));
+        if (screenNumber != OWF_RESERVED_BAD_SCREEN_NUMBER) {
+            if (i != screenNumber) {
+                DPRINT(("Continue (i != screenNumber) (i=%i n=%i)", i, n));
                 continue;
             }
-        }
-        else
-        {   /* screenzero device id is only legal if zero screen number is supported */
-            if (i==0 && !OWF_Screen_GetHeader(i, &screen))
-            {
-            DPRINT(("Continue !OWF_Screen_GetHeader(i, (i=%i n=%i)", i, n));
-               continue;
+        } else { /* screenzero device id is only legal if zero screen number is
+                    supported */
+            if (i == 0 && !OWF_Screen_GetHeader(i, &screen)) {
+                DPRINT(("Continue !OWF_Screen_GetHeader(i, (i=%i n=%i)", i, n));
+                continue;
             }
         }
 
         /* idList might be NULL when querying all devices w/
          * screen number in filter list */
-        if (idList && n < listCapacity)
-        {
-            idList[n] = FIRST_DEVICE_HANDLE+i;
+        if (idList && n < listCapacity) {
+            idList[n] = FIRST_DEVICE_HANDLE + i;
         }
         DPRINT(("N++(i=%i n=%i)", i, n));
 
@@ -213,7 +193,6 @@ WFC_Devices_GetIds(WFCint* idList,
 
     return n;
 }
-
 
 /*---------------------------------------------------------------------------
  *  Create instance of a device whose ID
@@ -225,60 +204,51 @@ WFC_Devices_GetIds(WFCint* idList,
  *  \return Handle to created device or WFC_INVALID_HANDLE
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCint
-WFC_Device_Create(WFCint deviceId)
-{
-    OWF_SCREEN              screen;
-    
-    WFC_DEVICE              *device = NULL;
-    
-    
-    WFCint checkScreenNum = deviceId-FIRST_DEVICE_HANDLE;
-    
+OWF_API_CALL WFCint WFC_Device_Create(WFCint deviceId) {
+    OWF_SCREEN screen;
+
+    WFC_DEVICE* device = NULL;
+
+    WFCint checkScreenNum = deviceId - FIRST_DEVICE_HANDLE;
+
     WFC_Devices_Initialize();
 
-    if (deviceId==WFC_DEFAULT_DEVICE_ID)
-        { /* So the default device is the one that supports the default screen number */
-        checkScreenNum = OWF_Screen_GetDefaultNumber(); 
-        DPRINT(("Default device= screen %i",checkScreenNum));
-        }
+    if (deviceId ==
+        WFC_DEFAULT_DEVICE_ID) { /* So the default device is the one that
+                                    supports the default screen number */
+        checkScreenNum = OWF_Screen_GetDefaultNumber();
+        DPRINT(("Default device= screen %i", checkScreenNum));
+    }
     ENTER(WFC_Device_Create);
-    /* There are many possible device:context mappings possible with OpenWF-C API */
+    /* There are many possible device:context mappings possible with OpenWF-C
+     * API */
     /* This SI implementation assigns 1 screen-number per device ID */
-    /* In-range high-numbered device IDs that can't show screenNumber are considered to be off-screen-only */
-    /* 0 is allowed to be a legal screen number, depending on OWF_SCREEN adaptation */
-    if (    checkScreenNum<MAX_NUM_DEVICE_IDS && checkScreenNum>=0
-        &&  (checkScreenNum>0 || OWF_Screen_GetHeader(checkScreenNum,&screen)) 
-        )
-    {
+    /* In-range high-numbered device IDs that can't show screenNumber are
+     * considered to be off-screen-only */
+    /* 0 is allowed to be a legal screen number, depending on OWF_SCREEN
+     * adaptation */
+    if (checkScreenNum < MAX_NUM_DEVICE_IDS && checkScreenNum >= 0 &&
+        (checkScreenNum > 0 || OWF_Screen_GetHeader(checkScreenNum, &screen))) {
         device = DEVICE(malloc(sizeof(WFC_DEVICE)));
+    } else {
+        DPRINT(("Did not try to create device - id out of range D%i S%i",
+                deviceId, checkScreenNum));
     }
-    else
-    {
-        DPRINT(("Did not try to create device - id out of range D%i S%i",deviceId,checkScreenNum));
-    }
-    
-    if (device)
-    {
-        if (!OWF_Array_AppendItem(&(gPhyDevice.iDeviceInstanceArray), device))
-            {
+
+    if (device) {
+        if (!OWF_Array_AppendItem(&(gPhyDevice.iDeviceInstanceArray), device)) {
             free(device);
-            device=NULL;
-            }
-        else
-            {
-            WFC_Device_Initialize(device,deviceId);
-            }
-    }    
+            device = NULL;
+        } else {
+            WFC_Device_Initialize(device, deviceId);
+        }
+    }
     LEAVE(WFC_Device_Create);
-    if (device)
-        {
+    if (device) {
         return device->handle;
-        }
-    else
-        {
+    } else {
         return WFC_INVALID_HANDLE;
-        }
+    }
 }
 
 /*---------------------------------------------------------------------------
@@ -291,32 +261,27 @@ WFC_Device_Create(WFCint deviceId)
  *  \param code Error to set
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void OWF_APIENTRY
-WFC_Device_SetError(WFCDevice dev,
-                    WFCErrorCode code)
-{
-    static char* const      errmsg[] =
-                            {
-                            "WFC_ERROR_NONE",
-                            "WFC_ERROR_OUT_OF_MEMORY",
-                            "WFC_ERROR_ILLEGAL_ARGUMENT",
-                            "WFC_ERROR_UNSUPPORTED",
-                            "WFC_ERROR_BAD_ATTRIBUTE",
-                            "WFC_ERROR_IN_USE",
-                            "WFC_ERROR_BUSY",
-                            "WFC_ERROR_BAD_DEVICE",
-                            "WFC_ERROR_BAD_HANDLE",
-                            "WFC_ERROR_INCONSISTENCY",
-                            };
+OWF_API_CALL void OWF_APIENTRY WFC_Device_SetError(WFCDevice dev,
+                                                   WFCErrorCode code) {
+    static char* const errmsg[] = {
+        "WFC_ERROR_NONE",
+        "WFC_ERROR_OUT_OF_MEMORY",
+        "WFC_ERROR_ILLEGAL_ARGUMENT",
+        "WFC_ERROR_UNSUPPORTED",
+        "WFC_ERROR_BAD_ATTRIBUTE",
+        "WFC_ERROR_IN_USE",
+        "WFC_ERROR_BUSY",
+        "WFC_ERROR_BAD_DEVICE",
+        "WFC_ERROR_BAD_HANDLE",
+        "WFC_ERROR_INCONSISTENCY",
+    };
     WFC_DEVICE* device = WFC_Device_FindByHandle(dev);
-    if (WFC_INVALID_HANDLE == device)
-    {
+    if (WFC_INVALID_HANDLE == device) {
         /* Invalid device handle. Nothing we can do about it so return. */
         return;
     }
 
-    if (!device->mutex)
-    {
+    if (!device->mutex) {
         OWF_Mutex_Init(&device->mutex);
     }
 
@@ -324,13 +289,13 @@ WFC_Device_SetError(WFCDevice dev,
 
     if (WFC_INVALID_HANDLE != device) {
         if (WFC_ERROR_NONE == device->latestUnreadError &&
-            code != device->latestUnreadError)
-        {
-             char* const msg = errmsg[code > WFC_ERROR_NONE ?
-                    code - WFC_ERROR_OUT_OF_MEMORY + 1 : 0];
+            code != device->latestUnreadError) {
+            char* const msg = errmsg[code > WFC_ERROR_NONE
+                                         ? code - WFC_ERROR_OUT_OF_MEMORY + 1
+                                         : 0];
 
             DPRINT(("setError(dev = %08x, err = %08x)", dev, code));
-            DPRINT(("  error set to = %04x (%s)", (OWFuint16) code, msg));
+            DPRINT(("  error set to = %04x (%s)", (OWFuint16)code, msg));
 
             device->latestUnreadError = code;
         }
@@ -346,10 +311,8 @@ WFC_Device_SetError(WFCDevice dev,
  *
  *  \return WFCErrorCode
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetError(WFC_DEVICE* device)
-{
-    WFCErrorCode            err;
+OWF_API_CALL WFCErrorCode WFC_Device_GetError(WFC_DEVICE* device) {
+    WFCErrorCode err;
 
     OWF_ASSERT(device);
 
@@ -365,25 +328,21 @@ WFC_Device_GetError(WFC_DEVICE* device)
  *
  *  \return Matching device object or NULL
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_DEVICE*
-WFC_Device_FindByHandle(WFCDevice dev)
-{
+OWF_API_CALL WFC_DEVICE* WFC_Device_FindByHandle(WFCDevice dev) {
     WFCint i = 0, length = 0;
     WFC_DEVICE* pDevice = NULL;
 
-    if (dev == WFC_INVALID_HANDLE)
-    {
+    if (dev == WFC_INVALID_HANDLE) {
         return NULL;
     }
 
     WFC_Devices_Initialize();
 
     length = gPhyDevice.iDeviceInstanceArray.length;
-    for (i = 0; i < length; i++) 
-    {
-        pDevice = DEVICE(OWF_Array_GetItemAt(&(gPhyDevice.iDeviceInstanceArray), i));
-        if (pDevice && pDevice->handle == dev) 
-        {
+    for (i = 0; i < length; i++) {
+        pDevice =
+            DEVICE(OWF_Array_GetItemAt(&(gPhyDevice.iDeviceInstanceArray), i));
+        if (pDevice && pDevice->handle == dev) {
             return pDevice;
         }
     }
@@ -400,36 +359,27 @@ WFC_Device_FindByHandle(WFCDevice dev)
  *
  *  \return WFCErrorCode
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetAttribi(WFC_DEVICE* device,
-                      WFCDeviceAttrib attrib,
-                      WFCint* value)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
+OWF_API_CALL WFCErrorCode WFC_Device_GetAttribi(WFC_DEVICE* device,
+                                                WFCDeviceAttrib attrib,
+                                                WFCint* value) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     OWF_ASSERT(device);
 
-    switch (attrib)
-    {
-        case WFC_DEVICE_CLASS:
-        {
-            if (device->screenNumber == OWF_RESERVED_BAD_SCREEN_NUMBER)
-            {
-            *value = WFC_DEVICE_CLASS_OFF_SCREEN_ONLY;
-            }
-            else
-            {
-            *value = WFC_DEVICE_CLASS_FULLY_CAPABLE;
+    switch (attrib) {
+        case WFC_DEVICE_CLASS: {
+            if (device->screenNumber == OWF_RESERVED_BAD_SCREEN_NUMBER) {
+                *value = WFC_DEVICE_CLASS_OFF_SCREEN_ONLY;
+            } else {
+                *value = WFC_DEVICE_CLASS_FULLY_CAPABLE;
             }
             break;
         }
-        case WFC_DEVICE_ID:
-        {
+        case WFC_DEVICE_ID: {
             *value = device->deviceId;
             break;
         }
-        default:
-        {
+        default: {
             result = WFC_ERROR_BAD_ATTRIBUTE;
         }
     }
@@ -447,23 +397,19 @@ WFC_Device_GetAttribi(WFC_DEVICE* device,
  *
  *  \return New context
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_CONTEXT*
-WFC_Device_CreateContext(WFC_DEVICE* device,
-                         WFCNativeStreamType stream,
-                         WFCContextType type,
-                         WFCint screenNum)
-{
-    WFC_CONTEXT*            context;
+OWF_API_CALL WFC_CONTEXT* WFC_Device_CreateContext(WFC_DEVICE* device,
+                                                   WFCNativeStreamType stream,
+                                                   WFCContextType type,
+                                                   WFCint screenNum) {
+    WFC_CONTEXT* context;
 
     ENTER(WFC_Device_CreateContext);
 
     OWF_ASSERT(device);
 
     context = WFC_Context_Create(device, stream, type, screenNum);
-    if (context)
-    {
-        if (!OWF_Array_AppendItem(&device->contexts, context))
-        {
+    if (context) {
+        if (!OWF_Array_AppendItem(&device->contexts, context)) {
             DESTROY(context);
         }
     }
@@ -475,26 +421,22 @@ WFC_Device_CreateContext(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *  Destroy context from device
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyContext(WFC_DEVICE* device,
-                          WFCContext context)
-{
-    WFCint                  i;
-    WFCErrorCode            result = WFC_ERROR_BAD_HANDLE;
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyContext(WFC_DEVICE* device,
+                                                    WFCContext context) {
+    WFCint i;
+    WFCErrorCode result = WFC_ERROR_BAD_HANDLE;
     ENTER(WFC_Device_DestroyContext);
 
     OWF_ASSERT(device);
 
     DPRINT(("WFC_Device_DestroyContext(context = %d)", context));
 
-    for (i = 0; i < device->contexts.length; i++)
-    {
-        WFC_CONTEXT*        ctmp;
+    for (i = 0; i < device->contexts.length; i++) {
+        WFC_CONTEXT* ctmp;
 
-        ctmp = (WFC_CONTEXT*) OWF_Array_GetItemAt(&device->contexts, i);
-        if (ctmp->handle == context)
-        {
-            WFC_CONTEXT*    context;
+        ctmp = (WFC_CONTEXT*)OWF_Array_GetItemAt(&device->contexts, i);
+        if (ctmp->handle == context) {
+            WFC_CONTEXT* context;
 
             context = CONTEXT(OWF_Array_RemoveItemAt(&device->contexts, i));
             DPRINT(("  Shutting down context %d", context->handle));
@@ -526,16 +468,13 @@ WFC_Device_DestroyContext(WFC_DEVICE* device,
  *
  *  \param device Device object
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_DestroyContexts(WFC_DEVICE* device)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_DestroyContexts(WFC_DEVICE* device) {
+    WFCint i;
 
     ENTER(WFC_Device_DestroyContexts);
 
-    for (i = 0; i < device->contexts.length; i++)
-    {
-        WFC_CONTEXT*        context;
+    for (i = 0; i < device->contexts.length; i++) {
+        WFC_CONTEXT* context;
 
         context = CONTEXT(OWF_Array_GetItemAt(&device->contexts, i));
         WFC_Context_Shutdown(context);
@@ -556,24 +495,20 @@ WFC_Device_DestroyContexts(WFC_DEVICE* device)
  *  \return Corresponding context object or NULL
  *  if handle is invalid.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_CONTEXT*
-WFC_Device_FindContext(WFC_DEVICE* device,
-                       WFCContext context)
-{
-    WFCint                  i;
-    WFC_CONTEXT*            result = NULL;
+OWF_API_CALL WFC_CONTEXT* WFC_Device_FindContext(WFC_DEVICE* device,
+                                                 WFCContext context) {
+    WFCint i;
+    WFC_CONTEXT* result = NULL;
 
     ENTER(WFC_Device_FindContext);
 
     FAIL_IF(NULL == device, NULL);
 
-    for (i = 0; i < device->contexts.length; i++)
-    {
-        WFC_CONTEXT*        ctmp;
+    for (i = 0; i < device->contexts.length; i++) {
+        WFC_CONTEXT* ctmp;
 
         ctmp = CONTEXT(OWF_Array_GetItemAt(&device->contexts, i));
-        if (ctmp->handle == context)
-        {
+        if (ctmp->handle == context) {
             result = ctmp;
             break;
         }
@@ -592,24 +527,20 @@ WFC_Device_FindContext(WFC_DEVICE* device,
  *
  *  \return New element or NULL
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_ELEMENT*
-WFC_Device_CreateElement(WFC_DEVICE* device, WFC_CONTEXT* context)
-{
-    WFC_ELEMENT*        element;
+OWF_API_CALL WFC_ELEMENT* WFC_Device_CreateElement(WFC_DEVICE* device,
+                                                   WFC_CONTEXT* context) {
+    WFC_ELEMENT* element;
 
     ENTER(WFC_Device_CreateElement);
 
     FAIL_IF(NULL == device || NULL == context, NULL);
 
     element = WFC_Element_Create(context);
-    if (!OWF_Array_AppendItem(&device->elements, element))
-    {
+    if (!OWF_Array_AppendItem(&device->elements, element)) {
         DPRINT(("WFC_Device_CreateElement: couldn't create element"));
         WFC_Element_Destroy(element);
         element = NULL;
-    }
-    else
-    {
+    } else {
         /* #4585: statement moved to else block */
         DPRINT(("  Created element; handle = %d", element->handle));
     }
@@ -624,26 +555,22 @@ WFC_Device_CreateElement(WFC_DEVICE* device, WFC_CONTEXT* context)
  *  \param device
  *  \param element
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyElement(WFC_DEVICE* device,
-                          WFCElement element)
-{
-    WFCint                  i;
-    WFCErrorCode            result = WFC_ERROR_BAD_HANDLE;
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyElement(WFC_DEVICE* device,
+                                                    WFCElement element) {
+    WFCint i;
+    WFCErrorCode result = WFC_ERROR_BAD_HANDLE;
 
     ENTER(WFC_Device_DestroyElement);
 
     FAIL_IF(NULL == device, WFC_ERROR_BAD_HANDLE);
     DPRINT(("destroying element %d", element));
 
-    for (i = 0; i < device->elements.length; i++)
-    {
-        WFC_ELEMENT*        object;
+    for (i = 0; i < device->elements.length; i++) {
+        WFC_ELEMENT* object;
 
         object = ELEMENT(OWF_Array_GetItemAt(&device->elements, i));
         DPRINT(("  element %d = %d", i, object->handle));
-        if (object->handle == element)
-        {
+        if (object->handle == element) {
             WFC_Context_RemoveElement(CONTEXT(object->context), element);
 
             OWF_Array_RemoveItemAt(&device->elements, i);
@@ -661,18 +588,15 @@ WFC_Device_DestroyElement(WFC_DEVICE* device,
  *
  *  \param device Device
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_DestroyElements(WFC_DEVICE* device)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_DestroyElements(WFC_DEVICE* device) {
+    WFCint i;
 
     ENTER(WFC_Device_DestroyElements);
 
     OWF_ASSERT(device);
 
-    for (i = 0; i < device->elements.length; i++)
-    {
-        WFC_ELEMENT*        etemp;
+    for (i = 0; i < device->elements.length; i++) {
+        WFC_ELEMENT* etemp;
 
         etemp = ELEMENT(OWF_Array_GetItemAt(&device->elements, i));
         WFC_Element_Destroy(etemp);
@@ -690,26 +614,21 @@ WFC_Device_DestroyElements(WFC_DEVICE* device)
  *
  *  \return Element object
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_ELEMENT*
-WFC_Device_FindElement(WFC_DEVICE* device,
-                       WFCElement el)
-{
-    WFC_ELEMENT*            result = WFC_INVALID_HANDLE;
-    WFCint                  i;
+OWF_API_CALL WFC_ELEMENT* WFC_Device_FindElement(WFC_DEVICE* device,
+                                                 WFCElement el) {
+    WFC_ELEMENT* result = WFC_INVALID_HANDLE;
+    WFCint i;
 
     FAIL_IF(NULL == device, NULL);
 
-    for (i = 0; i < device->elements.length; i++)
-    {
-        WFC_ELEMENT*        element;
+    for (i = 0; i < device->elements.length; i++) {
+        WFC_ELEMENT* element;
         element = ELEMENT(OWF_Array_GetItemAt(&device->elements, i));
 
-        if (element->handle == el)
-        {
+        if (element->handle == el) {
             result = element;
             break;
         }
-
     }
     return result;
 }
@@ -727,14 +646,12 @@ WFC_Device_FindElement(WFC_DEVICE* device,
  *  WFC_ERROR_INVALID_ARGUMENT if values is NULL or if the count doesn't match
  *  the attribute's size; WFC_ERROR_BAD_HANDLE if element handle is invalid.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_SetElementAttribiv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              const WFCint* values)
-{
-    WFC_ELEMENT*            object;
+OWF_API_CALL WFCErrorCode WFC_Device_SetElementAttribiv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        const WFCint* values) {
+    WFC_ELEMENT* object;
 
     OWF_ASSERT(device);
 
@@ -747,14 +664,10 @@ WFC_Device_SetElementAttribiv(WFC_DEVICE* device,
  *
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_SetElementAttribfv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              const WFCfloat* values)
-{
-    WFC_ELEMENT*            object;
+OWF_API_CALL WFCErrorCode WFC_Device_SetElementAttribfv(
+    WFC_DEVICE* device, WFCElement element, WFCElementAttrib attrib,
+    WFCint count, const WFCfloat* values) {
+    WFC_ELEMENT* object;
 
     OWF_ASSERT(device);
 
@@ -767,14 +680,12 @@ WFC_Device_SetElementAttribfv(WFC_DEVICE* device,
  *
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetElementAttribiv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              WFCint* values)
-{
-    WFC_ELEMENT*            object;
+OWF_API_CALL WFCErrorCode WFC_Device_GetElementAttribiv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        WFCint* values) {
+    WFC_ELEMENT* object;
 
     OWF_ASSERT(device);
 
@@ -787,14 +698,12 @@ WFC_Device_GetElementAttribiv(WFC_DEVICE* device,
  *
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetElementAttribfv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              WFCfloat* values)
-{
-    WFC_ELEMENT*            object;
+OWF_API_CALL WFCErrorCode WFC_Device_GetElementAttribfv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        WFCfloat* values) {
+    WFC_ELEMENT* object;
 
     OWF_ASSERT(device);
 
@@ -809,14 +718,12 @@ WFC_Device_GetElementAttribfv(WFC_DEVICE* device,
  *
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWF_STREAM*
-WFC_Device_CreateStream(WFC_DEVICE* device,
-                        WFC_CONTEXT* context,
-                        WFCNativeStreamType stream,
-                        WFCboolean write)
-{
-    WFCint              i;
-    OWF_STREAM*         newStream = NULL;
+OWF_API_CALL OWF_STREAM* WFC_Device_CreateStream(WFC_DEVICE* device,
+                                                 WFC_CONTEXT* context,
+                                                 WFCNativeStreamType stream,
+                                                 WFCboolean write) {
+    WFCint i;
+    OWF_STREAM* newStream = NULL;
 
     /* unused parameters, get rid of compiler warning */
     context = context;
@@ -829,31 +736,26 @@ WFC_Device_CreateStream(WFC_DEVICE* device,
     /* first try to look up a stream object that is associated
      * to given native stream
      */
-    for (i = 0; i < device->streams.length; i++)
-    {
-        OWF_STREAM*     stemp;
+    for (i = 0; i < device->streams.length; i++) {
+        OWF_STREAM* stemp;
 
         stemp = STREAM(OWF_Array_GetItemAt(&device->streams, i));
-        if (stemp->handle == stream)
-        {
+        if (stemp->handle == stream) {
             /* found it */
             newStream = stemp;
             break;
         }
     }
 
-    if (!newStream)
-    {
+    if (!newStream) {
         /* create new */
         newStream = OWF_Stream_Create(stream, write ? OWF_TRUE : OWF_FALSE);
-	if (newStream)
-	{
-	    if (!OWF_Array_AppendItem(&device->streams, newStream))
-	    {
-		OWF_Stream_Destroy(newStream);
-		newStream = NULL;
-	    }
-	}
+        if (newStream) {
+            if (!OWF_Array_AppendItem(&device->streams, newStream)) {
+                OWF_Stream_Destroy(newStream);
+                newStream = NULL;
+            }
+        }
     }
 
     LEAVE(WFC_Device_CreateStream);
@@ -865,12 +767,10 @@ WFC_Device_CreateStream(WFC_DEVICE* device,
  *
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyStream(WFC_DEVICE* device,
-                         OWF_STREAM* stream)
-{
-    WFCint                  i;
-    WFCErrorCode            result = WFC_ERROR_BAD_HANDLE;
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyStream(WFC_DEVICE* device,
+                                                   OWF_STREAM* stream) {
+    WFCint i;
+    WFCErrorCode result = WFC_ERROR_BAD_HANDLE;
 
     ENTER(WFC_Device_DestroyStream);
 
@@ -878,15 +778,12 @@ WFC_Device_DestroyStream(WFC_DEVICE* device,
 
     FAIL_IF(NULL == device || stream == NULL, WFC_ERROR_BAD_HANDLE);
 
-    for (i = 0; i < device->streams.length; i++)
-    {
-        OWF_STREAM*         object;
+    for (i = 0; i < device->streams.length; i++) {
+        OWF_STREAM* object;
 
         object = STREAM(OWF_Array_GetItemAt(&device->streams, i));
-        if (object == stream)
-        {
-            if (OWF_Stream_Destroy(object))
-            {
+        if (object == stream) {
+            if (OWF_Stream_Destroy(object)) {
                 OWF_Array_RemoveItemAt(&device->streams, i);
             }
             result = WFC_ERROR_NONE;
@@ -902,18 +799,15 @@ WFC_Device_DestroyStream(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_DestroyStreams(WFC_DEVICE* device)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_DestroyStreams(WFC_DEVICE* device) {
+    WFCint i;
 
     ENTER(WFC_Device_DestroyStreams);
 
     OWF_ASSERT(device);
 
-    for (i = 0; i < device->streams.length; i++)
-    {
-        OWF_STREAM*         stream;
+    for (i = 0; i < device->streams.length; i++) {
+        OWF_STREAM* stream;
 
         stream = STREAM(OWF_Array_GetItemAt(&device->streams, i));
         DPRINT(("  Destroying stream %p", stream));
@@ -926,48 +820,42 @@ WFC_Device_DestroyStreams(WFC_DEVICE* device)
 }
 
 /*---------------------------------------------------------------------------
-*
-*----------------------------------------------------------------------------*/
-static void
-WFC_Device_RemoveStreamIfUnused(WFC_DEVICE* device, OWF_STREAM* stream)
-{
+ *
+ *----------------------------------------------------------------------------*/
+static void WFC_Device_RemoveStreamIfUnused(WFC_DEVICE* device,
+                                            OWF_STREAM* stream) {
     /* ref.count value 1 means that the only reference there is to
-    * the stream is the reference from the device to stream. */
-    if (1 == stream->useCount)
-    {
-	WFCint             count = device->streams.length;
+     * the stream is the reference from the device to stream. */
+    if (1 == stream->useCount) {
+        WFCint count = device->streams.length;
 
-	/* stream get gone and be gone */
-	WFC_Device_DestroyStream(device, stream);
+        /* stream get gone and be gone */
+        WFC_Device_DestroyStream(device, stream);
 
-	/* rrrr! ensure it be gone. */
-	OWF_ASSERT(device->streams.length == count-1);
+        /* rrrr! ensure it be gone. */
+        OWF_ASSERT(device->streams.length == count - 1);
     }
-
 }
 
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static void
-WFC_Device_RemoveUnusedStreams(WFC_DEVICE* device)
-{
-    WFCint                  i;
+static void WFC_Device_RemoveUnusedStreams(WFC_DEVICE* device) {
+    WFCint i;
 
     ENTER(WFC_Device_RemoveUnusedStreams);
 
     OWF_ASSERT(device);
 
     i = device->streams.length - 1;
-    while (i >= 0)
-    {
-        OWF_STREAM*         stream;
+    while (i >= 0) {
+        OWF_STREAM* stream;
 
         stream = STREAM(OWF_Array_GetItemAt(&device->streams, i));
 
         /* ref.count value 1 means that the only reference there is to
          * the stream is the reference from the device to stream. */
-	WFC_Device_RemoveStreamIfUnused(device, stream);
+        WFC_Device_RemoveStreamIfUnused(device, stream);
         i--;
     }
 
@@ -979,22 +867,19 @@ WFC_Device_RemoveUnusedStreams(WFC_DEVICE* device)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_EnableContentNotifications(WFC_DEVICE* device,
-                                      WFC_CONTEXT* context,
-                                      WFCboolean enable)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_EnableContentNotifications(WFC_DEVICE* device,
+                                                        WFC_CONTEXT* context,
+                                                        WFCboolean enable) {
+    WFCint i;
 
     OWF_ASSERT(device);
     OWF_ASSERT(context);
 
     context = context;
 
-    for (i = 0; i < device->providers.length; i++)
-    {
+    for (i = 0; i < device->providers.length; i++) {
         WFC_IMAGE_PROVIDER* prov;
-        OWF_STREAM*         stream;
+        OWF_STREAM* stream;
 
         prov = IMAGE_PROVIDER(OWF_Array_GetItemAt(&device->providers, i));
         stream = STREAM(prov->stream);
@@ -1007,43 +892,37 @@ WFC_Device_EnableContentNotifications(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static WFC_IMAGE_PROVIDER*
-WFC_Device_CreateImageProvider(WFC_DEVICE* device,
-                               WFC_CONTEXT* context,
-                               OWFNativeStreamType stream,
-                               WFC_IMAGE_PROVIDER_TYPE type)
-{
-    WFC_IMAGE_PROVIDER*         provider;
-    OWF_STREAM*                 strm;
-    WFCint						success;
+static WFC_IMAGE_PROVIDER* WFC_Device_CreateImageProvider(
+    WFC_DEVICE* device, WFC_CONTEXT* context, OWFNativeStreamType stream,
+    WFC_IMAGE_PROVIDER_TYPE type) {
+    WFC_IMAGE_PROVIDER* provider;
+    OWF_STREAM* strm;
+    WFCint success;
 
     OWF_ASSERT(device);
     OWF_ASSERT(context);
 
     /* create/fetch stream-wrapper for native stream.  */
     strm = WFC_Device_CreateStream(device, context, stream, WFC_FALSE);
-    if (!strm)
-    {
+    if (!strm) {
         return NULL;
     }
 
     /* create new image provider object associated to
      * native stream wrapper previously fetched */
     provider = WFC_ImageProvider_Create(context, strm, type);
-    if (!provider)
-    {
+    if (!provider) {
         WFC_Device_DestroyStream(device, strm);
         return NULL;
     }
 
-    /* take advantage of short-circuiting in && evaluation; only add the observer
-       if the appendition is successful */
-    success = (OWF_Array_AppendItem(&device->providers, provider) == OWF_TRUE) &&
-	          (0 == owfNativeStreamAddObserver(stream,
-                                               WFC_Context_SourceStreamUpdated,
-                                               context));
-    if (!success)
-    {
+    /* take advantage of short-circuiting in && evaluation; only add the
+       observer if the appendition is successful */
+    success =
+        (OWF_Array_AppendItem(&device->providers, provider) == OWF_TRUE) &&
+        (0 == owfNativeStreamAddObserver(
+                  stream, WFC_Context_SourceStreamUpdated, context));
+    if (!success) {
         WFC_Device_DestroyStream(device, strm);
         DESTROY(provider);
         provider = NULL;
@@ -1055,14 +934,12 @@ WFC_Device_CreateImageProvider(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static WFCErrorCode
-WFC_Device_DestroyImageProvider(WFC_DEVICE* device,
-                                WFCHandle handle)
-{
-    WFCint                  i;
-    WFCErrorCode            result = WFC_ERROR_BAD_HANDLE;
-    void*            	    owner = NULL;
-    OWFNativeStreamType     stream = OWF_INVALID_HANDLE;
+static WFCErrorCode WFC_Device_DestroyImageProvider(WFC_DEVICE* device,
+                                                    WFCHandle handle) {
+    WFCint i;
+    WFCErrorCode result = WFC_ERROR_BAD_HANDLE;
+    void* owner = NULL;
+    OWFNativeStreamType stream = OWF_INVALID_HANDLE;
 
     ENTER(WFC_Device_DestroyImageProvider);
 
@@ -1070,16 +947,14 @@ WFC_Device_DestroyImageProvider(WFC_DEVICE* device,
 
     DPRINT(("  number of providers = %d", device->providers.length));
 
-    for (i = 0; i < device->providers.length; i++)
-    {
+    for (i = 0; i < device->providers.length; i++) {
         WFC_IMAGE_PROVIDER* object;
 
         object = (OWF_Array_GetItemAt(&device->providers, i));
-        if (object->handle == handle)
-        {
+        if (object->handle == handle) {
             DPRINT(("  Destroying image provider %d", handle));
             owner = object->owner;
-	    stream = object->stream->handle;
+            stream = object->stream->handle;
 
             OWF_Array_RemoveItemAt(&device->providers, i);
             DESTROY(object);
@@ -1095,11 +970,9 @@ WFC_Device_DestroyImageProvider(WFC_DEVICE* device,
      *  then the observer data pointer will be accessed badly.
      *  Relying on owner being context.
      */
-    if (stream)
-    {
-        owfNativeStreamRemoveObserver(stream,
-                                  WFC_Context_SourceStreamUpdated,
-                                  owner);
+    if (stream) {
+        owfNativeStreamRemoveObserver(stream, WFC_Context_SourceStreamUpdated,
+                                      owner);
     }
 
     LEAVE(WFC_Device_DestroyImageProvider);
@@ -1111,10 +984,8 @@ WFC_Device_DestroyImageProvider(WFC_DEVICE* device,
  *
  *  \param device Device
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_DestroyImageProviders(WFC_DEVICE* device)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_DestroyImageProviders(WFC_DEVICE* device) {
+    WFCint i;
 
     ENTER(WFC_Device_DestroyImageProviders);
 
@@ -1122,13 +993,12 @@ WFC_Device_DestroyImageProviders(WFC_DEVICE* device)
 
     DPRINT(("number of providers = %d", device->providers.length));
 
-    for (i = 0; i < device->providers.length; i++)
-    {
+    for (i = 0; i < device->providers.length; i++) {
         WFC_IMAGE_PROVIDER* itemp;
-        void*               owner = NULL;
+        void* owner = NULL;
         OWFNativeStreamType stream = OWF_INVALID_HANDLE;
         owner = itemp->owner;
-	stream = itemp->stream->handle;
+        stream = itemp->stream->handle;
 
         itemp = IMAGE_PROVIDER(OWF_Array_GetItemAt(&device->providers, i));
 
@@ -1138,12 +1008,10 @@ WFC_Device_DestroyImageProviders(WFC_DEVICE* device)
          *  then the observer data pointer will be accessed badly.
          *  Relying on owner being context.
          */
-        if (stream)
-        {
-            owfNativeStreamRemoveObserver(stream,
-                                      WFC_Context_SourceStreamUpdated,
-                                      owner);
-	}
+        if (stream) {
+            owfNativeStreamRemoveObserver(
+                stream, WFC_Context_SourceStreamUpdated, owner);
+        }
 
         DESTROY(itemp);
     }
@@ -1155,26 +1023,21 @@ WFC_Device_DestroyImageProviders(WFC_DEVICE* device)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_FindImageProvider(WFC_DEVICE* device,
-                             WFCHandle handle,
-                             WFC_IMAGE_PROVIDER_TYPE type)
-{
-    WFCint                  i;
-    WFC_IMAGE_PROVIDER*     result = WFC_INVALID_HANDLE;
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_FindImageProvider(
+    WFC_DEVICE* device, WFCHandle handle, WFC_IMAGE_PROVIDER_TYPE type) {
+    WFCint i;
+    WFC_IMAGE_PROVIDER* result = WFC_INVALID_HANDLE;
 
     ENTER(WFC_Device_FindImageProvider);
 
     OWF_ASSERT(device);
     DPRINT(("number of providers = %d", device->providers.length));
 
-    for (i = 0; i < device->providers.length; i++)
-    {
+    for (i = 0; i < device->providers.length; i++) {
         WFC_IMAGE_PROVIDER* object;
 
         object = IMAGE_PROVIDER(OWF_Array_GetItemAt(&device->providers, i));
-        if (object->handle == handle && object->type == type)
-        {
+        if (object->handle == handle && object->type == type) {
             result = object;
             break;
         }
@@ -1188,37 +1051,30 @@ WFC_Device_FindImageProvider(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_CreateSource(WFC_DEVICE* device,
-                        WFC_CONTEXT* context,
-                        WFCNativeStreamType stream)
-{
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_CreateSource(
+    WFC_DEVICE* device, WFC_CONTEXT* context, WFCNativeStreamType stream) {
     OWF_ASSERT(device);
     OWF_ASSERT(context);
-    return WFC_Device_CreateImageProvider(device,
-                                          context, stream, WFC_IMAGE_SOURCE);
+    return WFC_Device_CreateImageProvider(device, context, stream,
+                                          WFC_IMAGE_SOURCE);
 }
 
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_CreateMask(WFC_DEVICE* device,
-                      WFC_CONTEXT* context,
-                      WFCNativeStreamType stream)
-{
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_CreateMask(
+    WFC_DEVICE* device, WFC_CONTEXT* context, WFCNativeStreamType stream) {
     OWF_ASSERT(device);
     OWF_ASSERT(context);
-    return WFC_Device_CreateImageProvider(device,
-                                          context, stream, WFC_IMAGE_MASK);
+    return WFC_Device_CreateImageProvider(device, context, stream,
+                                          WFC_IMAGE_MASK);
 }
 
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroySource(WFC_DEVICE* device, WFCSource source)
-{
+OWF_API_CALL WFCErrorCode WFC_Device_DestroySource(WFC_DEVICE* device,
+                                                   WFCSource source) {
     OWF_ASSERT(device);
     return WFC_Device_DestroyImageProvider(device, source);
 }
@@ -1226,9 +1082,8 @@ WFC_Device_DestroySource(WFC_DEVICE* device, WFCSource source)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyMask(WFC_DEVICE* device, WFCMask mask)
-{
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyMask(WFC_DEVICE* device,
+                                                 WFCMask mask) {
     OWF_ASSERT(device);
     return WFC_Device_DestroyImageProvider(device, mask);
 }
@@ -1236,9 +1091,8 @@ WFC_Device_DestroyMask(WFC_DEVICE* device, WFCMask mask)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_FindSource(WFC_DEVICE* device, WFCSource source)
-{
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_FindSource(WFC_DEVICE* device,
+                                                       WFCSource source) {
     OWF_ASSERT(device);
     return WFC_Device_FindImageProvider(device, source, WFC_IMAGE_SOURCE);
 }
@@ -1246,9 +1100,8 @@ WFC_Device_FindSource(WFC_DEVICE* device, WFCSource source)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_FindMask(WFC_DEVICE* device, WFCMask mask)
-{
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_FindMask(WFC_DEVICE* device,
+                                                     WFCMask mask) {
     OWF_ASSERT(device);
     return WFC_Device_FindImageProvider(device, mask, WFC_IMAGE_MASK);
 }
@@ -1258,9 +1111,7 @@ WFC_Device_FindMask(WFC_DEVICE* device, WFCMask mask)
  *
  *  \param device Device
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_Destroy(WFC_DEVICE* device)
-{
+OWF_API_CALL void WFC_Device_Destroy(WFC_DEVICE* device) {
     ENTER(WFC_Device_Destroy);
 
     OWF_ASSERT(device);
@@ -1276,11 +1127,10 @@ WFC_Device_Destroy(WFC_DEVICE* device)
 
     device->latestUnreadError = WFC_ERROR_NONE;
     device->handle = WFC_INVALID_HANDLE;
-    
+
     OWF_Array_RemoveItem(&(gPhyDevice.iDeviceInstanceArray), device);
     free(device);
-    if (gPhyDevice.iDeviceInstanceArray.length == 0)
-    {   
+    if (gPhyDevice.iDeviceInstanceArray.length == 0) {
         OWF_Array_Destroy(&(gPhyDevice.iDeviceInstanceArray));
     }
     LEAVE(WFC_Device_Destroy);
@@ -1289,22 +1139,18 @@ WFC_Device_Destroy(WFC_DEVICE* device)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCboolean
-WFC_Device_StreamIsTarget(WFC_DEVICE* device,
-                          WFCNativeStreamType stream)
-{
-    WFCint                  i;
-    WFCboolean              result = WFC_FALSE;
+OWF_API_CALL WFCboolean WFC_Device_StreamIsTarget(WFC_DEVICE* device,
+                                                  WFCNativeStreamType stream) {
+    WFCint i;
+    WFCboolean result = WFC_FALSE;
 
     OWF_ASSERT(device);
 
-    for (i = 0; i < device->contexts.length; i++)
-    {
-        WFC_CONTEXT*        ctmp;
+    for (i = 0; i < device->contexts.length; i++) {
+        WFC_CONTEXT* ctmp;
 
         ctmp = CONTEXT(OWF_Array_GetItemAt(&device->contexts, i));
-        if (ctmp->stream == stream)
-        {
+        if (ctmp->stream == stream) {
             result = WFC_TRUE;
             break;
         }
@@ -1315,28 +1161,23 @@ WFC_Device_StreamIsTarget(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_CONTEXT*
-WFC_Device_FindContextByScreen(WFC_DEVICE* device,
-                               WFCint screenNumber)
-{
-    WFCint                  i;
-    WFC_CONTEXT*            result = NULL;
+OWF_API_CALL WFC_CONTEXT* WFC_Device_FindContextByScreen(WFC_DEVICE* device,
+                                                         WFCint screenNumber) {
+    WFCint i;
+    WFC_CONTEXT* result = NULL;
 
     OWF_ASSERT(device);
 
-    for (i = 0; i < device->contexts.length; i++)
-    {
-        WFC_CONTEXT*        ctmp;
+    for (i = 0; i < device->contexts.length; i++) {
+        WFC_CONTEXT* ctmp;
 
         ctmp = CONTEXT(OWF_Array_GetItemAt(&device->contexts, i));
-        if (ctmp->screenNumber == screenNumber)
-        {
+        if (ctmp->screenNumber == screenNumber) {
             result = ctmp;
             break;
         }
     }
     return result;
-
 }
 
 /*---------------------------------------------------------------------------
@@ -1345,28 +1186,22 @@ WFC_Device_FindContextByScreen(WFC_DEVICE* device,
  *  device's element list. These elements must not stay alive after
  *  the context has been deleted.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_DestroyContextElements(WFC_DEVICE* device,
-                                  WFC_CONTEXT* context)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_DestroyContextElements(WFC_DEVICE* device,
+                                                    WFC_CONTEXT* context) {
+    WFCint i;
 
     DPRINT(("WFC_Device_DestroyContextElements(device=%d, context=%d",
-            device ? device->handle : 0,
-            context ? context->handle : 0));
+            device ? device->handle : 0, context ? context->handle : 0));
 
-    if (!device || !context)
-    {
+    if (!device || !context) {
         return;
     }
 
-    for (i = device->elements.length; i > 0; i--)
-    {
-        WFC_ELEMENT*        element;
+    for (i = device->elements.length; i > 0; i--) {
+        WFC_ELEMENT* element;
 
-        element = ELEMENT(OWF_Array_GetItemAt(&device->elements, i-1));
-        if (element->context == context)
-        {
+        element = ELEMENT(OWF_Array_GetItemAt(&device->elements, i - 1));
+        if (element->context == context) {
             DPRINT(("  Destroying element %d (%p)", element->handle, element));
 
             /* Improvement idea: This code is partially same as in
@@ -1374,8 +1209,9 @@ WFC_Device_DestroyContextElements(WFC_DEVICE* device,
              * be isolated into some DoRemoveElement function which then
              * would be called from here and RemoveElement.
              */
-            WFC_Context_RemoveElement(CONTEXT(element->context), element->handle);
-            OWF_Array_RemoveItemAt(&device->elements, i-1);
+            WFC_Context_RemoveElement(CONTEXT(element->context),
+                                      element->handle);
+            OWF_Array_RemoveItemAt(&device->elements, i - 1);
             WFC_Element_Destroy(element);
         }
     }
@@ -1384,36 +1220,30 @@ WFC_Device_DestroyContextElements(WFC_DEVICE* device,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Device_DestroyContextImageProviders(WFC_DEVICE* device,
-                                        WFC_CONTEXT* context)
-{
-    WFCint                  i;
+OWF_API_CALL void WFC_Device_DestroyContextImageProviders(
+    WFC_DEVICE* device, WFC_CONTEXT* context) {
+    WFCint i;
 
     DPRINT(("WFC_Device_DestroyContextImageProviders(device=%d, context=%d",
-            device ? device->handle : 0,
-			context ? context->handle : 0));
+            device ? device->handle : 0, context ? context->handle : 0));
 
-    if (!device || !context)
-    {
+    if (!device || !context) {
         return;
     }
 
-    for (i = device->providers.length; i > 0; i--)
-    {
+    for (i = device->providers.length; i > 0; i--) {
         WFC_IMAGE_PROVIDER* provider;
 
-        provider = IMAGE_PROVIDER(OWF_Array_GetItemAt(&device->providers, i-1));
-        if (provider->owner == context)
-        {
-            DPRINT(("  Destroying image provider %d (%p)",
-                    provider->handle, provider));
+        provider =
+            IMAGE_PROVIDER(OWF_Array_GetItemAt(&device->providers, i - 1));
+        if (provider->owner == context) {
+            DPRINT(("  Destroying image provider %d (%p)", provider->handle,
+                    provider));
 
             WFC_Device_DestroyImageProvider(device, provider->handle);
         }
     }
 }
-
 
 #ifdef __cplusplus
 }

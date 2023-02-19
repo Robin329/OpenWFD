@@ -46,36 +46,34 @@
  *
  */
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "wfdport.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-
-#include "wfdhandle.h"
-#include "wfdport.h"
-#include "wfdpipeline.h"
-#include "wfdstructs.h"
-#include "wfdevent.h"
-#include "wfddebug.h"
-#include "wfdutils.h"
-#include "wfdimageprovider.h"
 
 #include "owfattributes.h"
 #include "owfmemory.h"
+#include "owfobject.h"
 #include "owfscreen.h"
 #include "owftypes.h"
-#include "owfobject.h"
+#include "wfddebug.h"
+#include "wfdevent.h"
+#include "wfdhandle.h"
+#include "wfdimageprovider.h"
+#include "wfdpipeline.h"
+#include "wfdstructs.h"
+#include "wfdutils.h"
 
-#define WAIT_FOREVER            -1
+#define WAIT_FOREVER -1
 
-#define ID(x)      (x->config->id)
+#define ID(x) (x->config->id)
 #define PLCOUNT(x) (x->config->pipelineIdCount)
-#define BINDABLE_PL_INDEX_2_PL_LAYER(x) (x+1)
+#define BINDABLE_PL_INDEX_2_PL_LAYER(x) (x + 1)
 
 #define BG_SIZE 3 /* background color vector size */
 
@@ -85,137 +83,97 @@ extern "C" {
 /* set this false when threading is used
  * synchronousPipelines can be enabled for debugging purposes
  */
-static WFDboolean  synchronousPipelines = WFD_TRUE;
+static WFDboolean synchronousPipelines = WFD_TRUE;
 #endif
 
+static WFDboolean doTransition(WFD_MESSAGES cmd, WFDTransition trans);
 
+static void WFD_Port_Render(WFD_PORT *port, WFD_MESSAGES cmd);
 
-static WFDboolean
-doTransition(WFD_MESSAGES cmd, WFDTransition trans);
+static void *WFD_Port_BlitterThread(void *data);
 
-static void
-WFD_Port_Render(WFD_PORT* port, WFD_MESSAGES cmd);
+static void *WFD_Port_BlenderThread(void *data);
 
-static void*
-WFD_Port_BlitterThread(void* data);
+static WFDErrorCode WFD_Port_ValidateAttribi(WFD_PORT *port,
+                                             WFDPortConfigAttrib attrib,
+                                             WFDint value);
+static WFDErrorCode WFD_Port_ValidateAttribf(WFD_PORT *port,
+                                             WFDPortConfigAttrib attrib,
+                                             WFDfloat value);
+static WFDErrorCode WFD_Port_ValidateAttribiv(WFD_PORT *port,
+                                              WFDPortConfigAttrib attrib,
+                                              WFDint count,
+                                              const WFDint *values);
 
-static void*
-WFD_Port_BlenderThread(void* data);
+static WFDErrorCode WFD_Port_ValidateAttribfv(WFD_PORT *port,
+                                              WFDPortConfigAttrib attrib,
+                                              WFDint count,
+                                              const WFDfloat *values);
 
-static WFDErrorCode
-WFD_Port_ValidateAttribi(WFD_PORT* port,
-                         WFDPortConfigAttrib attrib,
-                         WFDint value);
-static WFDErrorCode
-WFD_Port_ValidateAttribf(WFD_PORT* port,
-                         WFDPortConfigAttrib attrib,
-                         WFDfloat value);
-static WFDErrorCode
-WFD_Port_ValidateAttribiv(WFD_PORT* port,
-                          WFDPortConfigAttrib attrib,
-                          WFDint count,
-                          const WFDint* values);
+static void WFD_Port_LayerAndBlend(WFD_PORT *pPort, WFD_PIPELINE *pPipeline,
+                                   WFD_MASK *pMask);
 
-static WFDErrorCode
-WFD_Port_ValidateAttribfv(WFD_PORT* port,
-                          WFDPortConfigAttrib attrib,
-                          WFDint count,
-                          const WFDfloat* values);
+static void WFD_Port_PipelineRemoveBinding(WFD_PORT *pPort, WFDint pipelineInd);
 
-static void
-WFD_Port_LayerAndBlend(WFD_PORT* pPort,
-                       WFD_PIPELINE* pPipeline,
-                       WFD_MASK* pMask);
+static void WFD_Port_PowerOff(WFD_PORT *pPort);
 
-static void
-WFD_Port_PipelineRemoveBinding(WFD_PORT* pPort, WFDint pipelineInd);
+static void WFD_Port_PowerOn(WFD_PORT *pPort);
 
-static void
-WFD_Port_PowerOff(WFD_PORT* pPort);
+static WFDboolean WFD_Port_PowerIsOn(WFD_PORT *pPort);
 
-static void
-WFD_Port_PowerOn(WFD_PORT* pPort);
+static void WFD_Port_ChangePowerMode(WFD_PORT *port, WFDPowerMode currentMode,
+                                     WFDPowerMode newMode);
 
-static WFDboolean
-WFD_Port_PowerIsOn(WFD_PORT* pPort);
+static void WFD_Port_StartRendering(WFD_PORT *pPort);
 
-static void
-WFD_Port_ChangePowerMode(WFD_PORT* port, WFDPowerMode currentMode, WFDPowerMode newMode);
+static void WFD_Port_StopRendering(WFD_PORT *pPort);
 
-static void
-WFD_Port_StartRendering(WFD_PORT* pPort);
+static void WFD_Port_SetFrameBufferBackground(WFD_PORT *port, WFDfloat *color);
+static void WFD_Port_DoCommit(WFD_PORT *port);
 
-static void
-WFD_Port_StopRendering(WFD_PORT* pPort);
+static void WFD_Port_CommitPortMode(WFD_PORT *port);
 
-static void
-WFD_Port_SetFrameBufferBackground( WFD_PORT* port,
-                                   WFDfloat* color);
-static void
-WFD_Port_DoCommit(WFD_PORT* port);
+static void WFD_Port_CommitPipelineBindings(WFD_PORT *pPort, WFDint i,
+                                            WFD_PIPELINE *pPipeline);
 
-static void
-WFD_Port_CommitPortMode(WFD_PORT* port);
+static WFDboolean WFD_Port_IsPartialRefeshCommitConsistent(WFD_PORT *port);
 
-static void
-WFD_Port_CommitPipelineBindings(WFD_PORT* pPort,
-                                WFDint i,
-                                WFD_PIPELINE* pPipeline);
+static WFDboolean WFD_Port_IsPortModeCommitConsistent(WFD_PORT *port);
 
-static WFDboolean
-WFD_Port_IsPartialRefeshCommitConsistent(WFD_PORT* port);
+static void WFD_Port_ImageFinalize(WFD_PORT *pPort);
 
-static WFDboolean
-WFD_Port_IsPortModeCommitConsistent(WFD_PORT* port);
+static void WFD_Port_RenderInit(WFD_PORT *port);
 
-static void
-WFD_Port_ImageFinalize(WFD_PORT* pPort);
+static void WFD_Port_SetBlendParams(OWF_BLEND_INFO *blend, WFD_PORT *port,
+                                    WFD_PIPELINE *pPipeline, OWF_IMAGE *pMask,
+                                    OWF_RECTANGLE *dstRect,
+                                    OWF_RECTANGLE *srcRect);
 
+static WFDboolean WFD_Port_SetBlendRects(const WFD_PORT *pPort,
+                                         const WFD_PIPELINE *pPipeline,
+                                         OWF_RECTANGLE *dstRect,
+                                         OWF_RECTANGLE *srcRect);
 
-static void
-WFD_Port_RenderInit(WFD_PORT* port);
+static void WFD_Port_Blit(WFD_PORT *port);
 
-static void
-WFD_Port_SetBlendParams(OWF_BLEND_INFO* blend,
-                        WFD_PORT* port,
-                        WFD_PIPELINE* pPipeline,
-                        OWF_IMAGE* pMask,
-                        OWF_RECTANGLE* dstRect,
-                        OWF_RECTANGLE* srcRect);
-
-static WFDboolean
-WFD_Port_SetBlendRects(const WFD_PORT* pPort,
-                       const WFD_PIPELINE* pPipeline,
-                       OWF_RECTANGLE* dstRect,
-                       OWF_RECTANGLE* srcRect);
-
-static void
-WFD_Port_Blit(WFD_PORT* port);
-
-static void
-WFD_Port_AttachDetach(void* obj, WFDint screenNumber, char event);
-
+static void WFD_Port_AttachDetach(void *obj, WFDint screenNumber, char event);
 
 /* ================================================================== */
 /*       P O R T  A L L O C A T E   A N D   R E L E A S E             */
 /* ================================================================== */
 
-void WFD_PORT_Ctor(void* self)
-{
-    self = self;
-}
+void WFD_PORT_Ctor(void *self) { self = self; }
 
-void WFD_PORT_Dtor(void* payload)
-{
-    WFD_PORT* pPort;
-    WFD_DEVICE* pDevice = NULL;
-    WFD_PORT_CONFIG* prtConfig = NULL;
+void WFD_PORT_Dtor(void *payload) {
+    WFD_PORT *pPort;
+    WFD_DEVICE *pDevice = NULL;
+    WFD_PORT_CONFIG *prtConfig = NULL;
     WFDint portId;
     WFDint i;
 
     OWF_ASSERT(payload);
 
-    pPort = (WFD_PORT*) payload;
+    pPort = (WFD_PORT *)payload;
 
     OWF_ASSERT(pPort->config);
 
@@ -224,16 +182,14 @@ void WFD_PORT_Dtor(void* payload)
     pDevice = pPort->device;
     REMREF(pPort->device);
 
-    if (pPort->handle != WFD_INVALID_HANDLE)
-    {
+    if (pPort->handle != WFD_INVALID_HANDLE) {
         WFD_Handle_Delete(pPort->handle);
         pPort->handle = WFD_INVALID_HANDLE;
     }
 
     OWF_MessageQueue_Destroy(&pPort->msgQueue);
 
-    for (i=0; i< WFD_PORT_SCRATCH_COUNT; i++)
-    {
+    for (i = 0; i < WFD_PORT_SCRATCH_COUNT; i++) {
         OWF_Image_Destroy(pPort->scratch[i]);
     }
 
@@ -259,19 +215,17 @@ void WFD_PORT_Dtor(void* payload)
 
     /* locate static config area and mark port free */
     prtConfig = WFD_Port_FindById(pDevice, portId);
-    if (prtConfig)
-    {
+    if (prtConfig) {
         prtConfig->inUse = NULL;
     }
 
     /* Port is freed by REMREF macro */
 }
 
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_InitAttributes(WFD_PORT* pPort) OWF_APIEXIT
-{
-    WFDint              ec;
-    WFD_PORT_CONFIG*    prtConfig;
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Port_InitAttributes(WFD_PORT *pPort)
+    OWF_APIEXIT {
+    WFDint ec;
+    WFD_PORT_CONFIG *prtConfig;
 
     OWF_ASSERT(pPort && pPort->config);
 
@@ -280,149 +234,96 @@ WFD_Port_InitAttributes(WFD_PORT* pPort) OWF_APIEXIT
     /* initialize attributes interface */
     DPRINT(("  Creating port attribute list"));
 
-    OWF_AttributeList_Create(&pPort->attributes,
-                             WFD_PORT_ID,
+    OWF_AttributeList_Create(&pPort->attributes, WFD_PORT_ID,
                              WFD_PORT_PROTECTION_ENABLE);
 
     ec = OWF_AttributeList_GetError(&pPort->attributes);
-    if (ec != ATTR_ERROR_NONE)
-    {
+    if (ec != ATTR_ERROR_NONE) {
         DPRINT(("Error at port attribute list creation (%d)", ec));
         return WFD_FALSE;
     }
 
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_ID,
-                        (OWFint*) &prtConfig->id,
-                        OWF_TRUE);
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_ID,
+                        (OWFint *)&prtConfig->id, OWF_TRUE);
 
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_TYPE,
-                        (OWFint*) &prtConfig->type,
-                        OWF_TRUE);
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_TYPE,
+                        (OWFint *)&prtConfig->type, OWF_TRUE);
 
-    OWF_Attribute_Initb(&pPort->attributes,
-                        WFD_PORT_DETACHABLE,
-                        (OWFboolean*) &prtConfig->detachable,
-                        OWF_TRUE);
+    OWF_Attribute_Initb(&pPort->attributes, WFD_PORT_DETACHABLE,
+                        (OWFboolean *)&prtConfig->detachable, OWF_TRUE);
 
-    OWF_Attribute_Initb(&pPort->attributes,
-                        WFD_PORT_ATTACHED,
-                        (OWFboolean*) &prtConfig->attached,
-                        OWF_TRUE);
+    OWF_Attribute_Initb(&pPort->attributes, WFD_PORT_ATTACHED,
+                        (OWFboolean *)&prtConfig->attached, OWF_TRUE);
 
-    OWF_Attribute_Initiv(&pPort->attributes,
-                        WFD_PORT_NATIVE_RESOLUTION,
-                        2,
-                        (OWFint*) prtConfig->nativeResolution,
-                        OWF_TRUE);
+    OWF_Attribute_Initiv(&pPort->attributes, WFD_PORT_NATIVE_RESOLUTION, 2,
+                         (OWFint *)prtConfig->nativeResolution, OWF_TRUE);
 
-    OWF_Attribute_Initfv(&pPort->attributes,
-                         WFD_PORT_PHYSICAL_SIZE,
-                         2,
-                         (OWFfloat*) prtConfig->physicalSize,
+    OWF_Attribute_Initfv(&pPort->attributes, WFD_PORT_PHYSICAL_SIZE, 2,
+                         (OWFfloat *)prtConfig->physicalSize, OWF_TRUE);
+
+    OWF_Attribute_Initb(&pPort->attributes, WFD_PORT_FILL_PORT_AREA,
+                        (OWFboolean *)&prtConfig->fillPortArea, OWF_TRUE);
+
+    OWF_Attribute_Initfv(&pPort->attributes, WFD_PORT_BACKGROUND_COLOR, BG_SIZE,
+                         prtConfig->backgroundColor, OWF_FALSE);
+
+    OWF_Attribute_Initb(&pPort->attributes, WFD_PORT_FLIP,
+                        (OWFboolean *)&prtConfig->flip, OWF_FALSE);
+
+    OWF_Attribute_Initb(&pPort->attributes, WFD_PORT_MIRROR,
+                        (OWFboolean *)&prtConfig->mirror, OWF_FALSE);
+
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_ROTATION,
+                        (OWFint *)&prtConfig->rotation, OWF_FALSE);
+
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_POWER_MODE,
+                        (OWFint *)&prtConfig->powerMode, OWF_FALSE);
+
+    OWF_Attribute_Initfv(&pPort->attributes, WFD_PORT_GAMMA_RANGE, 2,
+                         prtConfig->gammaRange, OWF_TRUE);
+
+    OWF_Attribute_Initf(&pPort->attributes, WFD_PORT_GAMMA,
+                        (OWFfloat *)&prtConfig->gamma, OWF_FALSE);
+
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_PARTIAL_REFRESH_SUPPORT,
+                        (OWFint *)&prtConfig->partialRefreshSupport, OWF_TRUE);
+
+    OWF_Attribute_Initiv(&pPort->attributes, WFD_PORT_PARTIAL_REFRESH_MAXIMUM,
+                         2, prtConfig->partialRefreshMaximum, OWF_TRUE);
+
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_PARTIAL_REFRESH_ENABLE,
+                        (OWFint *)&prtConfig->partialRefreshEnable, OWF_FALSE);
+
+    OWF_Attribute_Initiv(
+        &pPort->attributes, WFD_PORT_PARTIAL_REFRESH_RECTANGLE, RECT_SIZE,
+        (OWFint *)&prtConfig->partialRefreshRectangle, OWF_FALSE);
+
+    OWF_Attribute_Initi(&pPort->attributes, WFD_PORT_PIPELINE_ID_COUNT,
+                        (OWFint *)&prtConfig->pipelineIdCount, OWF_FALSE);
+
+    OWF_Attribute_Initiv(&pPort->attributes, WFD_PORT_BINDABLE_PIPELINE_IDS,
+                         prtConfig->pipelineIdCount, prtConfig->pipelineIds,
                          OWF_TRUE);
 
-    OWF_Attribute_Initb(&pPort->attributes,
-                        WFD_PORT_FILL_PORT_AREA,
-                        (OWFboolean*) &prtConfig->fillPortArea,
-                        OWF_TRUE);
-
-    OWF_Attribute_Initfv(&pPort->attributes,
-                         WFD_PORT_BACKGROUND_COLOR,
-                         BG_SIZE,
-                         prtConfig->backgroundColor,
-                         OWF_FALSE);
-
-    OWF_Attribute_Initb(&pPort->attributes,
-                        WFD_PORT_FLIP,
-                        (OWFboolean*) &prtConfig->flip,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initb(&pPort->attributes,
-                        WFD_PORT_MIRROR,
-                        (OWFboolean*) &prtConfig->mirror,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_ROTATION,
-                        (OWFint*) &prtConfig->rotation,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_POWER_MODE,
-                        (OWFint*) &prtConfig->powerMode,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initfv(&pPort->attributes,
-                         WFD_PORT_GAMMA_RANGE,
-                         2,
-                         prtConfig->gammaRange,
-                         OWF_TRUE);
-
-    OWF_Attribute_Initf(&pPort->attributes,
-                        WFD_PORT_GAMMA,
-                        (OWFfloat*) &prtConfig->gamma,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_PARTIAL_REFRESH_SUPPORT,
-                        (OWFint*) &prtConfig->partialRefreshSupport,
-                        OWF_TRUE);
-
-    OWF_Attribute_Initiv(&pPort->attributes,
-                            WFD_PORT_PARTIAL_REFRESH_MAXIMUM,
-                            2,
-                            prtConfig->partialRefreshMaximum,
-                            OWF_TRUE);
-
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_PARTIAL_REFRESH_ENABLE,
-                        (OWFint*) &prtConfig->partialRefreshEnable,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initiv(&pPort->attributes,
-                         WFD_PORT_PARTIAL_REFRESH_RECTANGLE,
-                         RECT_SIZE,
-                         (OWFint*) &prtConfig->partialRefreshRectangle,
-                         OWF_FALSE);
-
-    OWF_Attribute_Initi(&pPort->attributes,
-                        WFD_PORT_PIPELINE_ID_COUNT,
-                        (OWFint*) &prtConfig->pipelineIdCount,
-                        OWF_FALSE);
-
-    OWF_Attribute_Initiv(&pPort->attributes,
-                         WFD_PORT_BINDABLE_PIPELINE_IDS,
-                         prtConfig->pipelineIdCount,
-                         prtConfig->pipelineIds,
-                         OWF_TRUE);
-
-    OWF_Attribute_Initb(&pPort->attributes,
-                        WFD_PORT_PROTECTION_ENABLE,
-                        (OWFboolean*) &prtConfig->protectionEnable,
-                        OWF_FALSE);
+    OWF_Attribute_Initb(&pPort->attributes, WFD_PORT_PROTECTION_ENABLE,
+                        (OWFboolean *)&prtConfig->protectionEnable, OWF_FALSE);
 
     ec = OWF_AttributeList_GetError(&pPort->attributes);
 
-    if (ec != ATTR_ERROR_NONE)
-    {
-       DPRINT(("Error at port attribute list initialization (%d)", ec));
-       return WFD_FALSE;
+    if (ec != ATTR_ERROR_NONE) {
+        DPRINT(("Error at port attribute list initialization (%d)", ec));
+        return WFD_FALSE;
     }
 
     return WFD_TRUE;
 }
 
-
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_AcquireLock(WFD_PORT* port) OWF_APIEXIT
-{
+OWF_API_CALL void OWF_APIENTRY WFD_Port_AcquireLock(WFD_PORT *port)
+    OWF_APIEXIT {
     OWF_Mutex_Lock(&port->portMutex);
 
-    while (port->portBusy)
-    {
-         OWF_Cond_Wait(port->busyCond, (OWFtime) OWF_FOREVER);
+    while (port->portBusy) {
+        OWF_Cond_Wait(port->busyCond, (OWFtime)OWF_FOREVER);
     }
 
     port->portBusy = WFD_TRUE;
@@ -432,9 +333,8 @@ WFD_Port_AcquireLock(WFD_PORT* port) OWF_APIEXIT
     OWF_Mutex_Unlock(&port->portMutex);
 }
 
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_ReleaseLock(WFD_PORT* port) OWF_APIEXIT
-{
+OWF_API_CALL void OWF_APIENTRY WFD_Port_ReleaseLock(WFD_PORT *port)
+    OWF_APIEXIT {
     OWF_Mutex_Lock(&port->portMutex);
     port->portBusy = WFD_FALSE;
     OWF_Cond_Signal(port->busyCond);
@@ -442,29 +342,23 @@ WFD_Port_ReleaseLock(WFD_PORT* port) OWF_APIEXIT
     OWF_Mutex_Unlock(&port->portMutex);
 }
 
-
-static WFDboolean
-WFD_Port_InitScratchBuffers(WFD_PORT* pPort)
-{
+static WFDboolean WFD_Port_InitScratchBuffers(WFD_PORT *pPort) {
     WFDboolean ret = WFD_TRUE;
     WFDint i, max, w, h;
-    WFD_PORT_MODE* modes;
+    WFD_PORT_MODE *modes;
 
     OWF_ASSERT(pPort);
     OWF_ASSERT(pPort->config);
 
-    if (pPort->config->modeCount > 0)
-    {
-        OWF_ASSERT(pPort->config->modes !=  NULL);
+    if (pPort->config->modeCount > 0) {
+        OWF_ASSERT(pPort->config->modes != NULL);
 
         /* find out maximum pixel count for port  */
         modes = pPort->config->modes;
 
-        for (max = 0, i = 1; i < pPort->config->modeCount; i++)
-        {
-            if ( modes[i].width * modes[i].height >
-                 modes[max].width * modes[max].height )
-            {
+        for (max = 0, i = 1; i < pPort->config->modeCount; i++) {
+            if (modes[i].width * modes[i].height >
+                modes[max].width * modes[max].height) {
                 max = i;
             }
         }
@@ -472,20 +366,18 @@ WFD_Port_InitScratchBuffers(WFD_PORT* pPort)
         w = modes[max].width;
         h = modes[max].height;
 
-        ret = WFD_Util_InitScratchBuffer(pPort->scratch,
-                                         WFD_PORT_SCRATCH_COUNT, w, h);
+        ret = WFD_Util_InitScratchBuffer(pPort->scratch, WFD_PORT_SCRATCH_COUNT,
+                                         w, h);
     }
 
     return ret;
 }
 
-static WFDboolean
-WFD_Port_InitFrameBuffers(WFD_PORT* pPort)
-{
+static WFDboolean WFD_Port_InitFrameBuffers(WFD_PORT *pPort) {
     WFDboolean ret = WFD_TRUE;
     WFDint i, w, h;
     OWF_IMAGE_FORMAT format;
-    OWF_IMAGE* scratch;
+    OWF_IMAGE *scratch;
 
     /* precondition: scratch buffers have been initialized */
 
@@ -493,33 +385,28 @@ WFD_Port_InitFrameBuffers(WFD_PORT* pPort)
 
     scratch = pPort->scratch[0];
 
-    if (scratch->width > 0 && scratch->height > 0)
-    {
+    if (scratch->width > 0 && scratch->height > 0) {
         /* use same width and height as scratch buffers */
         w = scratch->width;
         h = scratch->height;
 
         /* allocate native format buffer for final image */
-        format.pixelFormat   = OWF_IMAGE_XRGB8888;
-        format.linear        = OWF_FALSE;
+        format.pixelFormat = OWF_IMAGE_XRGB8888;
+        format.linear = OWF_FALSE;
         format.premultiplied = OWF_FALSE;
         format.rowPadding = OWF_Image_GetFormatPadding(OWF_IMAGE_XRGB8888);
 
-        for (i=0; i<2 /* double buffer - always two */; i++)
-        {
+        for (i = 0; i < 2 /* double buffer - always two */; i++) {
             pPort->surface[i] = OWF_Image_Create(w, h, &format, NULL, 0);
 
             ret = ret && pPort->surface[i];
         }
     }
 
-    if (!ret)
-    {
+    if (!ret) {
         /* clean up if creation failed */
-        for (i=0; i<2 /* double buffer - always two */; i++)
-        {
-            if (pPort->surface[i])
-            {
+        for (i = 0; i < 2 /* double buffer - always two */; i++) {
+            if (pPort->surface[i]) {
                 OWF_Image_Destroy(pPort->surface[i]);
             }
         }
@@ -528,28 +415,23 @@ WFD_Port_InitFrameBuffers(WFD_PORT* pPort)
     return ret;
 }
 
-static WFDboolean
-WFD_Port_InitBindings(WFD_PORT* pPort)
-{
+static WFDboolean WFD_Port_InitBindings(WFD_PORT *pPort) {
     WFDboolean ret = WFD_FALSE;
     WFDint i;
-    WFD_PORT_BINDING* bndgs;
+    WFD_PORT_BINDING *bndgs;
 
     OWF_ASSERT(pPort);
     OWF_ASSERT(pPort->config);
 
-    if (PLCOUNT(pPort) <= 0)
-    {
+    if (PLCOUNT(pPort) <= 0) {
         pPort->bindings = NULL;
         return WFD_TRUE;
     }
 
     bndgs = NEW0N(WFD_PORT_BINDING, PLCOUNT(pPort));
 
-    if (bndgs)
-    {
-        for (i = 0; i < PLCOUNT(pPort); i++)
-        {
+    if (bndgs) {
+        for (i = 0; i < PLCOUNT(pPort); i++) {
             bndgs[i].cachedPipeline = NULL;
             bndgs[i].boundPipeline = NULL;
         }
@@ -559,107 +441,96 @@ WFD_Port_InitBindings(WFD_PORT* pPort)
     }
 
     return ret;
-
 }
 
-static void WFD_Port_Preconfiguration(WFD_PORT* pPort)
-{
+static void WFD_Port_Preconfiguration(WFD_PORT *pPort) {
     /* if preconfigured mode exist
      * - set port mode and possible power mode
      * else
      * - clear preconfigured power mode
      */
 
-    if (pPort->config->preconfiguredMode != WFD_INVALID_HANDLE)
-    {
+    if (pPort->config->preconfiguredMode != WFD_INVALID_HANDLE) {
         pPort->currentMode =
             WFD_Port_FindMode(pPort, pPort->config->preconfiguredMode);
 
         if (pPort->currentMode &&
-            pPort->config->powerMode == WFD_POWER_MODE_ON)
-        {
+            pPort->config->powerMode == WFD_POWER_MODE_ON) {
             WFD_Port_PowerOn(pPort);
         }
-    }
-    else
-    {
+    } else {
         pPort->config->powerMode = WFD_POWER_MODE_OFF;
     }
-
 }
 
-
-OWF_API_CALL WFDPort OWF_APIENTRY
-WFD_Port_Allocate(WFD_DEVICE* device,
-                  WFDint portId) OWF_APIEXIT
-{
-    WFD_PORT_CONFIG* prtConfig;
-    WFD_PORT* pPort;
+OWF_API_CALL WFDPort OWF_APIENTRY WFD_Port_Allocate(WFD_DEVICE *device,
+                                                    WFDint portId) OWF_APIEXIT {
+    WFD_PORT_CONFIG *prtConfig;
+    WFD_PORT *pPort;
     WFDboolean ok = WFD_FALSE;
     WFDPort handle = WFD_INVALID_HANDLE;
 
     /* locate static config area */
     prtConfig = WFD_Port_FindById(device, portId);
-    if (!prtConfig)
-    {
+    if (!prtConfig) {
         /* port does not exist */
         return WFD_INVALID_HANDLE;
     }
 
     pPort = CREATE(WFD_PORT);
     if (pPort) {
-      printf("111\n");
-      ADDREF(pPort->device, device);
-      printf("222\n");
-      OWF_Array_AppendItem(&device->ports, pPort);
+        printf("111\n");
+        ADDREF(pPort->device, device);
+        printf("222\n");
+        OWF_Array_AppendItem(&device->ports, pPort);
 
-      /* mark the port allocated */
-      prtConfig->inUse = pPort;
+        /* mark the port allocated */
+        prtConfig->inUse = pPort;
 
-      /* make copy of the static config are. this holds
-       * committed port attributes during port's life-time
-       */
-      pPort->config = NEW0(WFD_PORT_CONFIG);
-      ok = (pPort->config != NULL);
+        /* make copy of the static config are. this holds
+         * committed port attributes during port's life-time
+         */
+        pPort->config = NEW0(WFD_PORT_CONFIG);
+        ok = (pPort->config != NULL);
 
-      if (ok) {
-        memcpy(pPort->config, prtConfig, sizeof(WFD_PORT_CONFIG));
-      }
+        if (ok) {
+            memcpy(pPort->config, prtConfig, sizeof(WFD_PORT_CONFIG));
+        }
 
-      ok = WFD_Port_InitAttributes(pPort);
-      if (ok) {
-        ok = WFD_Port_InitScratchBuffers(pPort);
-      }
+        ok = WFD_Port_InitAttributes(pPort);
+        if (ok) {
+            ok = WFD_Port_InitScratchBuffers(pPort);
+        }
 
-      if (ok) {
-        ok = WFD_Port_InitFrameBuffers(pPort);
-      }
+        if (ok) {
+            ok = WFD_Port_InitFrameBuffers(pPort);
+        }
 
-      /* this mutex is used for frame buffer updates */
-      if (ok) {
-        ok = (OWF_Mutex_Init(&pPort->frMutex) == 0);
-      }
+        /* this mutex is used for frame buffer updates */
+        if (ok) {
+            ok = (OWF_Mutex_Init(&pPort->frMutex) == 0);
+        }
 
-      /* busy flag tells that port busy doing commit or
-       * rendering. both are not allowed at the same time */
-      if (ok) {
-        ok = (OWF_Mutex_Init(&pPort->portMutex) == 0);
-      }
+        /* busy flag tells that port busy doing commit or
+         * rendering. both are not allowed at the same time */
+        if (ok) {
+            ok = (OWF_Mutex_Init(&pPort->portMutex) == 0);
+        }
 
-      if (ok) {
-        ok = (OWF_Cond_Init(&pPort->busyCond, pPort->portMutex) == 0);
-        pPort->portBusy = WFD_FALSE;
-      }
+        if (ok) {
+            ok = (OWF_Cond_Init(&pPort->busyCond, pPort->portMutex) == 0);
+            pPort->portBusy = WFD_FALSE;
+        }
 
-      /* initialize bindings structure - in bindings array
-       * there is a item per bindable pipeline. Items are
-       * in the layer order, bottom layer first
-       */
-      if (ok) {
-        ok = WFD_Port_InitBindings(pPort);
-      }
+        /* initialize bindings structure - in bindings array
+         * there is a item per bindable pipeline. Items are
+         * in the layer order, bottom layer first
+         */
+        if (ok) {
+            ok = WFD_Port_InitBindings(pPort);
+        }
 
-      /* launch port threads - rendering and vsync thread */
+        /* launch port threads - rendering and vsync thread */
 #if ENABLE_SYNCHRONOUS_PIPELINES
         /* synchronous pipelines can be enabled for debugging purposes */
         if (ok && !synchronousPipelines)
@@ -668,15 +539,14 @@ WFD_Port_Allocate(WFD_DEVICE* device,
 #endif
         {
             /* set-up message queue */
-            ok  = (OWF_MessageQueue_Init(&pPort->msgQueue) == 0);
+            ok = (OWF_MessageQueue_Init(&pPort->msgQueue) == 0);
 
             /* rendering and blitting threads are launched
              * when port power is turned on
              */
         }
 
-        if (ok)
-        {
+        if (ok) {
             pPort->handle = WFD_Handle_Create(WFD_PORT_HANDLE, pPort);
             handle = pPort->handle;
         }
@@ -692,8 +562,7 @@ WFD_Port_Allocate(WFD_DEVICE* device,
         DESTROY(pPort);
     }
 
-    else
-    {
+    else {
         WFD_Port_Preconfiguration(pPort);
         WFD_Port_StartRendering(pPort);
 
@@ -701,18 +570,15 @@ WFD_Port_Allocate(WFD_DEVICE* device,
                 pPort->config->id, pPort, handle));
     }
 
-    OWF_AttributeList_Commit(&pPort->attributes,
-                             WFD_PORT_ID,
+    OWF_AttributeList_Commit(&pPort->attributes, WFD_PORT_ID,
                              WFD_PORT_PROTECTION_ENABLE,
-			     WORKING_ATTR_VALUE_INDEX);
+                             WORKING_ATTR_VALUE_INDEX);
 
     return handle;
 }
 
-
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_Release(WFD_DEVICE* device, WFD_PORT* pPort) OWF_APIEXIT
-{
+OWF_API_CALL void OWF_APIENTRY WFD_Port_Release(WFD_DEVICE *device,
+                                                WFD_PORT *pPort) OWF_APIEXIT {
     WFDint i;
 
     DPRINT(("WFD_Port_Release, port %d", ID(pPort)));
@@ -723,8 +589,7 @@ WFD_Port_Release(WFD_DEVICE* device, WFD_PORT* pPort) OWF_APIEXIT
     pPort->handle = WFD_INVALID_HANDLE;
 
     /* no need to lock port because rendering has stopped */
-    for (i = 0; i < PLCOUNT(pPort); i++)
-    {
+    for (i = 0; i < PLCOUNT(pPort); i++) {
         WFD_Port_PipelineRemoveBinding(pPort, i);
     }
 
@@ -734,64 +599,51 @@ WFD_Port_Release(WFD_DEVICE* device, WFD_PORT* pPort) OWF_APIEXIT
     DESTROY(pPort);
 }
 
-
-static void
-WFD_Port_StartRendering(WFD_PORT* pPort)
-{
+static void WFD_Port_StartRendering(WFD_PORT *pPort) {
     OWF_ASSERT(pPort && pPort->config);
 
     /* create a window for port */
-    if (pPort->screenNumber == OWF_INVALID_SCREEN_NUMBER)
-    {
+    if (pPort->screenNumber == OWF_INVALID_SCREEN_NUMBER) {
         WFDint w, h;
         WFDfloat black[3] = {0.0, 0.0, 0.0};
 
         /* get maximum port mode width */
-        if (pPort->config->modeCount > 0)
-        {
+        if (pPort->config->modeCount > 0) {
             WFDint max, i;
-            WFD_PORT_MODE* modes;
+            WFD_PORT_MODE *modes;
 
-            OWF_ASSERT(pPort->config->modes !=  NULL);
+            OWF_ASSERT(pPort->config->modes != NULL);
 
             /* find out maximum width for  port  */
             modes = pPort->config->modes;
 
-            for (max = 0, i = 1; i < pPort->config->modeCount; i++)
-            {
-                if ( modes[i].width > modes[max].width)
-                {
+            for (max = 0, i = 1; i < pPort->config->modeCount; i++) {
+                if (modes[i].width > modes[max].width) {
                     max = i;
                 }
             }
 
             w = modes[max].width;
             h = modes[max].height;
-        }
-        else
-        {
+        } else {
             w = pPort->config->nativeResolution[0];
             h = pPort->config->nativeResolution[1];
         }
 
-        pPort->screenNumber = OWF_Screen_Create(w, h,
-                WFD_Port_AttachDetach, (void*)pPort);
+        pPort->screenNumber =
+            OWF_Screen_Create(w, h, WFD_Port_AttachDetach, (void *)pPort);
 
         WFD_Port_SetFrameBufferBackground(pPort, black);
 
-        if (pPort->currentMode)
-        {
-            OWF_Screen_Resize(pPort->screenNumber,
-                              pPort->currentMode->width,
+        if (pPort->currentMode) {
+            OWF_Screen_Resize(pPort->screenNumber, pPort->currentMode->width,
                               pPort->currentMode->height);
         }
     }
 
-    if (!pPort->blender)
-    {
+    if (!pPort->blender) {
         /* empty message queue first */
-        while (OWF_MessageQueue_Empty(&pPort->msgQueue))
-        {
+        while (OWF_MessageQueue_Empty(&pPort->msgQueue)) {
             OWF_MESSAGE msg;
             OWF_Message_Wait(&pPort->msgQueue, &msg, 0);
         }
@@ -801,28 +653,23 @@ WFD_Port_StartRendering(WFD_PORT* pPort)
         pPort->blender = OWF_Thread_Create(WFD_Port_BlenderThread, pPort);
     }
 
-    if (!pPort->blitter)
-    {
+    if (!pPort->blitter) {
         /* launch blitting thread */
         DPRINT(("WFD_Port_BlitterThread launch for port %d", ID(pPort)));
         pPort->blitter = OWF_Thread_Create(WFD_Port_BlitterThread, pPort);
     }
 }
 
-
-static void
-WFD_Port_StopRendering(WFD_PORT* pPort)
-{
-    if (pPort->blitter)
-    {
+static void WFD_Port_StopRendering(WFD_PORT *pPort) {
+    if (pPort->blitter) {
         pPort->destroyPending = WFD_TRUE;
         DPRINT(("WFD_Port_BlitterThread cancel, port %d", ID(pPort)));
-        OWF_Thread_Destroy(pPort->blitter);DPRINT(("    blitter dead, port %d", ID(pPort)));
+        OWF_Thread_Destroy(pPort->blitter);
+        DPRINT(("    blitter dead, port %d", ID(pPort)));
         pPort->blitter = NULL;
     }
 
-    if (pPort->blender)
-    {
+    if (pPort->blender) {
         DPRINT(("WFD_Port_BlenderThread cancel, port %d", ID(pPort)));
         OWF_Thread_Destroy(pPort->blender);
         DPRINT(("    blender dead, port %d", ID(pPort)));
@@ -830,8 +677,7 @@ WFD_Port_StopRendering(WFD_PORT* pPort)
     }
 
     /* destroy port screen */
-    if (pPort->screenNumber != OWF_INVALID_SCREEN_NUMBER)
-    {
+    if (pPort->screenNumber != OWF_INVALID_SCREEN_NUMBER) {
         OWF_Screen_Destroy(pPort->screenNumber);
         pPort->screenNumber = OWF_INVALID_SCREEN_NUMBER;
     }
@@ -840,11 +686,9 @@ WFD_Port_StopRendering(WFD_PORT* pPort)
 /*               P O R T  A T T A C H / D E T A C H                   */
 /* ================================================================== */
 
-
-static void
-WFD_Port_SendAttachDetachEvent(WFD_PORT* pPort, WFDboolean attached)
-{
-    WFD_EVENT               event;
+static void WFD_Port_SendAttachDetachEvent(WFD_PORT *pPort,
+                                           WFDboolean attached) {
+    WFD_EVENT event;
 
     OWF_ASSERT(pPort && pPort->config);
 
@@ -855,25 +699,20 @@ WFD_Port_SendAttachDetachEvent(WFD_PORT* pPort, WFDboolean attached)
     WFD_Event_InsertAll(pPort->device, &event);
 }
 
-
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_Attach(WFD_PORT* pPort) OWF_APIEXIT
-{
-
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Port_Attach(WFD_PORT *pPort)
+    OWF_APIEXIT {
     OWF_ASSERT(pPort && pPort->config);
 
     DPRINT(("WFD_Port_Attach(%p)", pPort));
 
     WFD_Port_AcquireLock(pPort);
 
-    if (!pPort->config->detachable)
-    {
+    if (!pPort->config->detachable) {
         WFD_Port_ReleaseLock(pPort);
         return WFD_FALSE;
     }
 
-    if (pPort->config->attached)
-    {
+    if (pPort->config->attached) {
         WFD_Port_ReleaseLock(pPort);
         return WFD_FALSE;
     }
@@ -894,13 +733,10 @@ WFD_Port_Attach(WFD_PORT* pPort) OWF_APIEXIT
     DPRINT(("   port is attached (%p)", pPort));
 
     return WFD_TRUE;
-
 }
 
-
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_Detach(WFD_PORT* pPort) OWF_APIEXIT
-{
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Port_Detach(WFD_PORT *pPort)
+    OWF_APIEXIT {
     WFDfloat black[3] = {0.0, 0.0, 0.0};
 
     DPRINT(("WFD_Port_Detach(%p)", pPort));
@@ -909,14 +745,12 @@ WFD_Port_Detach(WFD_PORT* pPort) OWF_APIEXIT
 
     WFD_Port_AcquireLock(pPort);
 
-    if (!pPort->config->detachable)
-    {
+    if (!pPort->config->detachable) {
         WFD_Port_ReleaseLock(pPort);
         return WFD_FALSE;
     }
 
-    if (!pPort->config->attached)
-    {
+    if (!pPort->config->attached) {
         WFD_Port_ReleaseLock(pPort);
         return WFD_FALSE;
     }
@@ -925,7 +759,7 @@ WFD_Port_Detach(WFD_PORT* pPort) OWF_APIEXIT
 
     /* revert port mode being unset, clear cached settings  */
     pPort->currentMode = NULL;
-    pPort->modeDirty =  WFD_FALSE;
+    pPort->modeDirty = WFD_FALSE;
     pPort->cachedMode = NULL;
 
     WFD_Port_SetFrameBufferBackground(pPort, black);
@@ -944,20 +778,15 @@ WFD_Port_Detach(WFD_PORT* pPort) OWF_APIEXIT
     return WFD_TRUE;
 }
 
-
 /* ================================================================== */
 /*                   P O R T  L O O K U P                             */
 /* ================================================================== */
 
-
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetIds(WFD_DEVICE* device,
-                WFDint* idsList,
-                WFDint listCapacity) OWF_APIEXIT
-{
-    WFDint count=0;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Port_GetIds(
+    WFD_DEVICE *device, WFDint *idsList, WFDint listCapacity) OWF_APIEXIT {
+    WFDint count = 0;
     WFDint i;
-    WFD_DEVICE_CONFIG* devConfig;
+    WFD_DEVICE_CONFIG *devConfig;
 
     DPRINT(("WFD_Port_GetIds(%p,%p,%d)", device, idsList, listCapacity));
 
@@ -965,105 +794,86 @@ WFD_Port_GetIds(WFD_DEVICE* device,
 
     devConfig = device->config;
 
-    if (!idsList)
-    {
+    if (!idsList) {
         return devConfig->portCount;
     }
 
     DPRINT(("  port count = %d", devConfig->portCount));
 
-    for (i = 0; i < devConfig->portCount && count < listCapacity; i++)
-    {
-
+    for (i = 0; i < devConfig->portCount && count < listCapacity; i++) {
         DPRINT(("  port %d, id = %d", i, devConfig->ports[i].id));
-        if (devConfig->ports[i].id != WFD_INVALID_PORT_ID)
-        {
-              idsList[count] = devConfig->ports[i].id;
-              ++count;
+        if (devConfig->ports[i].id != WFD_INVALID_PORT_ID) {
+            idsList[count] = devConfig->ports[i].id;
+            ++count;
         }
     }
 
-    for (i = count; i < listCapacity; i++)
-    {
+    for (i = count; i < listCapacity; i++) {
         idsList[i] = WFD_INVALID_PORT_ID;
     }
 
     return count;
 }
 
-
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_IsAllocated(WFD_DEVICE* device,
-                     WFDint id) OWF_APIEXIT
-{
-    WFDint              i;
-    WFD_DEVICE_CONFIG*  devConfig;
-    WFD_PORT_CONFIG*    portConfig = NULL;
+WFD_Port_IsAllocated(WFD_DEVICE *device, WFDint id) OWF_APIEXIT {
+    WFDint i;
+    WFD_DEVICE_CONFIG *devConfig;
+    WFD_PORT_CONFIG *portConfig = NULL;
 
-    OWF_ASSERT (device && device->config);
+    OWF_ASSERT(device && device->config);
 
     devConfig = device->config;
 
-    for (i = 0; i < devConfig->portCount; i++)
-    {
+    for (i = 0; i < devConfig->portCount; i++) {
         portConfig = &devConfig->ports[i];
-        if (portConfig->id == id)
-        {
-            return (portConfig->inUse == NULL) ? WFD_ERROR_NONE : WFD_ERROR_IN_USE;
+        if (portConfig->id == id) {
+            return (portConfig->inUse == NULL) ? WFD_ERROR_NONE
+                                               : WFD_ERROR_IN_USE;
         }
     }
 
     return WFD_ERROR_ILLEGAL_ARGUMENT;
 }
 
-OWF_API_CALL WFD_PORT_CONFIG* OWF_APIENTRY
-WFD_Port_FindById(WFD_DEVICE* device,
-                  WFDint id) OWF_APIEXIT
-{
-    WFDint              i;
-    WFD_DEVICE_CONFIG*  devConfig;
+OWF_API_CALL WFD_PORT_CONFIG *OWF_APIENTRY
+WFD_Port_FindById(WFD_DEVICE *device, WFDint id) OWF_APIEXIT {
+    WFDint i;
+    WFD_DEVICE_CONFIG *devConfig;
 
-    OWF_ASSERT (device && device->config);
+    OWF_ASSERT(device && device->config);
 
     devConfig = device->config;
 
-    for (i = 0; i < devConfig->portCount; i++)
-    {
-        if (devConfig->ports[i].id == id)
-        {
+    for (i = 0; i < devConfig->portCount; i++) {
+        if (devConfig->ports[i].id == id) {
             return &devConfig->ports[i];
         }
     }
     return NULL;
 }
 
+OWF_API_CALL WFD_PORT *OWF_APIENTRY
+WFD_Port_FindByHandle(WFD_DEVICE *device, WFDPort handle) OWF_APIEXIT {
+    WFD_PORT *pPort;
 
-OWF_API_CALL WFD_PORT* OWF_APIENTRY
-WFD_Port_FindByHandle(WFD_DEVICE* device, WFDPort handle) OWF_APIEXIT
-{
-    WFD_PORT* pPort;
-
-    pPort = (WFD_PORT*) WFD_Handle_GetObj(handle, WFD_PORT_HANDLE);
+    pPort = (WFD_PORT *)WFD_Handle_GetObj(handle, WFD_PORT_HANDLE);
 
     /* port must be associated with device */
     return (pPort && pPort->device == device) ? pPort : NULL;
 }
 
-
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetMaxRefreshRate(WFD_PORT_CONFIG* prtConfig) OWF_APIEXIT
-{
+WFD_Port_GetMaxRefreshRate(WFD_PORT_CONFIG *prtConfig) OWF_APIEXIT {
     WFDint i;
     WFDint maxRefresh = 0;
 
     OWF_ASSERT(prtConfig);
 
-    if (prtConfig && prtConfig->modes)
-    {
-        WFD_PORT_MODE* modes = prtConfig->modes;
+    if (prtConfig && prtConfig->modes) {
+        WFD_PORT_MODE *modes = prtConfig->modes;
 
-        for (i=0; i<prtConfig->modeCount; i++)
-        {
+        for (i = 0; i < prtConfig->modeCount; i++) {
             maxRefresh = MAX(maxRefresh, (WFDint)ceil(modes[i].refreshRate));
         }
     }
@@ -1075,11 +885,9 @@ WFD_Port_GetMaxRefreshRate(WFD_PORT_CONFIG* prtConfig) OWF_APIEXIT
 /*                     P O R T  M O D E S                             */
 /* ================================================================== */
 
-
-OWF_API_CALL WFD_PORT_MODE* OWF_APIENTRY
-WFD_Port_FindMode(WFD_PORT* port, WFDPortMode mode) OWF_APIEXIT
-{
-    WFDint  ii;
+OWF_API_CALL WFD_PORT_MODE *OWF_APIENTRY
+WFD_Port_FindMode(WFD_PORT *port, WFDPortMode mode) OWF_APIEXIT {
+    WFDint ii;
 
     OWF_ASSERT(port && port->config);
 
@@ -1091,42 +899,32 @@ WFD_Port_FindMode(WFD_PORT* port, WFDPortMode mode) OWF_APIEXIT
     return NULL;
 }
 
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetModes( WFD_PORT* port,
-                   WFDPortMode *modes,
-                   WFDint modesCount) OWF_APIEXIT
-{
-    WFDint  count;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Port_GetModes(
+    WFD_PORT *port, WFDPortMode *modes, WFDint modesCount) OWF_APIEXIT {
+    WFDint count;
 
     OWF_ASSERT(port && port->config);
 
-    if (!port->config->attached)
-    {
+    if (!port->config->attached) {
         return 0;
     }
 
-    if (!modes)
-    {
+    if (!modes) {
         count = port->config->modeCount;
-    }
-    else
-    {
+    } else {
         WFDint i;
 
         OWF_ASSERT(modesCount > 0);
         OWF_ASSERT(port->config);
         OWF_ASSERT(port->config->modes);
 
-        for (count = 0; count < port->config->modeCount; count++)
-        {
-            if (count > modesCount-1)
-                break;
+        for (count = 0; count < port->config->modeCount; count++) {
+            if (count > modesCount - 1) break;
 
             modes[count] = port->config->modes[count].id;
         }
 
-        for (i = count; i < modesCount; i++)
-        {
+        for (i = count; i < modesCount; i++) {
             modes[i] = WFD_INVALID_HANDLE;
         }
     }
@@ -1134,36 +932,28 @@ WFD_Port_GetModes( WFD_PORT* port,
     return count;
 }
 
-OWF_API_CALL WFD_PORT_MODE* OWF_APIENTRY
-WFD_Port_GetModePtr(WFD_PORT* port) OWF_APIEXIT
-{
+OWF_API_CALL WFD_PORT_MODE *OWF_APIENTRY WFD_Port_GetModePtr(WFD_PORT *port)
+    OWF_APIEXIT {
     OWF_ASSERT(port);
 
-    if (port->modeDirty)
-    {
+    if (port->modeDirty) {
         return port->cachedMode;
-    }
-    else
-    {
+    } else {
         return port->currentMode;
     }
 }
 
-
-OWF_API_CALL WFDPortMode OWF_APIENTRY
-WFD_Port_GetCurrentMode(WFD_PORT* port) OWF_APIEXIT
-{
-    WFD_PORT_MODE* currentMode;
+OWF_API_CALL WFDPortMode OWF_APIENTRY WFD_Port_GetCurrentMode(WFD_PORT *port)
+    OWF_APIEXIT {
+    WFD_PORT_MODE *currentMode;
     WFDint i;
 
     OWF_ASSERT(port && port->config);
 
     currentMode = WFD_Port_GetModePtr(port);
 
-    for (i=0; i<port->config->modeCount; i++)
-    {
-        if (currentMode == &port->config->modes[i])
-        {
+    for (i = 0; i < port->config->modeCount; i++) {
+        if (currentMode == &port->config->modes[i]) {
             return port->config->modes[i].id;
         }
     }
@@ -1172,15 +962,13 @@ WFD_Port_GetCurrentMode(WFD_PORT* port) OWF_APIEXIT
 }
 
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_SetMode(WFD_PORT* pPort, WFDPortMode mode) OWF_APIEXIT
-{
-    WFD_PORT_MODE* pPortMode;
+WFD_Port_SetMode(WFD_PORT *pPort, WFDPortMode mode) OWF_APIEXIT {
+    WFD_PORT_MODE *pPortMode;
 
     OWF_ASSERT(pPort);
 
     pPortMode = WFD_Port_FindMode(pPort, mode);
-    if (pPortMode)
-    {
+    if (pPortMode) {
         pPort->cachedMode = pPortMode;
         pPort->modeDirty = WFD_TRUE;
         return WFD_TRUE;
@@ -1189,16 +977,10 @@ WFD_Port_SetMode(WFD_PORT* pPort, WFDPortMode mode) OWF_APIEXIT
     return WFD_FALSE;
 }
 
-
-
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_PortMode_GetAttribf(WFD_PORT_MODE* pPortMode,
-                        WFDPortModeAttrib attrib,
-                        WFDfloat* attrValue) OWF_APIEXIT
-{
-
-    if (attrib == WFD_PORT_MODE_REFRESH_RATE)
-    {
+WFD_PortMode_GetAttribf(WFD_PORT_MODE *pPortMode, WFDPortModeAttrib attrib,
+                        WFDfloat *attrValue) OWF_APIEXIT {
+    if (attrib == WFD_PORT_MODE_REFRESH_RATE) {
         *attrValue = pPortMode->refreshRate;
         return WFD_ERROR_NONE;
     }
@@ -1206,85 +988,73 @@ WFD_PortMode_GetAttribf(WFD_PORT_MODE* pPortMode,
     return WFD_ERROR_BAD_ATTRIBUTE;
 }
 
-
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_PortMode_GetAttribi(WFD_PORT_MODE* pPortMode,
-                        WFDPortModeAttrib attrib,
-                        WFDint* attrValue) OWF_APIEXIT
-{
+WFD_PortMode_GetAttribi(WFD_PORT_MODE *pPortMode, WFDPortModeAttrib attrib,
+                        WFDint *attrValue) OWF_APIEXIT {
     WFDint value = 0;
 
     OWF_ASSERT(pPortMode);
 
-     /* these are all read-only attributes - no attribute list needed */
-     switch (attrib)
-     {
-         case WFD_PORT_MODE_WIDTH:
-             value = pPortMode->width;
-             break;
+    /* these are all read-only attributes - no attribute list needed */
+    switch (attrib) {
+        case WFD_PORT_MODE_WIDTH:
+            value = pPortMode->width;
+            break;
 
-         case WFD_PORT_MODE_HEIGHT:
-             value = pPortMode->height;
-             break;
+        case WFD_PORT_MODE_HEIGHT:
+            value = pPortMode->height;
+            break;
 
-         case WFD_PORT_MODE_REFRESH_RATE:
-             value = floor(pPortMode->refreshRate);
-             break;
+        case WFD_PORT_MODE_REFRESH_RATE:
+            value = floor(pPortMode->refreshRate);
+            break;
 
-         case WFD_PORT_MODE_FLIP_MIRROR_SUPPORT:
-             value = pPortMode->flipMirrorSupport;
-             break;
+        case WFD_PORT_MODE_FLIP_MIRROR_SUPPORT:
+            value = pPortMode->flipMirrorSupport;
+            break;
 
-         case WFD_PORT_MODE_ROTATION_SUPPORT:
-             value = pPortMode->rotationSupport;
-             break;
+        case WFD_PORT_MODE_ROTATION_SUPPORT:
+            value = pPortMode->rotationSupport;
+            break;
 
-         case WFD_PORT_MODE_INTERLACED:
-             value = pPortMode->interlaced;
-             break;
+        case WFD_PORT_MODE_INTERLACED:
+            value = pPortMode->interlaced;
+            break;
 
-         default:
-             *attrValue = 0;
-             return WFD_ERROR_BAD_ATTRIBUTE;
-     }
+        default:
+            *attrValue = 0;
+            return WFD_ERROR_BAD_ATTRIBUTE;
+    }
 
-     *attrValue = value;
+    *attrValue = value;
 
-     return WFD_ERROR_NONE;
+    return WFD_ERROR_NONE;
 }
 
 /* ================================================================== */
 /*                 P O R T  A T T R I B U T E S                       */
 /* ================================================================== */
 
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribi(WFD_PORT* port,
-                    WFDPortConfigAttrib attrib,
-                    WFDint* value) OWF_APIEXIT
-{
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_GetAttribi(
+    WFD_PORT *port, WFDPortConfigAttrib attrib, WFDint *value) OWF_APIEXIT {
     OWF_ATTRIBUTE_LIST_STATUS ec;
 
     OWF_ASSERT(port && value);
 
-    if (attrib == WFD_PORT_BACKGROUND_COLOR)
-    {
+    if (attrib == WFD_PORT_BACKGROUND_COLOR) {
         WFDfloat bg[BG_SIZE];
         WFDint temp;
 
         temp = OWF_Attribute_GetValuefv(&port->attributes, attrib, BG_SIZE, bg);
-        if (temp != BG_SIZE)
-        {
+        if (temp != BG_SIZE) {
             return WFD_ERROR_ILLEGAL_ARGUMENT;
         }
         ec = OWF_AttributeList_GetError(&port->attributes);
 
-        if (ec == ATTR_ERROR_NONE)
-        {
+        if (ec == ATTR_ERROR_NONE) {
             *value = WFD_Util_BgFv2Int(BG_SIZE, bg);
         }
-    }
-    else
-    {
+    } else {
         *value = OWF_Attribute_GetValuei(&port->attributes, attrib);
         ec = OWF_AttributeList_GetError(&port->attributes);
     }
@@ -1292,11 +1062,8 @@ WFD_Port_GetAttribi(WFD_PORT* port,
     return WFD_Util_AttrEc2WfdEc(ec);
 }
 
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribf(WFD_PORT* port,
-                    WFDPortConfigAttrib attrib,
-                    WFDfloat* value) OWF_APIEXIT
-{
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_GetAttribf(
+    WFD_PORT *port, WFDPortConfigAttrib attrib, WFDfloat *value) OWF_APIEXIT {
     OWF_ASSERT(port && value);
 
     *value = OWF_Attribute_GetValuef(&port->attributes, attrib);
@@ -1304,217 +1071,168 @@ WFD_Port_GetAttribf(WFD_PORT* port,
 }
 
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribiv(WFD_PORT* port,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     WFDint* value) OWF_APIEXIT
-{
-    WFDint                      temp;
-    OWF_ATTRIBUTE_LIST_STATUS   ec;
-    WFDint                      aLength;
+WFD_Port_GetAttribiv(WFD_PORT *port, WFDPortConfigAttrib attrib, WFDint count,
+                     WFDint *value) OWF_APIEXIT {
+    WFDint temp;
+    OWF_ATTRIBUTE_LIST_STATUS ec;
+    WFDint aLength;
 
     OWF_ASSERT(port && value);
     OWF_ASSERT(count > 0);
 
     /* check that count is ok for given attrib */
     aLength = OWF_Attribute_GetValueiv(&port->attributes, attrib, 0, NULL);
-    if (attrib != WFD_PORT_BINDABLE_PIPELINE_IDS)
-    {
-        if (aLength != count)
-        {
+    if (attrib != WFD_PORT_BINDABLE_PIPELINE_IDS) {
+        if (aLength != count) {
             return WFD_ERROR_ILLEGAL_ARGUMENT;
         }
-    }
-    else
-    {
+    } else {
         /* pipelines ids may be queried less than element count */
-        if (count > aLength)
-        {
+        if (count > aLength) {
             return WFD_ERROR_ILLEGAL_ARGUMENT;
         }
     }
 
-    if (attrib == WFD_PORT_BACKGROUND_COLOR)
-    {
+    if (attrib == WFD_PORT_BACKGROUND_COLOR) {
         WFDfloat bg[BG_SIZE];
 
         temp = OWF_Attribute_GetValuefv(&port->attributes, attrib, count, bg);
-        if (temp != count)
-        {
+        if (temp != count) {
             return WFD_ERROR_ILLEGAL_ARGUMENT;
         }
 
         ec = OWF_AttributeList_GetError(&port->attributes);
 
-        if (ec == ATTR_ERROR_NONE)
-        {
+        if (ec == ATTR_ERROR_NONE) {
             WFD_Util_BgFv2Iv(count, bg, value);
         }
-    }
-    else
-    {
-        temp = OWF_Attribute_GetValueiv(&port->attributes, attrib, count, value);
-        if (temp != count)
-        {
+    } else {
+        temp =
+            OWF_Attribute_GetValueiv(&port->attributes, attrib, count, value);
+        if (temp != count) {
             return WFD_ERROR_ILLEGAL_ARGUMENT;
         }
         ec = OWF_AttributeList_GetError(&port->attributes);
     }
 
-   return WFD_Util_AttrEc2WfdEc(ec);
+    return WFD_Util_AttrEc2WfdEc(ec);
 }
 
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribfv(WFD_PORT* port,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     WFDfloat* value) OWF_APIEXIT
-{
-    WFDint      temp;
-    WFDint      aLength;
+WFD_Port_GetAttribfv(WFD_PORT *port, WFDPortConfigAttrib attrib, WFDint count,
+                     WFDfloat *value) OWF_APIEXIT {
+    WFDint temp;
+    WFDint aLength;
 
     OWF_ASSERT(port && value);
     OWF_ASSERT(count > 0);
 
     /* check that count is ok for given attrib */
     aLength = OWF_Attribute_GetValuefv(&port->attributes, attrib, 0, NULL);
-    if (aLength != count)
-    {
+    if (aLength != count) {
         return WFD_ERROR_ILLEGAL_ARGUMENT;
     }
 
     temp = OWF_Attribute_GetValuefv(&port->attributes, attrib, count, value);
-    if (temp != count)
-    {
+    if (temp != count) {
         return WFD_ERROR_ILLEGAL_ARGUMENT;
     }
     return WFD_Util_AttrEc2WfdEc(OWF_AttributeList_GetError(&port->attributes));
 }
 
-
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribi(WFD_PORT* port,
-                    WFDPortConfigAttrib attrib,
-                    WFDint value) OWF_APIEXIT
-{
-    WFDErrorCode            ec;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_SetAttribi(
+    WFD_PORT *port, WFDPortConfigAttrib attrib, WFDint value) OWF_APIEXIT {
+    WFDErrorCode ec;
 
     ec = WFD_Port_ValidateAttribi(port, attrib, value);
-    if (WFD_ERROR_NONE == ec)
-    {
-        if (attrib == WFD_PORT_BACKGROUND_COLOR)
-        {
+    if (WFD_ERROR_NONE == ec) {
+        if (attrib == WFD_PORT_BACKGROUND_COLOR) {
             WFDfloat bg[BG_SIZE];
 
             WFD_Util_BgInt2Fv(value, BG_SIZE, bg);
             OWF_Attribute_SetValuefv(&port->attributes, attrib, BG_SIZE, bg);
-        }
-        else
-        {
+        } else {
             OWF_Attribute_SetValuei(&port->attributes, attrib, value);
         }
         ec = WFD_Util_AttrEc2WfdEc(
-                OWF_AttributeList_GetError(&port->attributes));
+            OWF_AttributeList_GetError(&port->attributes));
     }
     return ec;
 }
 
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribf(WFD_PORT* port,
-                    WFDPortConfigAttrib attrib,
-                    WFDfloat value) OWF_APIEXIT
-{
-    WFDErrorCode            ec;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_SetAttribf(
+    WFD_PORT *port, WFDPortConfigAttrib attrib, WFDfloat value) OWF_APIEXIT {
+    WFDErrorCode ec;
 
     ec = WFD_Port_ValidateAttribf(port, attrib, value);
-    if (WFD_ERROR_NONE == ec)
-    {
+    if (WFD_ERROR_NONE == ec) {
         OWF_Attribute_SetValuef(&port->attributes, attrib, value);
-        ec = WFD_Util_AttrEc2WfdEc(OWF_AttributeList_GetError(&port->attributes));
+        ec = WFD_Util_AttrEc2WfdEc(
+            OWF_AttributeList_GetError(&port->attributes));
     }
     return ec;
 }
 
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribiv(WFD_PORT* port,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     const WFDint* values) OWF_APIEXIT
-{
-    WFDErrorCode            ec;
+WFD_Port_SetAttribiv(WFD_PORT *port, WFDPortConfigAttrib attrib, WFDint count,
+                     const WFDint *values) OWF_APIEXIT {
+    WFDErrorCode ec;
 
     ec = WFD_Port_ValidateAttribiv(port, attrib, count, values);
-    if (WFD_ERROR_NONE == ec)
-    {
-        if (attrib == WFD_PORT_BACKGROUND_COLOR)
-        {
+    if (WFD_ERROR_NONE == ec) {
+        if (attrib == WFD_PORT_BACKGROUND_COLOR) {
             WFDfloat bg[BG_SIZE];
 
             WFD_Util_BgIv2Fv(count, values, bg);
             OWF_Attribute_SetValuefv(&port->attributes, attrib, count, bg);
-        }
-        else
-        {
+        } else {
             OWF_Attribute_SetValueiv(&port->attributes, attrib, count, values);
         }
-        ec = WFD_Util_AttrEc2WfdEc(OWF_AttributeList_GetError(&port->attributes));
+        ec = WFD_Util_AttrEc2WfdEc(
+            OWF_AttributeList_GetError(&port->attributes));
     }
     return ec;
 }
 
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribfv(WFD_PORT* port,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     const WFDfloat* values) OWF_APIEXIT
-{
-    WFDErrorCode            ec;
+WFD_Port_SetAttribfv(WFD_PORT *port, WFDPortConfigAttrib attrib, WFDint count,
+                     const WFDfloat *values) OWF_APIEXIT {
+    WFDErrorCode ec;
 
     ec = WFD_Port_ValidateAttribfv(port, attrib, count, values);
-    if (WFD_ERROR_NONE == ec)
-    {
+    if (WFD_ERROR_NONE == ec) {
         OWF_Attribute_SetValuefv(&port->attributes, attrib, count, values);
-        ec = WFD_Util_AttrEc2WfdEc(OWF_AttributeList_GetError(&port->attributes));
+        ec = WFD_Util_AttrEc2WfdEc(
+            OWF_AttributeList_GetError(&port->attributes));
     }
     return ec;
 }
 
-static WFDErrorCode
-WFD_Port_ValidateAttribi(WFD_PORT* port,
-                         WFDPortConfigAttrib attrib,
-                         WFDint value)
-{
-    WFDErrorCode            result = WFD_ERROR_NONE;
+static WFDErrorCode WFD_Port_ValidateAttribi(WFD_PORT *port,
+                                             WFDPortConfigAttrib attrib,
+                                             WFDint value) {
+    WFDErrorCode result = WFD_ERROR_NONE;
 
     OWF_ASSERT(port && port->config);
 
     DPRINT(("WFD_Port_ValidateAttribi(pipeline=%d, attrib=%d, value=%d",
             ID(port), attrib, value));
 
-    switch (attrib)
-    {
+    switch (attrib) {
         case WFD_PORT_FLIP:
-        case WFD_PORT_MIRROR:
-        {
-            WFD_PORT_MODE*          mode;
+        case WFD_PORT_MIRROR: {
+            WFD_PORT_MODE *mode;
 
             /* check boolean */
-            if (!(WFD_FALSE == value || WFD_TRUE == value))
-            {
+            if (!(WFD_FALSE == value || WFD_TRUE == value)) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
-            }
-            else
-            {
+            } else {
                 mode = WFD_Port_GetModePtr(port);
-                if (NULL != mode)
-                {
-                    if (!mode->flipMirrorSupport && WFD_TRUE == value)
-                    {
+                if (NULL != mode) {
+                    if (!mode->flipMirrorSupport && WFD_TRUE == value) {
                         result = WFD_ERROR_ILLEGAL_ARGUMENT;
                     }
-                }
-                else
-                {
+                } else {
                     result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 }
             }
@@ -1522,49 +1240,36 @@ WFD_Port_ValidateAttribi(WFD_PORT* port,
             break;
         }
 
-        case WFD_PORT_ROTATION:
-        {
-            WFD_PORT_MODE*          mode;
+        case WFD_PORT_ROTATION: {
+            WFD_PORT_MODE *mode;
 
             mode = WFD_Port_GetModePtr(port);
-            if (NULL != mode)
-            {
-                if (mode->rotationSupport == WFD_ROTATION_SUPPORT_NONE)
-                {
-                    if ( value != 0)
-                    {
+            if (NULL != mode) {
+                if (mode->rotationSupport == WFD_ROTATION_SUPPORT_NONE) {
+                    if (value != 0) {
                         result = WFD_ERROR_ILLEGAL_ARGUMENT;
                     }
-                }
-                else if (mode->rotationSupport == WFD_ROTATION_SUPPORT_LIMITED)
-                {
-                    if (value != 0 && value != 90 && value != 180 && value != 270)
-                    {
+                } else if (mode->rotationSupport ==
+                           WFD_ROTATION_SUPPORT_LIMITED) {
+                    if (value != 0 && value != 90 && value != 180 &&
+                        value != 270) {
                         result = WFD_ERROR_ILLEGAL_ARGUMENT;
                     }
-                }
-                else
-                {
+                } else {
                     result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 }
 
-            }
-            else
-            {
+            } else {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
             }
             break;
         }
 
-        case WFD_PORT_PROTECTION_ENABLE:
-        {
+        case WFD_PORT_PROTECTION_ENABLE: {
             /* check boolean */
-            if (!(WFD_FALSE == value || WFD_TRUE == value))
-            {
+            if (!(WFD_FALSE == value || WFD_TRUE == value)) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
-            }
-            else
-            {
+            } else {
                 /* Real implementation should check here
                  * whether the HW is capable of providing protection
                  */
@@ -1573,72 +1278,53 @@ WFD_Port_ValidateAttribi(WFD_PORT* port,
                  * information - content protection is never supported
                  * Setting value to WFD_FALSE is allowed
                  */
-                if (value != WFD_FALSE)
-                {
+                if (value != WFD_FALSE) {
                     result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 }
             }
             break;
         }
 
-        case WFD_PORT_POWER_MODE:
-        {
-            if (!(WFD_POWER_MODE_OFF  == value ||
+        case WFD_PORT_POWER_MODE: {
+            if (!(WFD_POWER_MODE_OFF == value ||
                   WFD_POWER_MODE_SUSPEND == value ||
                   WFD_POWER_MODE_LIMITED_USE == value ||
-                  WFD_POWER_MODE_ON  == value))
-            {
+                  WFD_POWER_MODE_ON == value)) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
             }
             break;
         }
 
-        case WFD_PORT_PARTIAL_REFRESH_ENABLE:
-        {
+        case WFD_PORT_PARTIAL_REFRESH_ENABLE: {
             WFDPartialRefresh supported = port->config->partialRefreshSupport;
 
-            if (value == WFD_PARTIAL_REFRESH_NONE)
-            {
+            if (value == WFD_PARTIAL_REFRESH_NONE) {
                 result = WFD_ERROR_NONE;
-            }
-            else if (value == WFD_PARTIAL_REFRESH_VERTICAL)
-            {
+            } else if (value == WFD_PARTIAL_REFRESH_VERTICAL) {
                 if (supported != WFD_PARTIAL_REFRESH_VERTICAL &&
-                    supported != WFD_PARTIAL_REFRESH_BOTH)
-                {
+                    supported != WFD_PARTIAL_REFRESH_BOTH) {
                     result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 }
-            }
-            else if (value == WFD_PARTIAL_REFRESH_HORIZONTAL)
-            {
+            } else if (value == WFD_PARTIAL_REFRESH_HORIZONTAL) {
                 if (supported != WFD_PARTIAL_REFRESH_HORIZONTAL &&
-                    supported != WFD_PARTIAL_REFRESH_BOTH)
-                {
+                    supported != WFD_PARTIAL_REFRESH_BOTH) {
                     result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 }
-            }
-            else if (value == WFD_PARTIAL_REFRESH_BOTH)
-            {
-                if (supported != WFD_PARTIAL_REFRESH_BOTH)
-                {
+            } else if (value == WFD_PARTIAL_REFRESH_BOTH) {
+                if (supported != WFD_PARTIAL_REFRESH_BOTH) {
                     result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 }
-            }
-            else
-            {
+            } else {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
             }
             break;
         }
 
-        case WFD_PORT_BACKGROUND_COLOR:
-        {
+        case WFD_PORT_BACKGROUND_COLOR: {
             if ((value & 0xFF) != 0xFF) /* alpha always 0xFF when set or get */
             {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
-            }
-            else
-            {
+            } else {
                 WFDfloat bg[BG_SIZE];
 
                 WFD_Util_BgInt2Fv(value, BG_SIZE, bg);
@@ -1647,8 +1333,7 @@ WFD_Port_ValidateAttribi(WFD_PORT* port,
             break;
         }
 
-        default:
-        {
+        default: {
             DPRINT(("  Invalid port attribute: %d", attrib));
             result = WFD_ERROR_ILLEGAL_ARGUMENT;
             break;
@@ -1657,31 +1342,26 @@ WFD_Port_ValidateAttribi(WFD_PORT* port,
     return result;
 }
 
-static WFDErrorCode
-WFD_Port_ValidateAttribf(WFD_PORT* port,
-                         WFDPortConfigAttrib attrib,
-                         WFDfloat value)
-{
-    WFDErrorCode            result = WFD_ERROR_NONE;
+static WFDErrorCode WFD_Port_ValidateAttribf(WFD_PORT *port,
+                                             WFDPortConfigAttrib attrib,
+                                             WFDfloat value) {
+    WFDErrorCode result = WFD_ERROR_NONE;
 
     OWF_ASSERT(port);
 
     DPRINT(("WFD_Port_ValidateAttribi(pipeline=%d, attrib=%d, value=%d",
             ID(port), attrib, value));
 
-    switch (attrib)
-    {
-        case WFD_PORT_GAMMA:
-        {
-            if (!(value >= port->config->gammaRange[0] && value <= port->config->gammaRange[1]))
-            {
+    switch (attrib) {
+        case WFD_PORT_GAMMA: {
+            if (!(value >= port->config->gammaRange[0] &&
+                  value <= port->config->gammaRange[1])) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
             }
             break;
         }
 
-        default:
-        {
+        default: {
             DPRINT(("  Invalid port attribute: %d", attrib));
             result = WFD_ERROR_ILLEGAL_ARGUMENT;
             break;
@@ -1690,45 +1370,38 @@ WFD_Port_ValidateAttribf(WFD_PORT* port,
     return result;
 }
 
-static WFDErrorCode
-WFD_Port_ValidateAttribiv(WFD_PORT* port,
-                          WFDPortConfigAttrib attrib,
-                          WFDint count,
-                          const WFDint* values)
-{
-    WFDErrorCode            result = WFD_ERROR_NONE;
+static WFDErrorCode WFD_Port_ValidateAttribiv(WFD_PORT *port,
+                                              WFDPortConfigAttrib attrib,
+                                              WFDint count,
+                                              const WFDint *values) {
+    WFDErrorCode result = WFD_ERROR_NONE;
 
     OWF_ASSERT(port);
 
     DPRINT(("WFD_Port_ValidateAttribi(pipeline=%d, attrib=%d, value=%d",
             ID(port), attrib, values));
 
-    switch (attrib)
-    {
-        case WFD_PORT_PARTIAL_REFRESH_RECTANGLE:
-        {
-            if (RECT_SIZE != count)
-            {
+    switch (attrib) {
+        case WFD_PORT_PARTIAL_REFRESH_RECTANGLE: {
+            if (RECT_SIZE != count) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 break;
             }
 
-            if ( !(values[RECT_OFFSETX] >= 0 &&
-                   values[RECT_OFFSETY] >= 0 &&
-                   values[RECT_WIDTH] <= port->config->partialRefreshMaximum[0] &&
-                   values[RECT_HEIGHT] <= port->config->partialRefreshMaximum[1]) )
-            {
+            if (!(values[RECT_OFFSETX] >= 0 && values[RECT_OFFSETY] >= 0 &&
+                  values[RECT_WIDTH] <=
+                      port->config->partialRefreshMaximum[0] &&
+                  values[RECT_HEIGHT] <=
+                      port->config->partialRefreshMaximum[1])) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
             }
             break;
         }
 
-        case WFD_PORT_BACKGROUND_COLOR:
-        {
+        case WFD_PORT_BACKGROUND_COLOR: {
             WFDfloat bg[BG_SIZE];
 
-            if (BG_SIZE != count)
-            {
+            if (BG_SIZE != count) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 break;
             }
@@ -1738,9 +1411,7 @@ WFD_Port_ValidateAttribiv(WFD_PORT* port,
             break;
         }
 
-
-        default:
-        {
+        default: {
             DPRINT(("  Invalid port attribute: %d", attrib));
             result = WFD_ERROR_ILLEGAL_ARGUMENT;
             break;
@@ -1749,40 +1420,32 @@ WFD_Port_ValidateAttribiv(WFD_PORT* port,
     return result;
 }
 
-static WFDErrorCode
-WFD_Port_ValidateAttribfv(WFD_PORT* port,
-                          WFDPortConfigAttrib attrib,
-                          WFDint count,
-                          const WFDfloat* values)
-{
-    WFDErrorCode            result = WFD_ERROR_NONE;
+static WFDErrorCode WFD_Port_ValidateAttribfv(WFD_PORT *port,
+                                              WFDPortConfigAttrib attrib,
+                                              WFDint count,
+                                              const WFDfloat *values) {
+    WFDErrorCode result = WFD_ERROR_NONE;
 
     OWF_ASSERT(port);
 
     DPRINT(("WFD_Port_ValidateAttribi(pipeline=%d, attrib=%d, value=%d",
             ID(port), attrib, values));
 
-    switch (attrib)
-    {
-
-        case WFD_PORT_BACKGROUND_COLOR:
-        {
-            if (BG_SIZE != count)
-            {
+    switch (attrib) {
+        case WFD_PORT_BACKGROUND_COLOR: {
+            if (BG_SIZE != count) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
                 break;
             }
 
             if (!(INRANGE(values[0], 0.0f, 1.0f) &&
                   INRANGE(values[1], 0.0f, 1.0f) &&
-                  INRANGE(values[2], 0.0f, 1.0f) ))
-            {
+                  INRANGE(values[2], 0.0f, 1.0f))) {
                 result = WFD_ERROR_ILLEGAL_ARGUMENT;
             }
             break;
         }
-        default:
-        {
+        default: {
             DPRINT(("  Invalid port attribute: %d", attrib));
             result = WFD_ERROR_BAD_ATTRIBUTE;
             break;
@@ -1791,25 +1454,19 @@ WFD_Port_ValidateAttribfv(WFD_PORT* port,
     return result;
 }
 
-
-
 /* ================================================================== */
 /*                   P O R T   B I N D I N G S                        */
 /* ================================================================== */
 
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_PipelineNbr(WFD_PORT* port, WFD_PIPELINE* pipeline) OWF_APIEXIT
-{
+WFD_Port_PipelineNbr(WFD_PORT *port, WFD_PIPELINE *pipeline) OWF_APIEXIT {
     WFDint i;
 
     OWF_ASSERT(port && pipeline);
-    if (!port || !pipeline)
-        return -1;
+    if (!port || !pipeline) return -1;
 
-    for (i = 0; i < PLCOUNT(port); i++)
-    {
-        if (ID(pipeline) == port->config->pipelineIds[i])
-        {
+    for (i = 0; i < PLCOUNT(port); i++) {
+        if (ID(pipeline) == port->config->pipelineIds[i]) {
             return i;
         }
     }
@@ -1817,14 +1474,11 @@ WFD_Port_PipelineNbr(WFD_PORT* port, WFD_PIPELINE* pipeline) OWF_APIEXIT
 }
 
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_PipelineBindable(WFD_PORT* port, WFDint pipelineId) OWF_APIEXIT
-{
+WFD_Port_PipelineBindable(WFD_PORT *port, WFDint pipelineId) OWF_APIEXIT {
     WFDint i;
 
-    for (i = 0; i < PLCOUNT(port); i++)
-    {
-        if (port->config->pipelineIds[i] == pipelineId)
-        {
+    for (i = 0; i < PLCOUNT(port); i++) {
+        if (port->config->pipelineIds[i] == pipelineId) {
             return WFD_TRUE;
         }
     }
@@ -1832,28 +1486,23 @@ WFD_Port_PipelineBindable(WFD_PORT* port, WFDint pipelineId) OWF_APIEXIT
 }
 
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_PipelineBound(WFD_PORT* port, WFD_PIPELINE* pipeline) OWF_APIEXIT
-{
+WFD_Port_PipelineBound(WFD_PORT *port, WFD_PIPELINE *pipeline) OWF_APIEXIT {
     OWF_ASSERT(port && pipeline && pipeline->bindings);
-    if (!port || !pipeline)
-        return WFD_FALSE;
+    if (!port || !pipeline) return WFD_FALSE;
 
     return (pipeline->bindings->boundPort == port);
 }
 
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_PipelineCacheBinding(WFD_PORT* port,
-                              WFD_PIPELINE* pipeline) OWF_APIEXIT
-{
+OWF_API_CALL void OWF_APIENTRY WFD_Port_PipelineCacheBinding(
+    WFD_PORT *port, WFD_PIPELINE *pipeline) OWF_APIEXIT {
     WFDint pipelineNbr;
 
-    OWF_ASSERT (port && port->bindings);
-    OWF_ASSERT (pipeline && pipeline->bindings);
+    OWF_ASSERT(port && port->bindings);
+    OWF_ASSERT(pipeline && pipeline->bindings);
 
     pipelineNbr = WFD_Port_PipelineNbr(port, pipeline);
-    if (pipelineNbr>=0)
-    {
-        WFD_PORT* oldPort;
+    if (pipelineNbr >= 0) {
+        WFD_PORT *oldPort;
 
         oldPort = pipeline->bindings->cachedPort;
 
@@ -1861,8 +1510,7 @@ WFD_Port_PipelineCacheBinding(WFD_PORT* port,
         ADDREF(port->bindings[pipelineNbr].cachedPipeline, pipeline);
 
         /* check if earlier cached binding exist */
-        if (oldPort && oldPort != port)
-        {
+        if (oldPort && oldPort != port) {
             WFDint ind;
 
             WFD_Port_AcquireLock(oldPort);
@@ -1877,53 +1525,45 @@ WFD_Port_PipelineCacheBinding(WFD_PORT* port,
         return;
     }
 
-    DPRINT(("Cannot cache port-pipeline binding %d, %d",
-            ID(port), pipeline->config->id));
+    DPRINT(("Cannot cache port-pipeline binding %d, %d", ID(port),
+            pipeline->config->id));
 }
 
-static void
-WFD_Port_PipelineRemoveBinding(WFD_PORT* pPort, WFDint pipelineInd)
-{
-    WFD_PORT_BINDING* portBinding;
-    WFD_PIPELINE_BINDINGS* plBindings = NULL;
+static void WFD_Port_PipelineRemoveBinding(WFD_PORT *pPort,
+                                           WFDint pipelineInd) {
+    WFD_PORT_BINDING *portBinding;
+    WFD_PIPELINE_BINDINGS *plBindings = NULL;
 
     OWF_ASSERT(pPort && pPort->config);
-    OWF_ASSERT (pipelineInd < pPort->config->pipelineIdCount);
+    OWF_ASSERT(pipelineInd < pPort->config->pipelineIdCount);
 
     portBinding = &pPort->bindings[pipelineInd];
-    if (!portBinding)
-        return;
+    if (!portBinding) return;
 
-    if (portBinding->boundPipeline)
-    {
+    if (portBinding->boundPipeline) {
         plBindings = portBinding->boundPipeline->bindings;
         REMREF(plBindings->boundPort);
-        portBinding->boundPipeline->config->layer =  WFD_INVALID_PIPELINE_LAYER;
-        portBinding->boundPipeline->config->portId =  WFD_INVALID_PORT_ID;
+        portBinding->boundPipeline->config->layer = WFD_INVALID_PIPELINE_LAYER;
+        portBinding->boundPipeline->config->portId = WFD_INVALID_PORT_ID;
         REMREF(portBinding->boundPipeline);
     }
 
-    if (portBinding->cachedPipeline)
-    {
+    if (portBinding->cachedPipeline) {
         plBindings = portBinding->cachedPipeline->bindings;
         REMREF(plBindings->cachedPort);
         REMREF(portBinding->cachedPipeline);
     }
 }
 
-
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_QueryPipelineLayerOrder(WFD_PORT* pPort,
-                                 WFD_PIPELINE* pPipeline) OWF_APIEXIT
-{
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Port_QueryPipelineLayerOrder(
+    WFD_PORT *pPort, WFD_PIPELINE *pPipeline) OWF_APIEXIT {
     WFDint i;
 
     OWF_ASSERT(pPort && pPort->config && pPipeline && pPipeline->config);
 
     i = WFD_Port_PipelineNbr(pPort, pPipeline);
 
-    if (i >= 0)
-    {
+    if (i >= 0) {
         return BINDABLE_PL_INDEX_2_PL_LAYER(i);
     }
 
@@ -1936,30 +1576,24 @@ WFD_Port_QueryPipelineLayerOrder(WFD_PORT* pPort,
 /* ================================================================== */
 
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetDisplayDataFormats(WFD_PORT* port,
-                               WFDDisplayDataFormat *format,
-                               WFDint formatCount) OWF_APIEXIT
-{
+WFD_Port_GetDisplayDataFormats(WFD_PORT *port, WFDDisplayDataFormat *format,
+                               WFDint formatCount) OWF_APIEXIT {
     WFDint i;
     WFDint count = 0;
 
     OWF_ASSERT(port && port->config);
 
-    if (!port->config->attached)
-    {
+    if (!port->config->attached) {
         return 0;
     }
 
-    if (!format)
-    {
+    if (!format) {
         return port->config->displayDataCount;
     }
 
-    for(i=0; i < formatCount; i++)
-    {
-        if (i < port->config->displayDataCount)
-        {
-            format[i] =  port->config->displayData[i].format;
+    for (i = 0; i < formatCount; i++) {
+        if (i < port->config->displayDataCount) {
+            format[i] = port->config->displayData[i].format;
             count++;
         }
     }
@@ -1967,23 +1601,18 @@ WFD_Port_GetDisplayDataFormats(WFD_PORT* port,
     return count;
 }
 
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_HasDisplayData(WFD_PORT* port,
-                        WFDDisplayDataFormat format) OWF_APIEXIT
-{
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Port_HasDisplayData(
+    WFD_PORT *port, WFDDisplayDataFormat format) OWF_APIEXIT {
     WFDint i;
 
     OWF_ASSERT(port && port->config);
 
-    if (!port->config->attached)
-    {
+    if (!port->config->attached) {
         return WFD_FALSE;
     }
 
-    for (i=0; i < port->config->displayDataCount; i++)
-    {
-        if (port->config->displayData[i].format == format)
-        {
+    for (i = 0; i < port->config->displayDataCount; i++) {
+        if (port->config->displayData[i].format == format) {
             return WFD_TRUE;
         }
     }
@@ -1992,44 +1621,31 @@ WFD_Port_HasDisplayData(WFD_PORT* port,
 }
 
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetDisplayData(WFD_PORT* port,
-                        WFDDisplayDataFormat format,
-                        WFDuint8* data,
-                        WFDint dataCount) OWF_APIEXIT
-{
+WFD_Port_GetDisplayData(WFD_PORT *port, WFDDisplayDataFormat format,
+                        WFDuint8 *data, WFDint dataCount) OWF_APIEXIT {
     WFDint i;
     WFDint count = 0;
 
     OWF_ASSERT(port && port->config);
 
-    if (!port->config->attached)
-    {
+    if (!port->config->attached) {
         return 0;
     }
 
-    for (i=0; i < port->config->displayDataCount; i++)
-    {
-        WFD_DISPLAY_DATA* displayData = &port->config->displayData[i];
+    for (i = 0; i < port->config->displayDataCount; i++) {
+        WFD_DISPLAY_DATA *displayData = &port->config->displayData[i];
 
-        if (displayData->format == format)
-        {
+        if (displayData->format == format) {
             WFDint j;
 
-            if (!data)
-            {
+            if (!data) {
                 count = displayData->dataSize;
-            }
-            else
-            {
-                for (j=0; j < dataCount; j++)
-                {
-                    if (j < displayData->dataSize)
-                    {
+            } else {
+                for (j = 0; j < dataCount; j++) {
+                    if (j < displayData->dataSize) {
                         data[j] = displayData->data[j];
                         count++;
-                    }
-                    else
-                    {
+                    } else {
                         data[j] = 0;
                     }
                 }
@@ -2042,29 +1658,22 @@ WFD_Port_GetDisplayData(WFD_PORT* port,
     return count;
 }
 
-
 /* ================================================================== */
 /*                   P O W E R    M O D E S                           */
 /* ================================================================== */
 
-
-static void
-WFD_Port_ChangePowerMode(WFD_PORT* port,
-                         WFDPowerMode currentPower,
-                         WFDPowerMode newPower)
-{
+static void WFD_Port_ChangePowerMode(WFD_PORT *port, WFDPowerMode currentPower,
+                                     WFDPowerMode newPower) {
     /* pre-conditions: port mode already committed */
     /*                 port mode exists            */
 
     OWF_ASSERT(port && port->config);
 
-    if (newPower == currentPower)
-    {
+    if (newPower == currentPower) {
         return;
     }
 
-    switch (newPower)
-    {
+    switch (newPower) {
         case WFD_POWER_MODE_OFF:
         case WFD_POWER_MODE_SUSPEND:
             /* Sample implementation does not distinguish between these
@@ -2089,17 +1698,13 @@ WFD_Port_ChangePowerMode(WFD_PORT* port,
     }
 }
 
-static WFDboolean
-WFD_Port_IsAttached(WFD_PORT* pPort)
-{
+static WFDboolean WFD_Port_IsAttached(WFD_PORT *pPort) {
     OWF_ASSERT(pPort && pPort->config);
 
     return (pPort->config->attached);
 }
 
-static WFDboolean
-WFD_Port_PowerIsOn(WFD_PORT* pPort)
-{
+static WFDboolean WFD_Port_PowerIsOn(WFD_PORT *pPort) {
     OWF_ASSERT(pPort && pPort->config);
 
     /* SI: power is considered be on when power mode is set correctly
@@ -2107,13 +1712,11 @@ WFD_Port_PowerIsOn(WFD_PORT* pPort)
      */
 
     return (pPort->config->powerMode == WFD_POWER_MODE_LIMITED_USE ||
-           pPort->config->powerMode == WFD_POWER_MODE_ON) &&
+            pPort->config->powerMode == WFD_POWER_MODE_ON) &&
            pPort->screenNumber != OWF_INVALID_SCREEN_NUMBER;
 }
 
-static void
-WFD_Port_PowerOff(WFD_PORT* pPort)
-{
+static void WFD_Port_PowerOff(WFD_PORT *pPort) {
     WFDfloat black[BG_SIZE] = {0.0, 0.0, 0.0};
 
     OWF_ASSERT(pPort);
@@ -2123,40 +1726,30 @@ WFD_Port_PowerOff(WFD_PORT* pPort)
     WFD_Port_SetFrameBufferBackground(pPort, black);
 }
 
-static void
-WFD_Port_PowerOn(WFD_PORT* pPort)
-{
+static void WFD_Port_PowerOn(WFD_PORT *pPort) {
     OWF_ASSERT(pPort && pPort->currentMode);
 
     DPRINT(("Port going power on: %d (%p)", ID(pPort), pPort));
 
-    WFD_Port_SetFrameBufferBackground(pPort,
-            pPort->config->backgroundColor);
+    WFD_Port_SetFrameBufferBackground(pPort, pPort->config->backgroundColor);
 }
 
-
-static void
-WFD_Port_SetFrameBufferBackground( WFD_PORT* port,
-                                   WFDfloat* color)
-{
+static void WFD_Port_SetFrameBufferBackground(WFD_PORT *port, WFDfloat *color) {
     /* this can be called when port lock is in posession */
 
     OWFsubpixel red;
     OWFsubpixel green;
     OWFsubpixel blue;
 
-    WFDint w,h;
+    WFDint w, h;
 
-    OWF_ASSERT (port && port->config);
+    OWF_ASSERT(port && port->config);
     OWF_ASSERT(port->frameBuffer == 0 || port->frameBuffer == 1);
 
-    if (port->currentMode)
-    {
+    if (port->currentMode) {
         w = port->currentMode->width;
         h = port->currentMode->height;
-    }
-    else
-    {
+    } else {
         w = port->config->nativeResolution[0];
         h = port->config->nativeResolution[1];
     }
@@ -2165,7 +1758,7 @@ WFD_Port_SetFrameBufferBackground( WFD_PORT* port,
 
     red = color[0];
     green = color[1];
-    blue  = color[2];
+    blue = color[2];
 
     OWF_Image_Clear(port->scratch[0], red, green, blue, OWF_FULLY_OPAQUE);
 
@@ -2173,11 +1766,10 @@ WFD_Port_SetFrameBufferBackground( WFD_PORT* port,
     {
         OWF_Image_SetSize(port->surface[port->frameBuffer], w, h);
         OWF_Image_DestinationFormatConversion(port->surface[port->frameBuffer],
-                port->scratch[0]);
+                                              port->scratch[0]);
     }
     OWF_Mutex_Unlock(&port->frMutex);
 }
-
 
 /*! \brief Catching detach/attach events
  *
@@ -2194,35 +1786,27 @@ WFD_Port_SetFrameBufferBackground( WFD_PORT* port,
  * \param screenNumber  Screen giving the callback
  * \param event         A character denoting the type of the event
  */
-static void
-WFD_Port_AttachDetach(void* obj, WFDint screenNumber, char event)
-{
-    WFD_PORT* pPort = (WFD_PORT*)obj;
+static void WFD_Port_AttachDetach(void *obj, WFDint screenNumber, char event) {
+    WFD_PORT *pPort = (WFD_PORT *)obj;
 
     /* search port matching screen number */
-    if (pPort->screenNumber == screenNumber)
-    {
-        if (pPort->config->detachable)
-        {
-            switch (event)
-            {
-            case 'a':
-            case 'A':
-                if (!pPort->config->attached)
-                {
-                    WFD_Port_Attach(pPort);
-
-                }
-                break;
-            case 'd':
-            case 'D':
-                if (pPort->config->attached)
-                {
-                    WFD_Port_Detach(pPort);
-                }
-                break;
-            default:
-                break;
+    if (pPort->screenNumber == screenNumber) {
+        if (pPort->config->detachable) {
+            switch (event) {
+                case 'a':
+                case 'A':
+                    if (!pPort->config->attached) {
+                        WFD_Port_Attach(pPort);
+                    }
+                    break;
+                case 'd':
+                case 'D':
+                    if (pPort->config->attached) {
+                        WFD_Port_Detach(pPort);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -2232,7 +1816,6 @@ WFD_Port_AttachDetach(void* obj, WFDint screenNumber, char event)
 /*                     P O R T  C O M M I T                           */
 /* ================================================================== */
 
-
 /* \brief Commit port
  *
  *  Device's commit lock is set!
@@ -2240,20 +1823,16 @@ WFD_Port_AttachDetach(void* obj, WFDint screenNumber, char event)
  *
  */
 
-OWF_API_CALL void  OWF_APIENTRY
-WFD_Port_Commit(WFD_PORT* port) OWF_APIEXIT
-{
+OWF_API_CALL void OWF_APIENTRY WFD_Port_Commit(WFD_PORT *port) OWF_APIEXIT {
     WFD_Port_AcquireLock(port);
     WFD_Port_DoCommit(port);
     WFD_Port_ReleaseLock(port);
 }
 
-static void
-WFD_Port_DoCommit(WFD_PORT* port)
-{
-    WFDPowerMode    newPower, currentPower;
-    WFDboolean      hasImmT = WFD_FALSE; /* port has immediate transitions */
-    WFDint          i;
+static void WFD_Port_DoCommit(WFD_PORT *port) {
+    WFDPowerMode newPower, currentPower;
+    WFDboolean hasImmT = WFD_FALSE; /* port has immediate transitions */
+    WFDint i;
 
     /* pre-condition: port is commit consistent */
 
@@ -2265,27 +1844,24 @@ WFD_Port_DoCommit(WFD_PORT* port)
     newPower = OWF_Attribute_GetValuei(&port->attributes, WFD_PORT_POWER_MODE);
 
     /* commit attribute list before changing port power mode */
-    OWF_AttributeList_Commit(&port->attributes,
-                             WFD_PORT_ID,
-                             WFD_PORT_PROTECTION_ENABLE, COMMIT_ATTR_DIRECT_FROM_WORKING);
+    OWF_AttributeList_Commit(&port->attributes, WFD_PORT_ID,
+                             WFD_PORT_PROTECTION_ENABLE,
+                             COMMIT_ATTR_DIRECT_FROM_WORKING);
 
     WFD_Port_ChangePowerMode(port, currentPower, newPower);
 
-    for (i = 0; i < PLCOUNT(port); i++)
-    {
-        WFD_PIPELINE* pl;
+    for (i = 0; i < PLCOUNT(port); i++) {
+        WFD_PIPELINE *pl;
 
         pl = port->bindings[i].cachedPipeline;
-        if (pl)
-        {
+        if (pl) {
             WFD_Port_CommitPipelineBindings(port, i, pl);
         }
 
         /* at this point, cached pipeline should be bound to port */
         pl = port->bindings[i].boundPipeline;
-        if (pl)
-        {
-            hasImmT  = WFD_Pipeline_Commit(pl, port) || hasImmT;
+        if (pl) {
+            hasImmT = WFD_Pipeline_Commit(pl, port) || hasImmT;
         }
     }
 
@@ -2301,8 +1877,7 @@ WFD_Port_DoCommit(WFD_PORT* port)
         /* do not render if power is off */
         imm = imm && WFD_Port_PowerIsOn(port) && WFD_Port_IsAttached(port);
 
-        if (imm)
-        {
+        if (imm) {
             /* immediate transition: render & blit */
             WFD_Port_Render(port, WFD_MESSAGE_IMMEDIATE);
             WFD_Port_Blit(port);
@@ -2310,82 +1885,64 @@ WFD_Port_DoCommit(WFD_PORT* port)
     }
 }
 
-static void
-WFD_Port_CommitPortMode(WFD_PORT* port)
-{
+static void WFD_Port_CommitPortMode(WFD_PORT *port) {
     OWF_ASSERT(port);
 
-    if (port && port->modeDirty)
-    {
+    if (port && port->modeDirty) {
         port->modeDirty = WFD_FALSE;
 
-        if (port->cachedMode)
-        {
+        if (port->cachedMode) {
             DPRINT(("  changing port mode %d -> %d",
                     (port->currentMode) ? port->currentMode->id : 0,
-                    (port->cachedMode)  ? port->cachedMode->id  : 0));
+                    (port->cachedMode) ? port->cachedMode->id : 0));
 
             port->currentMode = port->cachedMode;
 
-            if (port->screenNumber != OWF_INVALID_SCREEN_NUMBER)
-            {
-                OWF_Screen_Resize(port->screenNumber,
-                                  port->currentMode->width,
+            if (port->screenNumber != OWF_INVALID_SCREEN_NUMBER) {
+                OWF_Screen_Resize(port->screenNumber, port->currentMode->width,
                                   port->currentMode->height);
             }
 
-        /* Initialize frame buffers with port background color.
-         * This prevents tearing effects during refresh.
-         * Port lock is on, so it is safe to use scratch buffer.
-         * Frame mutex must be grabbed when frame buffers are touched.
-         */
+            /* Initialize frame buffers with port background color.
+             * This prevents tearing effects during refresh.
+             * Port lock is on, so it is safe to use scratch buffer.
+             * Frame mutex must be grabbed when frame buffers are touched.
+             */
 
             WFD_Port_SetFrameBufferBackground(port,
-                    port->config->backgroundColor);
+                                              port->config->backgroundColor);
         }
     }
 }
 
-static void
-WFD_Port_CommitPipelineBindings(WFD_PORT* pPort,
-                                WFDint i,
-                                WFD_PIPELINE* pPipeline)
-{
+static void WFD_Port_CommitPipelineBindings(WFD_PORT *pPort, WFDint i,
+                                            WFD_PIPELINE *pPipeline) {
+    WFD_PORT_BINDING *portBinding = &pPort->bindings[i];
 
-    WFD_PORT_BINDING* portBinding = &pPort->bindings[i];
-
-    if (!pPipeline)
-    {
+    if (!pPipeline) {
         return; /* nothing to commit */
-    }
-    else
-    {
-        WFD_PIPELINE_BINDINGS* plBindings = pPipeline->bindings;
-        WFD_PIPELINE_CONFIG* plConfig = pPipeline->config;
+    } else {
+        WFD_PIPELINE_BINDINGS *plBindings = pPipeline->bindings;
+        WFD_PIPELINE_CONFIG *plConfig = pPipeline->config;
 
-        if (portBinding && plBindings && plConfig)
-        {
+        if (portBinding && plBindings && plConfig) {
             /* remove old binding, if any */
-            if (plBindings->boundPort)
-            {
+            if (plBindings->boundPort) {
                 WFDboolean lockPort = plBindings->boundPort != pPort;
-                WFD_PORT* oldPort = plBindings->boundPort;
+                WFD_PORT *oldPort = plBindings->boundPort;
 
-                if (lockPort)
-                {
+                if (lockPort) {
                     WFD_Port_AcquireLock(oldPort);
                 }
 
                 WFD_Pipeline_PortRemoveBinding(plBindings->boundPort,
-                                               plBindings->pipeline,
-                                               WFD_FALSE);
-                if (lockPort)
-                {
+                                               plBindings->pipeline, WFD_FALSE);
+                if (lockPort) {
                     WFD_Port_ReleaseLock(oldPort);
                 }
 
-                plConfig->layer =  WFD_INVALID_PIPELINE_LAYER;
-                plConfig->portId =  WFD_INVALID_PORT_ID;
+                plConfig->layer = WFD_INVALID_PIPELINE_LAYER;
+                plConfig->portId = WFD_INVALID_PORT_ID;
             }
 
             /* move cached binding to bound binding */
@@ -2395,206 +1952,193 @@ WFD_Port_CommitPipelineBindings(WFD_PORT* pPort,
             REMREF(plBindings->cachedPort); /* remove cached binding */
             plBindings->portDirty = WFD_FALSE;
 
-            plConfig->layer =
-                WFD_Port_QueryPipelineLayerOrder(pPort, portBinding->boundPipeline);
-            plConfig->portId =  pPort->config->id;
+            plConfig->layer = WFD_Port_QueryPipelineLayerOrder(
+                pPort, portBinding->boundPipeline);
+            plConfig->portId = pPort->config->id;
         }
     }
 }
 
-
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_IsCommitConsistent(WFD_PORT* port, WFDCommitType type) OWF_APIEXIT
-{
-    WFDboolean              consistent = WFD_TRUE;
-    WFDint                  i;
+WFD_Port_IsCommitConsistent(WFD_PORT *port, WFDCommitType type) OWF_APIEXIT {
+    WFDboolean consistent = WFD_TRUE;
+    WFDint i;
 
     OWF_ASSERT(port && port->config);
 
     consistent = WFD_Port_IsPartialRefeshCommitConsistent(port);
     consistent = consistent && WFD_Port_IsPortModeCommitConsistent(port);
 
-    for (i = 0; i < PLCOUNT(port) && consistent; i++)
-    {
-        WFD_PORT_BINDING* portBinding = &port->bindings[i];
-        WFD_PIPELINE* pl;
+    for (i = 0; i < PLCOUNT(port) && consistent; i++) {
+        WFD_PORT_BINDING *portBinding = &port->bindings[i];
+        WFD_PIPELINE *pl;
 
-        if (portBinding->cachedPipeline)
-        {
+        if (portBinding->cachedPipeline) {
             pl = portBinding->cachedPipeline;
 
             if (type == WFD_COMMIT_ENTIRE_PORT &&
                 pl->bindings->boundPort != NULL &&
-                pl->bindings->boundPort != port)
-            {
+                pl->bindings->boundPort != port) {
                 /* cannot do port only commit if it requires releasing
                  * pipeline binding of another port
                  */
                 consistent = WFD_FALSE;
             }
-        }
-        else
-        {
+        } else {
             pl = portBinding->boundPipeline;
         }
 
-        if (pl && consistent)
-        {
-            consistent = consistent && WFD_Pipeline_IsCommitConsistent(pl, type);
+        if (pl && consistent) {
+            consistent =
+                consistent && WFD_Pipeline_IsCommitConsistent(pl, type);
         }
     }
 
-    if (!consistent)
-    {
+    if (!consistent) {
         DPRINT(("  port is not commit consistent %d", ID(port)));
     }
 
     return consistent;
 }
 
-static WFDboolean
-WFD_Port_IsPartialRefeshCommitConsistent(WFD_PORT* port)
-{
-    WFDboolean          consistent = WFD_TRUE;
-    WFDPartialRefresh   enabled;
-    WFD_PORT_MODE*      pMode;
+static WFDboolean WFD_Port_IsPartialRefeshCommitConsistent(WFD_PORT *port) {
+    WFDboolean consistent = WFD_TRUE;
+    WFDPartialRefresh enabled;
+    WFD_PORT_MODE *pMode;
 
     OWF_ASSERT(port && port->config);
 
-    WFD_Port_GetAttribi(port, WFD_PORT_PARTIAL_REFRESH_ENABLE, (WFDint*)&enabled);
+    WFD_Port_GetAttribi(port, WFD_PORT_PARTIAL_REFRESH_ENABLE,
+                        (WFDint *)&enabled);
 
-    if (enabled != WFD_PARTIAL_REFRESH_NONE)
-    {
+    if (enabled != WFD_PARTIAL_REFRESH_NONE) {
         pMode = WFD_Port_GetModePtr(port);
         consistent = (pMode != NULL);
     }
 
-    if (enabled != WFD_PARTIAL_REFRESH_NONE && consistent)
-    {
+    if (enabled != WFD_PARTIAL_REFRESH_NONE && consistent) {
         WFDint pW, pH;
         WFDint prRect[RECT_SIZE];
 
         WFD_PortMode_GetAttribi(pMode, WFD_PORT_MODE_WIDTH, &pW);
         WFD_PortMode_GetAttribi(pMode, WFD_PORT_MODE_HEIGHT, &pH);
 
-        WFD_Port_GetAttribiv(port, WFD_PORT_PARTIAL_REFRESH_RECTANGLE, RECT_SIZE, prRect);
+        WFD_Port_GetAttribiv(port, WFD_PORT_PARTIAL_REFRESH_RECTANGLE,
+                             RECT_SIZE, prRect);
 
-        if (enabled != WFD_PARTIAL_REFRESH_VERTICAL)
-        {
-            consistent = consistent && (pW >= prRect[RECT_OFFSETX] + prRect[RECT_WIDTH]);
+        if (enabled != WFD_PARTIAL_REFRESH_VERTICAL) {
+            consistent =
+                consistent && (pW >= prRect[RECT_OFFSETX] + prRect[RECT_WIDTH]);
         }
 
-        if (enabled != WFD_PARTIAL_REFRESH_HORIZONTAL)
-        {
-            consistent = consistent && (pH >= prRect[RECT_OFFSETY] + prRect[RECT_HEIGHT]);
+        if (enabled != WFD_PARTIAL_REFRESH_HORIZONTAL) {
+            consistent = consistent &&
+                         (pH >= prRect[RECT_OFFSETY] + prRect[RECT_HEIGHT]);
         }
     }
 
-    if (!consistent)
-    {
-        DPRINT(("  partial refresh attributes are not commit consistent for port %d", ID(port)));
+    if (!consistent) {
+        DPRINT(
+            ("  partial refresh attributes are not commit consistent for port "
+             "%d",
+             ID(port)));
     }
 
     return consistent;
 }
 
-
-static WFDboolean
-WFD_Port_IsPortModeCommitConsistent(WFD_PORT* port)
-{
-    WFDboolean          consistent = WFD_TRUE;
-    WFD_PORT_MODE*      pMode;
+static WFDboolean WFD_Port_IsPortModeCommitConsistent(WFD_PORT *port) {
+    WFDboolean consistent = WFD_TRUE;
+    WFD_PORT_MODE *pMode;
 
     OWF_ASSERT(port && port->config);
 
     pMode = WFD_Port_GetModePtr(port);
 
-    if (pMode != NULL)
-    {
+    if (pMode != NULL) {
         /* check that port flip/mirror settings does not
          * violate port mode flip/mirror  constraints */
 
-        WFDboolean  pmFlip   = WFD_FALSE;
-        WFDboolean  pFlip    = WFD_FALSE;
-        WFDboolean  pMirror  = WFD_FALSE;
+        WFDboolean pmFlip = WFD_FALSE;
+        WFDboolean pFlip = WFD_FALSE;
+        WFDboolean pMirror = WFD_FALSE;
 
-        WFD_PortMode_GetAttribi(pMode, WFD_PORT_MODE_FLIP_MIRROR_SUPPORT, (WFDint*)&pmFlip);
-        WFD_Port_GetAttribi(port, WFD_PORT_FLIP, (WFDint*)&pFlip);
-        WFD_Port_GetAttribi(port, WFD_PORT_MIRROR, (WFDint*)&pMirror);
+        WFD_PortMode_GetAttribi(pMode, WFD_PORT_MODE_FLIP_MIRROR_SUPPORT,
+                                (WFDint *)&pmFlip);
+        WFD_Port_GetAttribi(port, WFD_PORT_FLIP, (WFDint *)&pFlip);
+        WFD_Port_GetAttribi(port, WFD_PORT_MIRROR, (WFDint *)&pMirror);
 
-        consistent = consistent && ( (pmFlip) || (!pmFlip && pFlip) );
-        consistent = consistent && ( (pmFlip) || (!pmFlip && pMirror) );
+        consistent = consistent && ((pmFlip) || (!pmFlip && pFlip));
+        consistent = consistent && ((pmFlip) || (!pmFlip && pMirror));
 
-        if (!consistent)
-        {
-            DPRINT(("  port %d flip/mirror attributes does not match port mode settings", ID(port)));
+        if (!consistent) {
+            DPRINT(
+                ("  port %d flip/mirror attributes does not match port mode "
+                 "settings",
+                 ID(port)));
         }
-
     }
 
-    if (pMode != NULL && consistent)
-    {
+    if (pMode != NULL && consistent) {
         /* check that port rotation is set correctly */
-        WFDRotationSupport  pmRot  = WFD_ROTATION_SUPPORT_NONE;
-        WFDRotationSupport  pRot   = WFD_ROTATION_SUPPORT_NONE;
+        WFDRotationSupport pmRot = WFD_ROTATION_SUPPORT_NONE;
+        WFDRotationSupport pRot = WFD_ROTATION_SUPPORT_NONE;
 
-        WFD_PortMode_GetAttribi(pMode, WFD_PORT_MODE_ROTATION_SUPPORT, (WFDint*)&pmRot);
-        WFD_Port_GetAttribi(port, WFD_PORT_ROTATION, (WFDint*)&pRot);
+        WFD_PortMode_GetAttribi(pMode, WFD_PORT_MODE_ROTATION_SUPPORT,
+                                (WFDint *)&pmRot);
+        WFD_Port_GetAttribi(port, WFD_PORT_ROTATION, (WFDint *)&pRot);
 
         consistent = (pmRot == WFD_ROTATION_SUPPORT_LIMITED) || (pmRot == pRot);
 
-        if (!consistent)
-        {
-            DPRINT(("  port %d rotation attribute does not match port mode settings", ID(port)));
+        if (!consistent) {
+            DPRINT(
+                ("  port %d rotation attribute does not match port mode "
+                 "settings",
+                 ID(port)));
         }
-
     }
 
-    if (!consistent)
-    {
-        DPRINT(("  port %d is not commit consistent after port mode change", ID(port)));
+    if (!consistent) {
+        DPRINT(("  port %d is not commit consistent after port mode change",
+                ID(port)));
     }
 
     return consistent;
 }
 
-
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_CommitForSinglePipeline(WFD_PIPELINE* pipeline, WFDboolean hasImmT) OWF_APIEXIT
-{
-    WFD_PORT* cPort = NULL;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_CommitForSinglePipeline(
+    WFD_PIPELINE *pipeline, WFDboolean hasImmT) OWF_APIEXIT {
+    WFD_PORT *cPort = NULL;
 
     /* Commit any port binding here */
     cPort = pipeline->bindings->cachedPort;
 
-    if (cPort)
-    {
+    if (cPort) {
         WFDint pipelineNbr;
 
         WFD_Port_AcquireLock(cPort);
 
         pipelineNbr = WFD_Port_PipelineNbr(cPort, pipeline);
 
-        if (pipelineNbr >= 0)
-        {
+        if (pipelineNbr >= 0) {
             WFD_Port_CommitPipelineBindings(cPort, pipelineNbr, pipeline);
         }
 
-        if (hasImmT && cPort)
-        {
+        if (hasImmT && cPort) {
             WFDboolean imm = WFD_FALSE; /* immediate render? */
 
 #if ENABLE_SYNCHRONOUS_PIPELINES
-            /* note: synchronousPipelines may be enabled for debugging purposes */
+            /* note: synchronousPipelines may be enabled for debugging purposes
+             */
             imm = synchronousPipelines || hasImmT;
 #else
             imm = hasImmT;
 #endif
             /* do not render if power is off */
-            imm = imm && WFD_Port_PowerIsOn(cPort) && WFD_Port_IsAttached(cPort);
+            imm =
+                imm && WFD_Port_PowerIsOn(cPort) && WFD_Port_IsAttached(cPort);
 
-            if (imm)
-            {
+            if (imm) {
                 /* immediate transition: render & blit */
                 WFD_Port_Render(cPort, WFD_MESSAGE_IMMEDIATE);
                 WFD_Port_Blit(cPort);
@@ -2605,23 +2149,20 @@ WFD_Port_CommitForSinglePipeline(WFD_PIPELINE* pipeline, WFDboolean hasImmT) OWF
     }
 }
 
-
 /* ================================================================== */
 /*                       B L E N D E R                                */
 /* ================================================================== */
 
-static WFDboolean
-WFD_Port_CanRender(WFD_PORT* port)
-{
-    if (WFD_Port_PowerIsOn(port) && WFD_Port_IsAttached(port) && port->currentMode)
-    {
-       return WFD_TRUE;
+static WFDboolean WFD_Port_CanRender(WFD_PORT *port) {
+    if (WFD_Port_PowerIsOn(port) && WFD_Port_IsAttached(port) &&
+        port->currentMode) {
+        return WFD_TRUE;
     }
 
     return WFD_FALSE;
 }
 /*
-* \brief Compose image from port pipelines
+ * \brief Compose image from port pipelines
  *
  *  Preconditions
  *  - all source bindings exists
@@ -2629,14 +2170,12 @@ WFD_Port_CanRender(WFD_PORT* port)
  *  -
  *
  */
-static void*
-WFD_Port_BlenderThread(void* data)
-{
-    WFD_PORT*         port;
-    WFDint            ec;
-    OWF_MESSAGE       msg;
+static void *WFD_Port_BlenderThread(void *data) {
+    WFD_PORT *port;
+    WFDint ec;
+    OWF_MESSAGE msg;
 
-    ADDREF(port, (WFD_PORT*)data);
+    ADDREF(port, (WFD_PORT *)data);
 
     DPRINT(("WFD_Port_BlenderThread starting %d", ID(port)));
 
@@ -2647,37 +2186,28 @@ WFD_Port_BlenderThread(void* data)
     /* Loop until quit message detected. Periodic blitter should
      * always be feeding VSYNC events, so deadlock shouldn't
      * be possible. */
-    while (msg.id != WFD_MESSAGE_QUIT)
-    {
+    while (msg.id != WFD_MESSAGE_QUIT) {
         ec = OWF_Message_Wait(&port->msgQueue, &msg, WAIT_FOREVER);
 
-        if (ec >= 0)
-        {
-
-            if (msg.id == WFD_MESSAGE_QUIT)
-            {
+        if (ec >= 0) {
+            if (msg.id == WFD_MESSAGE_QUIT) {
                 break;
             }
 
-            /* port lock is needed to prevent configuration change during rendering */
+            /* port lock is needed to prevent configuration change during
+             * rendering */
             WFD_Port_AcquireLock(port);
 
-            if (WFD_Port_CanRender(port))
-            {
+            if (WFD_Port_CanRender(port)) {
                 WFD_Port_Render(port, msg.id);
-            }
-            else
-            {
-                if (!WFD_Port_IsAttached(port))
-                {
+            } else {
+                if (!WFD_Port_IsAttached(port)) {
                     DPRINT(("Port is not attached %d", ID(port)));
                 }
-                if (!WFD_Port_PowerIsOn(port))
-                {
+                if (!WFD_Port_PowerIsOn(port)) {
                     DPRINT(("Port power is off %d", ID(port)));
                 }
-                if (!port->currentMode)
-                {
+                if (!port->currentMode) {
                     DPRINT(("Port mode in not set %d", ID(port)));
                 }
             }
@@ -2694,10 +2224,7 @@ WFD_Port_BlenderThread(void* data)
     return NULL;
 }
 
-
-static void
-WFD_Port_Render(WFD_PORT* port, WFD_MESSAGES cmd)
-{
+static void WFD_Port_Render(WFD_PORT *port, WFD_MESSAGES cmd) {
     WFDint i;
 
     DPRINT(("WFD_Port_Render, port %d", ID(port)));
@@ -2705,10 +2232,9 @@ WFD_Port_Render(WFD_PORT* port, WFD_MESSAGES cmd)
     WFD_Port_RenderInit(port);
 
     /* Run all pipelines */
-    for (i = 0; i < PLCOUNT(port); i++)
-    {
-        WFD_PIPELINE* pipeline = port->bindings[i].boundPipeline;
-        WFD_PIPELINE_BINDINGS* bndgs = NULL;
+    for (i = 0; i < PLCOUNT(port); i++) {
+        WFD_PIPELINE *pipeline = port->bindings[i].boundPipeline;
+        WFD_PIPELINE_BINDINGS *bndgs = NULL;
         WFDboolean srcTransition = WFD_FALSE;
         WFDboolean maskTransition = WFD_FALSE;
 
@@ -2726,21 +2252,15 @@ WFD_Port_Render(WFD_PORT* port, WFD_MESSAGES cmd)
         maskTransition = doTransition(cmd, bndgs->boundMaskTransition);
 
         /* render source image to pipeline output */
-        if (srcTransition)
-        {
-            if (WFD_Pipeline_Disabled(pipeline))
-            {
+        if (srcTransition) {
+            if (WFD_Pipeline_Disabled(pipeline)) {
                 DPRINT((">>>>> Pipeline %d is disabled",
                         port->config->pipelineIds[i]));
-            }
-            else if (bndgs->boundSource == NULL)
-            {
+            } else if (bndgs->boundSource == NULL) {
                 DPRINT((">>>>> No source bound to pipeline %d",
                         port->config->pipelineIds[i]));
                 WFD_Pipeline_Clear(pipeline);
-            }
-            else
-            {
+            } else {
                 /* This could be done in parallel for all pipelines. */
                 WFD_Pipeline_Execute(pipeline, bndgs->boundSource);
             }
@@ -2753,15 +2273,12 @@ WFD_Port_Render(WFD_PORT* port, WFD_MESSAGES cmd)
          */
         WFD_Port_LayerAndBlend(port, pipeline, bndgs->boundMask);
 
-
         /* this pipeline is done - send events */
-        if (srcTransition)
-        {
+        if (srcTransition) {
             WFD_Pipeline_SourceBindComplete(pipeline);
         }
 
-        if (maskTransition)
-        {
+        if (maskTransition) {
             WFD_Pipeline_MaskBindComplete(pipeline);
         }
 
@@ -2770,11 +2287,8 @@ WFD_Port_Render(WFD_PORT* port, WFD_MESSAGES cmd)
     WFD_Port_ImageFinalize(port);
 }
 
-
-static void
-WFD_Port_RenderInit(WFD_PORT* port)
-{
-    WFD_PORT_MODE*          portMode;
+static void WFD_Port_RenderInit(WFD_PORT *port) {
+    WFD_PORT_MODE *portMode;
     OWFsubpixel red;
     OWFsubpixel green;
     OWFsubpixel blue;
@@ -2793,15 +2307,12 @@ WFD_Port_RenderInit(WFD_PORT* port)
      * If fill port area is set, scratch buffer is cleared with black
      * Otherwise, port background color is used.
      */
-    if (port->config->fillPortArea)
-    {
+    if (port->config->fillPortArea) {
         red = green = blue = 0.0;
-    }
-    else
-    {
-        red   = port->config->backgroundColor[0];
+    } else {
+        red = port->config->backgroundColor[0];
         green = port->config->backgroundColor[1];
-        blue  = port->config->backgroundColor[2];
+        blue = port->config->backgroundColor[2];
     }
 
     OWF_Image_Clear(port->scratch[0], red, green, blue, OWF_FULLY_OPAQUE);
@@ -2810,127 +2321,107 @@ WFD_Port_RenderInit(WFD_PORT* port)
 /* \brief Blend pipeline output and mask to final port output
  *
  */
-static void
-WFD_Port_LayerAndBlend(WFD_PORT* pPort,
-                       WFD_PIPELINE* pPipeline,
-                       WFD_MASK* pMask)
-{
-    OWF_BLEND_INFO          blend;
-    OWF_RECTANGLE           dstRect, srcRect;
-    OWF_TRANSPARENCY        blendMode;
-    OWF_IMAGE*              maskImage = NULL;
-    WFDboolean              hasMask = WFD_FALSE;
-    WFDboolean              pipelineVisible;
+static void WFD_Port_LayerAndBlend(WFD_PORT *pPort, WFD_PIPELINE *pPipeline,
+                                   WFD_MASK *pMask) {
+    OWF_BLEND_INFO blend;
+    OWF_RECTANGLE dstRect, srcRect;
+    OWF_TRANSPARENCY blendMode;
+    OWF_IMAGE *maskImage = NULL;
+    WFDboolean hasMask = WFD_FALSE;
+    WFDboolean pipelineVisible;
 
     OWF_ASSERT(pPort && pPort->config);
     OWF_ASSERT(pPipeline && pPipeline->config);
 
-    if (pPipeline->frontBuffer == NULL)
-    {
-        DPRINT(("Nothing in front buffer for pipeline %d", pPipeline->config->id));
+    if (pPipeline->frontBuffer == NULL) {
+        DPRINT(
+            ("Nothing in front buffer for pipeline %d", pPipeline->config->id));
         return;
     }
 
-    if (WFD_Pipeline_Disabled(pPipeline))
-    {
+    if (WFD_Pipeline_Disabled(pPipeline)) {
         return;
     }
 
-    if (pMask)
-    {
+    if (pMask) {
         maskImage = WFD_ImageProvider_LockForReading(pMask);
         /* NOTE: mask could be converted at the time it is bound */
-        OWF_Image_SetSize(pPort->scratch[WFD_PORT_MASK_INDEX],
-                          maskImage->width,
+        OWF_Image_SetSize(pPort->scratch[WFD_PORT_MASK_INDEX], maskImage->width,
                           maskImage->height);
-        hasMask =
-            OWF_Image_ConvertMask(pPort->scratch[WFD_PORT_MASK_INDEX], maskImage);
+        hasMask = OWF_Image_ConvertMask(pPort->scratch[WFD_PORT_MASK_INDEX],
+                                        maskImage);
     }
 
-    pipelineVisible = WFD_Port_SetBlendRects(pPort, pPipeline, &dstRect, &srcRect);
+    pipelineVisible =
+        WFD_Port_SetBlendRects(pPort, pPipeline, &dstRect, &srcRect);
 
     /* blend result only if pipeline is in refresh area */
-    if (pipelineVisible)
-    {
-        WFD_Port_SetBlendParams(&blend, pPort, pPipeline,
-                                (hasMask) ? pPort->scratch[WFD_PORT_MASK_INDEX] : NULL,
-                                &dstRect, &srcRect);
-        blendMode =
-            WFD_Util_GetBlendMode(pPipeline->config->transparencyEnable, hasMask);
+    if (pipelineVisible) {
+        WFD_Port_SetBlendParams(
+            &blend, pPort, pPipeline,
+            (hasMask) ? pPort->scratch[WFD_PORT_MASK_INDEX] : NULL, &dstRect,
+            &srcRect);
+        blendMode = WFD_Util_GetBlendMode(pPipeline->config->transparencyEnable,
+                                          hasMask);
         OWF_Image_PremultiplyAlpha(pPipeline->frontBuffer);
         OWF_Image_Blend(&blend, blendMode);
     }
 
-    if (pMask)
-    {
+    if (pMask) {
         WFD_ImageProvider_Unlock(pMask);
     }
 }
 
-static void
-WFD_Port_SetBlendParams(OWF_BLEND_INFO* blend,
-                        WFD_PORT* pPort,
-                        WFD_PIPELINE* pPipeline,
-                        OWF_IMAGE* pMask,
-                        OWF_RECTANGLE* dstRect,
-                        OWF_RECTANGLE* srcRect)
-{
-
+static void WFD_Port_SetBlendParams(OWF_BLEND_INFO *blend, WFD_PORT *pPort,
+                                    WFD_PIPELINE *pPipeline, OWF_IMAGE *pMask,
+                                    OWF_RECTANGLE *dstRect,
+                                    OWF_RECTANGLE *srcRect) {
     /* setup blending parameters */
-    blend->destination.image      = pPort->scratch[0];
-    blend->destination.rectangle  = dstRect;
-    blend->source.image           = pPipeline->frontBuffer;
-    blend->source.rectangle       = srcRect;
-    blend->mask                   = pMask;
-    blend->globalAlpha            = pPipeline->config->globalAlpha;
+    blend->destination.image = pPort->scratch[0];
+    blend->destination.rectangle = dstRect;
+    blend->source.image = pPipeline->frontBuffer;
+    blend->source.rectangle = srcRect;
+    blend->mask = pMask;
+    blend->globalAlpha = pPipeline->config->globalAlpha;
     blend->destinationFullyOpaque = WFD_TRUE;
 
-    if (pPipeline->config->transparencyEnable & WFD_TRANSPARENCY_SOURCE_COLOR)
-    {
+    if (pPipeline->config->transparencyEnable & WFD_TRANSPARENCY_SOURCE_COLOR) {
         blend->tsColor = &pPipeline->tsColor.color;
         DPRINT(("  blend mode = WFD_TRANSPARENCY_SOURCE_COLOR: %f, %f, %f",
                 pPipeline->tsColor.color.color.red,
                 pPipeline->tsColor.color.color.green,
                 pPipeline->tsColor.color.color.blue));
-    }
-    else
-    {
+    } else {
         blend->tsColor = NULL;
     }
 
     DPRINT(("Blending parameters:"));
     DPRINT(("  dest image = %p", blend->destination.image));
-    DPRINT(("  dest rect = {%d, %d, %d, %d}",
-            blend->destination.rectangle->x,
+    DPRINT(("  dest rect = {%d, %d, %d, %d}", blend->destination.rectangle->x,
             blend->destination.rectangle->y,
             blend->destination.rectangle->width,
             blend->destination.rectangle->height));
     DPRINT(("  src image = %p", blend->source.image));
-    DPRINT(("  src rect = {%d, %d, %d, %d}",
-            blend->source.rectangle->x,
-            blend->source.rectangle->y,
-            blend->source.rectangle->width,
+    DPRINT(("  src rect = {%d, %d, %d, %d}", blend->source.rectangle->x,
+            blend->source.rectangle->y, blend->source.rectangle->width,
             blend->source.rectangle->height));
     DPRINT(("  mask = %p", blend->mask));
     DPRINT(("  global alpha = %d", blend->globalAlpha));
-
 }
 
-
-static WFDboolean
-WFD_Port_SetBlendRects(const WFD_PORT* pPort,
-                       const WFD_PIPELINE* pPipeline,
-                       OWF_RECTANGLE* dstRect,
-                       OWF_RECTANGLE* srcRect)
-{
-    WFDint* plRect; /* pipeline's destination rectangle */
-    OWF_RECTANGLE  pRefRect; /* partial refresh rectangle in port dimensions */
-    OWF_RECTANGLE  sPartRect; /* partial refresh rectangle in pipeline dimensions */
+static WFDboolean WFD_Port_SetBlendRects(const WFD_PORT *pPort,
+                                         const WFD_PIPELINE *pPipeline,
+                                         OWF_RECTANGLE *dstRect,
+                                         OWF_RECTANGLE *srcRect) {
+    WFDint *plRect;         /* pipeline's destination rectangle */
+    OWF_RECTANGLE pRefRect; /* partial refresh rectangle in port dimensions */
+    OWF_RECTANGLE
+    sPartRect; /* partial refresh rectangle in pipeline dimensions */
     WFDboolean visible;
 
-    OWF_ASSERT (pPort && pPort->config);
-    OWF_ASSERT (pPipeline && pPipeline->config);
-    OWF_ASSERT (dstRect && srcRect);
+    OWF_ASSERT(pPort && pPort->config);
+    OWF_ASSERT(pPipeline && pPipeline->config);
+    OWF_ASSERT(dstRect && srcRect);
 
     plRect = pPipeline->config->destinationRectangle;
 
@@ -2938,73 +2429,78 @@ WFD_Port_SetBlendRects(const WFD_PORT* pPort,
     OWF_Rect_Set(srcRect, 0, 0, plRect[RECT_WIDTH], plRect[RECT_HEIGHT]);
 
     /* blend destination defaults to pipeline destination rectangle */
-    OWF_Rect_Set(dstRect,
-                 plRect[RECT_OFFSETX], plRect[RECT_OFFSETY],
-                 plRect[RECT_WIDTH],   plRect[RECT_HEIGHT]);
+    OWF_Rect_Set(dstRect, plRect[RECT_OFFSETX], plRect[RECT_OFFSETY],
+                 plRect[RECT_WIDTH], plRect[RECT_HEIGHT]);
 
+    switch (pPort->config->partialRefreshEnable) {
+        case WFD_PARTIAL_REFRESH_NONE:
 
-    switch (pPort->config->partialRefreshEnable)
-    {
-    case WFD_PARTIAL_REFRESH_NONE:
+            /* nothing more to be done */
+            return WFD_TRUE;
 
-        /* nothing more to be done */
-        return WFD_TRUE;
+        case WFD_PARTIAL_REFRESH_VERTICAL:
+            pRefRect.x = 0;
+            pRefRect.y = pPort->config->partialRefreshRectangle[RECT_OFFSETY];
+            pRefRect.width = pPort->currentMode->width;
+            pRefRect.height =
+                pPort->config->partialRefreshRectangle[RECT_HEIGHT];
 
-    case WFD_PARTIAL_REFRESH_VERTICAL:
-        pRefRect.x = 0;
-        pRefRect.y = pPort->config->partialRefreshRectangle[RECT_OFFSETY];
-        pRefRect.width = pPort->currentMode->width;
-        pRefRect.height = pPort->config->partialRefreshRectangle[RECT_HEIGHT];
+            sPartRect.x = 0;
+            sPartRect.y =
+                (pRefRect.y > dstRect->y) ? pRefRect.y - dstRect->y : 0;
+            sPartRect.width = dstRect->width;
+            sPartRect.height = (pRefRect.y > dstRect->y)
+                                   ? pRefRect.height
+                                   : pRefRect.y + pRefRect.height - dstRect->y;
+            break;
 
-        sPartRect.x = 0;
-        sPartRect.y = (pRefRect.y > dstRect->y) ? pRefRect.y - dstRect->y : 0;
-        sPartRect.width = dstRect->width;
-        sPartRect.height = (pRefRect.y > dstRect->y) ? pRefRect.height :
-                pRefRect.y + pRefRect.height - dstRect->y;
-        break;
+        case WFD_PARTIAL_REFRESH_HORIZONTAL:
+            pRefRect.x = pPort->config->partialRefreshRectangle[RECT_OFFSETX];
+            pRefRect.y = 0;
+            pRefRect.width = pPort->config->partialRefreshRectangle[RECT_WIDTH];
+            pRefRect.height = pPort->currentMode->height;
 
-    case WFD_PARTIAL_REFRESH_HORIZONTAL:
-        pRefRect.x = pPort->config->partialRefreshRectangle[RECT_OFFSETX];
-        pRefRect.y = 0;
-        pRefRect.width = pPort->config->partialRefreshRectangle[RECT_WIDTH];
-        pRefRect.height = pPort->currentMode->height;
+            sPartRect.x =
+                (pRefRect.x > dstRect->x) ? pRefRect.x - dstRect->x : 0;
+            sPartRect.y = 0;
+            sPartRect.width = (pRefRect.x > dstRect->x)
+                                  ? pRefRect.width
+                                  : pRefRect.x + pRefRect.width - dstRect->x;
+            sPartRect.height = dstRect->height;
+            break;
 
-        sPartRect.x = (pRefRect.x > dstRect->x) ? pRefRect.x - dstRect->x : 0;
-        sPartRect.y = 0;
-        sPartRect.width = (pRefRect.x > dstRect->x) ? pRefRect.width :
-                pRefRect.x + pRefRect.width - dstRect->x;
-        sPartRect.height = dstRect->height;
-        break;
+        case WFD_PARTIAL_REFRESH_BOTH:
+            pRefRect.x = pPort->config->partialRefreshRectangle[RECT_OFFSETX];
+            pRefRect.y = pPort->config->partialRefreshRectangle[RECT_OFFSETY];
+            pRefRect.width = pPort->config->partialRefreshRectangle[RECT_WIDTH];
+            pRefRect.height =
+                pPort->config->partialRefreshRectangle[RECT_HEIGHT];
 
-    case WFD_PARTIAL_REFRESH_BOTH:
-        pRefRect.x = pPort->config->partialRefreshRectangle[RECT_OFFSETX];
-        pRefRect.y = pPort->config->partialRefreshRectangle[RECT_OFFSETY];
-        pRefRect.width = pPort->config->partialRefreshRectangle[RECT_WIDTH];
-        pRefRect.height = pPort->config->partialRefreshRectangle[RECT_HEIGHT];
+            sPartRect.y =
+                (pRefRect.y > dstRect->y) ? pRefRect.y - dstRect->y : 0;
+            sPartRect.x =
+                (pRefRect.x > dstRect->x) ? pRefRect.x - dstRect->x : 0;
+            sPartRect.width = (pRefRect.x > dstRect->x)
+                                  ? pRefRect.width
+                                  : pRefRect.x + pRefRect.width - dstRect->x;
+            sPartRect.height = (pRefRect.y > dstRect->y)
+                                   ? pRefRect.height
+                                   : pRefRect.y + pRefRect.height - dstRect->y;
+            break;
 
-        sPartRect.y = (pRefRect.y > dstRect->y) ? pRefRect.y - dstRect->y : 0;
-        sPartRect.x = (pRefRect.x > dstRect->x) ? pRefRect.x - dstRect->x : 0;
-        sPartRect.width = (pRefRect.x > dstRect->x) ? pRefRect.width :
-                pRefRect.x + pRefRect.width - dstRect->x;
-        sPartRect.height = (pRefRect.y > dstRect->y) ? pRefRect.height :
-                pRefRect.y + pRefRect.height - dstRect->y;
-        break;
-
-    default:
-        OWF_ASSERT(0 != 0); /* should never happen here */
+        default:
+            OWF_ASSERT(0 != 0); /* should never happen here */
     }
 
     /* partial refresh destination */
     visible = OWF_Rect_Clip(dstRect, dstRect, &pRefRect);
 
-    if (visible)
-    {
+    if (visible) {
         /* source from pipeline for partial refresh */
         OWF_Rect_Clip(srcRect, srcRect, &sPartRect);
     }
 
     return visible;
-
 }
 
 /*!
@@ -3015,11 +2511,9 @@ WFD_Port_SetBlendRects(const WFD_PORT* pPort,
  * - Swap frame buffer pointers
  *
  */
-static void
-WFD_Port_ImageFinalize(WFD_PORT* pPort)
-{
-    OWF_IMAGE* outImg = pPort->scratch[0];
-    OWF_IMAGE* inpImg = pPort->scratch[0];
+static void WFD_Port_ImageFinalize(WFD_PORT *pPort) {
+    OWF_IMAGE *outImg = pPort->scratch[0];
+    OWF_IMAGE *inpImg = pPort->scratch[0];
     OWF_FLIP_DIRECTION flip = 0;
     WFDint frame = 0;
 
@@ -3027,84 +2521,72 @@ WFD_Port_ImageFinalize(WFD_PORT* pPort)
 
     /* flip, mirror and rotate port */
 
-    if (pPort->config->flip)
-    {
+    if (pPort->config->flip) {
         DPRINT(("  flip port"));
         flip |= OWF_FLIP_VERTICALLY;
     }
-    if (pPort->config->mirror)
-    {
+    if (pPort->config->mirror) {
         DPRINT(("  mirror port"));
         flip |= OWF_FLIP_HORIZONTALLY;
     }
-    if (flip != 0)
-    {
+    if (flip != 0) {
         OWF_Image_Flip(inpImg, flip);
     }
 
-    if (pPort->config->rotation != 0)
-    {
+    if (pPort->config->rotation != 0) {
         OWF_ROTATION rotation = OWF_ROTATION_0;
 
         outImg = pPort->scratch[1];
 
-        switch (pPort->config->rotation)
-        {
-        case 0:
-            rotation = OWF_ROTATION_0;
-            break;
-        case 90:
-            rotation = OWF_ROTATION_90;
-            break;
-        case 180:
-            rotation = OWF_ROTATION_180;
-            break;
-        case 270:
-            rotation = OWF_ROTATION_270;
-            break;
-        default:
-            OWF_ASSERT(0);
+        switch (pPort->config->rotation) {
+            case 0:
+                rotation = OWF_ROTATION_0;
+                break;
+            case 90:
+                rotation = OWF_ROTATION_90;
+                break;
+            case 180:
+                rotation = OWF_ROTATION_180;
+                break;
+            case 270:
+                rotation = OWF_ROTATION_270;
+                break;
+            default:
+                OWF_ASSERT(0);
         }
 
         DPRINT(("  rotate port %d degrees", pPort->config->rotation));
 
-        if (rotation == OWF_ROTATION_90 || rotation == OWF_ROTATION_270)
-        {
+        if (rotation == OWF_ROTATION_90 || rotation == OWF_ROTATION_270) {
             OWF_Image_SwapWidthAndHeight(outImg);
         }
         OWF_Image_Rotate(outImg, inpImg, rotation);
     }
 
-    if (pPort->config->gamma != 1.0f)
-    {
-        DPRINT(("  apply gamma %f", pPort->config->gamma ));
+    if (pPort->config->gamma != 1.0f) {
+        DPRINT(("  apply gamma %f", pPort->config->gamma));
         OWF_Image_Gamma(outImg, pPort->config->gamma);
     }
 
     DPRINT(("  destination conversion"));
-    frame = (pPort->frameBuffer+1) % 2;
+    frame = (pPort->frameBuffer + 1) % 2;
     OWF_Image_SetSize(pPort->surface[frame], outImg->width, outImg->height);
     OWF_Image_DestinationFormatConversion(pPort->surface[frame], outImg);
 
     /* swap frame buffer index */
     OWF_Mutex_Lock(&pPort->frMutex);
-    {
-        pPort->frameBuffer = frame;
-    }
+    { pPort->frameBuffer = frame; }
     OWF_Mutex_Unlock(&pPort->frMutex);
 }
 
-static WFDboolean
-doTransition(WFD_MESSAGES cmd, WFDTransition trans)
-{
+static WFDboolean doTransition(WFD_MESSAGES cmd, WFDTransition trans) {
     if (cmd == WFD_MESSAGE_IMMEDIATE && trans == WFD_TRANSITION_IMMEDIATE)
         return WFD_TRUE;
 
     if (cmd == WFD_MESSAGE_VSYNC && trans == WFD_TRANSITION_AT_VSYNC)
         return WFD_TRUE;
 
-    if (cmd == WFD_MESSAGE_SOURCE_UPDATED)
-    {
+    if (cmd == WFD_MESSAGE_SOURCE_UPDATED) {
         return WFD_TRUE;
     }
 
@@ -3114,7 +2596,6 @@ doTransition(WFD_MESSAGES cmd, WFDTransition trans)
 
     return WFD_FALSE;
 }
-
 
 /* ================================================================== */
 /*                         B L I T T E R                              */
@@ -3132,23 +2613,19 @@ doTransition(WFD_MESSAGES cmd, WFDTransition trans)
  *  \param data Data should be a pointer to internal port
  *  structure in memory.
  */
-static void*
-WFD_Port_BlitterThread(void* data)
-{
-    WFD_PORT* pPort;
+static void *WFD_Port_BlitterThread(void *data) {
+    WFD_PORT *pPort;
     WFDint frame = -1;
 
-    ADDREF(pPort, (WFD_PORT*)data);
+    ADDREF(pPort, (WFD_PORT *)data);
 
     DPRINT(("WFD_Port_BlitterThread starting for port %d", ID(pPort)));
-
 
     while (1) /* loop until thread is cancelled */
     {
         OWFuint32 sleepTime;
 
-        if (frame != pPort->frameBuffer)
-        {
+        if (frame != pPort->frameBuffer) {
             OWF_ASSERT(pPort->screenNumber != OWF_INVALID_SCREEN_NUMBER);
             DPRINT(("Blit port %d", ID(pPort)));
             WFD_Port_Blit(pPort);
@@ -3157,28 +2634,24 @@ WFD_Port_BlitterThread(void* data)
         /* send compose request to port (prepare for next VSYNC) */
         OWF_Message_Send(&pPort->msgQueue, WFD_MESSAGE_VSYNC, 0);
 
-        if (!pPort->currentMode)
-        {
+        if (!pPort->currentMode) {
             sleepTime = 200000; /* port mode not set */
-        }
-        else
-        {
+        } else {
             /* refresh interval in microseconds (refresh rate) */
             sleepTime = 100000 / pPort->currentMode->refreshRate;
         }
 
-		/*
-		 * This is not really accurate. We should use a periodic
-		 * timer process to wake up the blitter, but sample
-		 * implementation is not supposed to be RT
-		 *
-		 *  Sleep is also a thread cancellation point.
-		 */
+        /*
+         * This is not really accurate. We should use a periodic
+         * timer process to wake up the blitter, but sample
+         * implementation is not supposed to be RT
+         *
+         *  Sleep is also a thread cancellation point.
+         */
 
         OWF_Thread_MicroSleep(sleepTime);
 
-        if (pPort->destroyPending)
-        {
+        if (pPort->destroyPending) {
             OWF_Message_Send(&pPort->msgQueue, WFD_MESSAGE_QUIT, 0);
             break; /* port going down */
         }
@@ -3190,9 +2663,7 @@ WFD_Port_BlitterThread(void* data)
     return NULL;
 }
 
-static void
-WFD_Port_Blit(WFD_PORT* port)
-{
+static void WFD_Port_Blit(WFD_PORT *port) {
     /*
      * Keep frame buffer mutex locked until image is blitted
      * - this prevents renderer to change buffer at a critical time
@@ -3201,14 +2672,14 @@ WFD_Port_Blit(WFD_PORT* port)
     OWF_Mutex_Lock(&port->frMutex);
     {
         OWF_SCREEN screen;
-        OWF_IMAGE* img;
+        OWF_IMAGE *img;
 
         /* image dimensions might have changed because of port rotation */
         img = port->surface[port->frameBuffer];
         OWF_Screen_GetHeader(port->screenNumber, &screen);
 
-        if (screen.normal.width != img->width || screen.normal.height != img->height)
-        {
+        if (screen.normal.width != img->width ||
+            screen.normal.height != img->height) {
             OWF_Screen_Resize(port->screenNumber, img->width, img->height);
         }
 
@@ -3218,16 +2689,13 @@ WFD_Port_Blit(WFD_PORT* port)
     OWF_Mutex_Unlock(&port->frMutex);
 }
 
-
 /* ================================================================== */
 /*           T E S T   I M A G E   E X P O R T                        */
 /* ================================================================== */
 
 OWF_API_CALL WFDEGLImage OWF_APIENTRY
-WFD_Port_AcquireCurrentImage(WFD_PORT* pPort) OWF_APIEXIT
-{
-    if (pPort)
-    {
+WFD_Port_AcquireCurrentImage(WFD_PORT *pPort) OWF_APIEXIT {
+    if (pPort) {
         OWF_IMAGE *bufferCopy;
 
         /* If we can get port lock we can be sure that
@@ -3237,16 +2705,13 @@ WFD_Port_AcquireCurrentImage(WFD_PORT* pPort) OWF_APIEXIT
         WFD_Port_ReleaseLock(pPort);
 
         OWF_Mutex_Lock(&pPort->frMutex);
-        {
-            bufferCopy =  OWF_Image_Copy(pPort->surface[pPort->frameBuffer]);
-        }
+        { bufferCopy = OWF_Image_Copy(pPort->surface[pPort->frameBuffer]); }
         OWF_Mutex_Unlock(&pPort->frMutex);
         return bufferCopy;
     }
 
     return NULL;
 }
-
 
 #ifdef __cplusplus
 }

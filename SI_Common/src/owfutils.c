@@ -20,26 +20,21 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
- #include "owftypes.h"
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-OWFint min(OWFint aLhs, OWFint aRhs)
-{
+OWFint min(OWFint aLhs, OWFint aRhs) {
     if (aLhs < aRhs) {
         return aLhs;
     }
     return aRhs;
 }
 
-void OWF_Rect_Set(OWF_RECTANGLE* rect,
-                  OWFint left,
-                  OWFint top,
-                  OWFint width,
-                  OWFint height)
-{
+void OWF_Rect_Set(OWF_RECTANGLE *rect, OWFint left, OWFint top, OWFint width,
+                  OWFint height) {
     if (!rect) {
         return;
     }
@@ -50,10 +45,8 @@ void OWF_Rect_Set(OWF_RECTANGLE* rect,
     rect->height = height;
 }
 
-OWFboolean OWF_Rect_Clip(OWF_RECTANGLE* clipped,
-                         OWF_RECTANGLE* rect,
-                         OWF_RECTANGLE* bounds)
-{
+OWFboolean OWF_Rect_Clip(OWF_RECTANGLE *clipped, OWF_RECTANGLE *rect,
+                         OWF_RECTANGLE *bounds) {
     OWFint dw, dh, dx0, dy0, dx1, dy1; /* destination image coordinates */
     OWFint bl, bt, br, bb;
 

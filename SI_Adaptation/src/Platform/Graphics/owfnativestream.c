@@ -24,110 +24,106 @@
  * Ring buffer based Image Stream implementation for Linux.
  */
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define OWF_NATIVESTREAM_HANDLE 0xAB
 
+#include "owfnativestream.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "owfnativestream.h"
-#include "owfscreen.h"
-#include "owfmemory.h"
 #include "owfdebug.h"
-#include "owftypes.h"
-#include "owfmutex.h"
 #include "owfhstore.h"
+#include "owfmemory.h"
+#include "owfmutex.h"
+#include "owfscreen.h"
+#include "owftypes.h"
 
 /*needed for owfNativeStreamFromWFC function */
 #include "WF/wfcplatform.h"
 
 /* macro for fetching stream object by handle */
-#define GET_STREAM(ns, s)       ns = owfNativeStreamGet(s)
+#define GET_STREAM(ns, s) ns = owfNativeStreamGet(s)
 
 /* stream null checks */
-#define CHECK_STREAM(v)     if (NULL == ns) { return v;}
-#define CHECK_STREAM_NR()   if (NULL == ns) { return; }
+#define CHECK_STREAM(v) \
+    if (NULL == ns) {   \
+        return v;       \
+    }
+#define CHECK_STREAM_NR() \
+    if (NULL == ns) {     \
+        return;           \
+    }
 
-#define BUFFER_HANDLE_BASE  0x100
-#define STREAM_HANDLE_BASE  10000
-#define STREAM_HASHTABLE_SIZE   0x100
+#define BUFFER_HANDLE_BASE 0x100
+#define STREAM_HANDLE_BASE 10000
+#define STREAM_HASHTABLE_SIZE 0x100
 
 /* buffer handle sanity checks */
-#define CHECK_BUFFER_NR(x)  if ((x) < BUFFER_HANDLE_BASE || \
-                                (x) >= BUFFER_HANDLE_BASE + ns->bufferCount) \
-                            { \
-                                return; \
-                            }
+#define CHECK_BUFFER_NR(x)                             \
+    if ((x) < BUFFER_HANDLE_BASE ||                    \
+        (x) >= BUFFER_HANDLE_BASE + ns->bufferCount) { \
+        return;                                        \
+    }
 
-#define CHECK_BUFFER(x,v)   if ((x) < BUFFER_HANDLE_BASE || \
-                                (x) >= BUFFER_HANDLE_BASE + ns->bufferCount) \
-                            { \
-                            return v; \
-                            }
+#define CHECK_BUFFER(x, v)                             \
+    if ((x) < BUFFER_HANDLE_BASE ||                    \
+        (x) >= BUFFER_HANDLE_BASE + ns->bufferCount) { \
+        return v;                                      \
+    }
 
-#define BUFFER(x)           ns->bufferList[(x)-BUFFER_HANDLE_BASE]
+#define BUFFER(x) ns->bufferList[(x)-BUFFER_HANDLE_BASE]
 
-#define INDEX_TO_HANDLE(x)  ((OWFNativeStreamBuffer) ((x)+BUFFER_HANDLE_BASE))
-#define HANDLE_TO_INDEX(x)  ((int) ((x)-BUFFER_HANDLE_BASE))
+#define INDEX_TO_HANDLE(x) ((OWFNativeStreamBuffer)((x) + BUFFER_HANDLE_BASE))
+#define HANDLE_TO_INDEX(x) ((int)((x)-BUFFER_HANDLE_BASE))
 
 typedef struct {
-    EGLDisplay     dpy;
-    EGLSyncKHR*    sync;
+    EGLDisplay dpy;
+    EGLSyncKHR *sync;
 } OWF_SYNC_DESC;
 
-
-typedef enum 
-{
+typedef enum {
     NS_FLIP_TARGET_NOT_SET,
     NS_FLIP_TARGET_NORMAL,
     NS_FLIP_TARGET_FLIPPED
-}NS_FLIPPED_TARGET;
-
+} NS_FLIPPED_TARGET;
 
 /*!
  * Structure for image stream.
  */
 typedef struct {
-    OWFNativeStreamType     handle;     /* stream handle */
-    void**                  bufferList;
-    OWFint*                 bufferRefs;
-    OWFint                  bufferCount;
-    OWFint                  lockCount;
-    OWFint                  screenNumber;
-    OWFint                  width,      /* frame width (pixels) */
-                            height,     /* frame height (pixels) */
-                            stride;     /* size of single row (bytes) */
-    OWF_IMAGE_FORMAT        colorFormat;
-    OWFint                  referenceCount;
-    OWF_MUTEX               mutex;
-    OWF_SEMAPHORE           writer;
-    OWFint                  idxFront;
-    OWFint                  idxNextFree;
-    OWF_NODE*               observers;
-    OWFboolean              sendNotifications;
-    OWFboolean              protected;  /* protection flag to prevent the
-                                           user from destroying the stream
-                                           (for onscreen-context use) */
+    OWFNativeStreamType handle; /* stream handle */
+    void **bufferList;
+    OWFint *bufferRefs;
+    OWFint bufferCount;
+    OWFint lockCount;
+    OWFint screenNumber;
+    OWFint width, /* frame width (pixels) */
+        height,   /* frame height (pixels) */
+        stride;   /* size of single row (bytes) */
+    OWF_IMAGE_FORMAT colorFormat;
+    OWFint referenceCount;
+    OWF_MUTEX mutex;
+    OWF_SEMAPHORE writer;
+    OWFint idxFront;
+    OWFint idxNextFree;
+    OWF_NODE *observers;
+    OWFboolean sendNotifications;
+    OWFboolean protected; /* protection flag to prevent the
+                             user from destroying the stream
+                             (for onscreen-context use) */
 
-    OWF_SYNC_DESC*          bufferSyncs; /* sync object to be signalled when
-                                            buffer is 'consumed' */
-    NS_FLIPPED_TARGET       flipState;
-    NS_FLIPPED_TARGET       newFlip;
+    OWF_SYNC_DESC *bufferSyncs; /* sync object to be signalled when
+                                   buffer is 'consumed' */
+    NS_FLIPPED_TARGET flipState;
+    NS_FLIPPED_TARGET newFlip;
 } OWF_NATIVE_STREAM;
 
-
-static const OWF_IMAGE_FORMAT   owfOnScreenColorFormat =
-                                {
-                                    OWF_IMAGE_ARGB8888,
-                                    OWF_FALSE,
-                                    OWF_TRUE,
-                                    4
-                                };
+static const OWF_IMAGE_FORMAT owfOnScreenColorFormat = {OWF_IMAGE_ARGB8888,
+                                                        OWF_FALSE, OWF_TRUE, 4};
 
 /*============================================================================
  * PRIVATE PARTS
@@ -147,9 +143,7 @@ static const OWF_IMAGE_FORMAT   owfOnScreenColorFormat =
  *
  *  \return Boolean value indicating whether the addition was succesful
  *----------------------------------------------------------------------------*/
-static OWFHandle
-owfNativeStreamAddStream(OWF_NATIVE_STREAM* stream)
-{
+static OWFHandle owfNativeStreamAddStream(OWF_NATIVE_STREAM *stream) {
     OWFHandle handle = OWF_INVALID_HANDLE;
 
     handle = OWF_HStore_HandleCreate(OWF_NATIVESTREAM_HANDLE, stream);
@@ -164,10 +158,9 @@ owfNativeStreamAddStream(OWF_NATIVE_STREAM* stream)
  *
  *  \return Stream object or NULL if the handle is invalid
  *----------------------------------------------------------------------------*/
-static OWF_NATIVE_STREAM*
-owfNativeStreamGet(OWFNativeStreamType handle)
-{
-    return (OWF_NATIVE_STREAM*) OWF_HStore_GetObj(handle, OWF_NATIVESTREAM_HANDLE);
+static OWF_NATIVE_STREAM *owfNativeStreamGet(OWFNativeStreamType handle) {
+    return (OWF_NATIVE_STREAM *)OWF_HStore_GetObj(handle,
+                                                  OWF_NATIVESTREAM_HANDLE);
 }
 
 /*----------------------------------------------------------------------------
@@ -177,9 +170,7 @@ owfNativeStreamGet(OWFNativeStreamType handle)
  *
  *  \return Boolean value indicating success of the deletion
  *----------------------------------------------------------------------------*/
-static OWFboolean
-owfNativeStreamRemove(OWFNativeStreamType handle)
-{
+static OWFboolean owfNativeStreamRemove(OWFNativeStreamType handle) {
     OWF_HStore_HandleDelete(handle);
     return OWF_TRUE;
 }
@@ -191,32 +182,27 @@ owfNativeStreamRemove(OWFNativeStreamType handle)
  *  \param event            Event to notify about
  *----------------------------------------------------------------------------*/
 static void owfNativeStreamNotifyObservers(OWFNativeStreamType stream,
-                                           OWFNativeStreamEvent event)
-{
-    OWF_NODE*               iter = NULL;
+                                           OWFNativeStreamEvent event) {
+    OWF_NODE *iter = NULL;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
-    DPRINT(("owfNativeStreamNotifyObservers(%p, %x)",
-             stream, event));
+    DPRINT(("owfNativeStreamNotifyObservers(%p, %x)", stream, event));
 
     GET_STREAM(ns, stream);
     CHECK_STREAM_NR();
 
-    if (ns->sendNotifications)
-    {
+    if (ns->sendNotifications) {
         OWF_Mutex_Lock(&ns->mutex);
 
         iter = ns->observers;
-        while (iter)
-        {
-            OWFStreamCallbackData* cbdata = (OWFStreamCallbackData*) iter->data;
+        while (iter) {
+            OWFStreamCallbackData *cbdata = (OWFStreamCallbackData *)iter->data;
 
-            DPRINT(("Stream callback: (%p)(%p, %x, %p)",
-                    cbdata->callback, stream, event, cbdata->data));
+            DPRINT(("Stream callback: (%p)(%p, %x, %p)", cbdata->callback,
+                    stream, event, cbdata->data));
 
-            if (cbdata->callback)
-            {
+            if (cbdata->callback) {
                 (cbdata->callback)(stream, event, cbdata->data);
             }
             iter = iter->next;
@@ -228,39 +214,27 @@ static void owfNativeStreamNotifyObservers(OWFNativeStreamType stream,
 /*----------------------------------------------------------------------------
  *  Observer equality comparison
  *----------------------------------------------------------------------------*/
-static OWFint
-ObserversEqual(void* arg1, void* arg2)
-{
-#define _CALLBACK(x)        ((OWFStreamCallbackData*)(x))
+static OWFint ObserversEqual(void *arg1, void *arg2) {
+#define _CALLBACK(x) ((OWFStreamCallbackData *)(x))
 
-
-    return (OWFint)(    _CALLBACK(arg1)->callback ==_CALLBACK(arg2)->callback
-                    &&  _CALLBACK(arg1)->data ==_CALLBACK(arg2)->data
-                    );
+    return (OWFint)(_CALLBACK(arg1)->callback == _CALLBACK(arg2)->callback &&
+                    _CALLBACK(arg1)->data == _CALLBACK(arg2)->data);
 
 #undef _CALLBACK
 }
 
-static OWFint
-ObserverFuncsEqual(void* arg1, void* arg2)
-{
-#define _CALLBACK(x)        ((OWFStreamCallbackData*)(x))
+static OWFint ObserverFuncsEqual(void *arg1, void *arg2) {
+#define _CALLBACK(x) ((OWFStreamCallbackData *)(x))
 
-
-    return (OWFint)(_CALLBACK(arg1)->callback ==_CALLBACK(arg2)->callback
-                    );
+    return (OWFint)(_CALLBACK(arg1)->callback == _CALLBACK(arg2)->callback);
 
 #undef _CALLBACK
 }
 
-static OWFint
-ObserverDatasEqual(void* arg1, void* arg2)
-{
-#define _CALLBACK(x)        ((OWFStreamCallbackData*)(x))
+static OWFint ObserverDatasEqual(void *arg1, void *arg2) {
+#define _CALLBACK(x) ((OWFStreamCallbackData *)(x))
 
-
-    return (OWFint)(_CALLBACK(arg1)->data ==_CALLBACK(arg2)->data
-                    );
+    return (OWFint)(_CALLBACK(arg1)->data == _CALLBACK(arg2)->data);
 
 #undef _CALLBACK
 }
@@ -270,18 +244,15 @@ ObserverDatasEqual(void* arg1, void* arg2)
  *
  *  \param ns               Native stream object
  *----------------------------------------------------------------------------*/
-static void
-owfNativeStreamDoDestroy(OWF_NATIVE_STREAM* ns)
-{
-    OWFint                  ii = 0;
+static void owfNativeStreamDoDestroy(OWF_NATIVE_STREAM *ns) {
+    OWFint ii = 0;
 
     OWF_ASSERT(ns);
 
     /* bail out if the stream is protected (e.g. the user tries to
      * free on-screen context's stream) */
     OWF_Mutex_Lock(&ns->mutex);
-    if (ns->protected)
-    {
+    if (ns->protected) {
         OWF_Mutex_Unlock(&ns->mutex);
         return;
     }
@@ -296,16 +267,14 @@ owfNativeStreamDoDestroy(OWF_NATIVE_STREAM* ns)
     }
 
     /* remove from internal dictionary */
-    if (ns->handle != OWF_INVALID_HANDLE)
-    {
+    if (ns->handle != OWF_INVALID_HANDLE) {
         owfNativeStreamRemove(ns->handle);
     }
 
     OWF_ASSERT(0 == ns->lockCount);
 
     /* release resources allocated by the stream. */
-    for (ii = 0; ii < ns->bufferCount; ii++)
-    {
+    for (ii = 0; ii < ns->bufferCount; ii++) {
         OWF_Image_FreeData(&ns->bufferList[ii]);
     }
     xfree(ns->bufferList);
@@ -316,9 +285,8 @@ owfNativeStreamDoDestroy(OWF_NATIVE_STREAM* ns)
 
     ns->mutex = NULL;
 
-    while (ns->observers)
-    {
-        OWF_NODE* next = ns->observers->next;
+    while (ns->observers) {
+        OWF_NODE *next = ns->observers->next;
         xfree(ns->observers);
         ns->observers = next;
     }
@@ -343,53 +311,42 @@ owfNativeStreamDoDestroy(OWF_NATIVE_STREAM* ns)
  *  \param Handle to newly created stream or OWF_INVALID_HANDLe if no
  *  stream could be created.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWFNativeStreamType
-owfNativeStreamCreateImageStream(OWFint width,
-                                 OWFint height,
-                                 const OWF_IMAGE_FORMAT* imageFormat,
-                                 OWFint nbufs)
-{
-    OWF_NATIVE_STREAM*      ns          = NULL;
-    OWFint                  multiFail   = 0;
-    void**                  bufferList  = NULL;
-    OWFint*                 bufferRefs  = NULL;
-    OWF_SYNC_DESC*          bufferSyncs = NULL;
-    OWFint                  ii          = 0,
-                            j           = 0;
-    OWFint                  ok          = 0;
+OWF_PUBLIC OWFNativeStreamType owfNativeStreamCreateImageStream(
+    OWFint width, OWFint height, const OWF_IMAGE_FORMAT *imageFormat,
+    OWFint nbufs) {
+    OWF_NATIVE_STREAM *ns = NULL;
+    OWFint multiFail = 0;
+    void **bufferList = NULL;
+    OWFint *bufferRefs = NULL;
+    OWF_SYNC_DESC *bufferSyncs = NULL;
+    OWFint ii = 0, j = 0;
+    OWFint ok = 0;
 
     OWF_ASSERT(nbufs >= 1);
 
     /* stream must have at least 2 buffers (front & back) */
-    ns          = NEW0(OWF_NATIVE_STREAM);
-    bufferList  = xalloc(sizeof(void*), nbufs);
-    bufferRefs  = xalloc(sizeof(int*), nbufs);
+    ns = NEW0(OWF_NATIVE_STREAM);
+    bufferList = xalloc(sizeof(void *), nbufs);
+    bufferRefs = xalloc(sizeof(int *), nbufs);
 
-    bufferSyncs  = xalloc(sizeof(OWF_SYNC_DESC), nbufs);
-
+    bufferSyncs = xalloc(sizeof(OWF_SYNC_DESC), nbufs);
 
     /* initialize surface/buffer list */
-    if (bufferList)
-    {
-        for (ii = 0; ii < nbufs; ii++)
-        {
-            bufferList[ii] = OWF_Image_AllocData(width, height,
-                                                 imageFormat->pixelFormat);
-            if (!bufferList[ii])
-            {
+    if (bufferList) {
+        for (ii = 0; ii < nbufs; ii++) {
+            bufferList[ii] =
+                OWF_Image_AllocData(width, height, imageFormat->pixelFormat);
+            if (!bufferList[ii]) {
                 multiFail++;
                 break;
             }
         }
     }
 
-    if (!ns || !bufferList || multiFail || !bufferRefs || !bufferSyncs)
-    {
+    if (!ns || !bufferList || multiFail || !bufferRefs || !bufferSyncs) {
         xfree(ns);
-        if (bufferList)
-        {
-            for (j = 0; j < ii; j++)
-            {
+        if (bufferList) {
+            for (j = 0; j < ii; j++) {
                 OWF_Image_FreeData(&bufferList[j]);
             }
         }
@@ -400,34 +357,32 @@ owfNativeStreamCreateImageStream(OWFint width,
         return OWF_INVALID_HANDLE;
     }
 
-    ns->bufferList      = bufferList;
-    ns->bufferRefs      = bufferRefs;
-    ns->bufferCount     = nbufs;
+    ns->bufferList = bufferList;
+    ns->bufferRefs = bufferRefs;
+    ns->bufferCount = nbufs;
 
-    ns->width           = width;
-    ns->height          = height;
+    ns->width = width;
+    ns->height = height;
 
-    ns->idxFront        = 0;
-    ns->idxNextFree     = 1;
+    ns->idxFront = 0;
+    ns->idxNextFree = 1;
     memcpy(&ns->colorFormat, imageFormat, sizeof(ns->colorFormat));
-    ns->stride          = OWF_Image_GetStride(width, imageFormat, 0);
-    ns->referenceCount  = 1;
+    ns->stride = OWF_Image_GetStride(width, imageFormat, 0);
+    ns->referenceCount = 1;
     ns->sendNotifications = OWF_TRUE;
-    ns->protected       = OWF_FALSE;
-    ns->flipState       = NS_FLIP_TARGET_NORMAL;
-    ns->newFlip         = NS_FLIP_TARGET_NOT_SET;
+    ns->protected = OWF_FALSE;
+    ns->flipState = NS_FLIP_TARGET_NORMAL;
+    ns->newFlip = NS_FLIP_TARGET_NOT_SET;
 
     ok = OWF_Semaphore_Init(&ns->writer, nbufs);
-    if (ok == 0)
-    {
+    if (ok == 0) {
         ok = OWF_Mutex_Init(&ns->mutex);
     }
 
     ns->bufferSyncs = bufferSyncs;
 
     ns->handle = owfNativeStreamAddStream(ns);
-    if (ns->handle == OWF_INVALID_HANDLE || ok != 0)
-    {
+    if (ns->handle == OWF_INVALID_HANDLE || ok != 0) {
         owfNativeStreamDoDestroy(ns);
         ns = NULL;
         return OWF_INVALID_HANDLE;
@@ -436,43 +391,40 @@ owfNativeStreamCreateImageStream(OWFint width,
     return ns->handle;
 }
 /*!---------------------------------------------------------------------------
- * Converts from external WFC native stream handle type to internal OWF native stream handle type.
- * The internal handle MUST be persistant. The external handle nmay already be persistant.
- * This method may fail, either due to memory, or due to the stream object not being supported by the compositor
+ * Converts from external WFC native stream handle type to internal OWF native
+ *stream handle type. The internal handle MUST be persistant. The external
+ *handle nmay already be persistant. This method may fail, either due to memory,
+ *or due to the stream object not being supported by the compositor
  * @param publicStream The publicly defined stream handle
- * @param error			Pointer to store error code - optionally can be NULL
+ * @param error			Pointer to store error code - optionally can be
+ *NULL
  * @return OWFNativeStreamType an equivalent internal stream handle
  *----------------------------------------------------------------------------**/
-OWF_API_CALL OWFNativeStreamType owfNativeStreamFromWFC(WFCNativeStreamType publicStream,OWF_STREAM_ERROR* errorReturn)
-	{
-	OWFNativeStreamType rv=(OWFNativeStreamType)publicStream;
-	OWF_IMAGE_FORMAT format;
-	owfNativeStreamGetHeader(rv,NULL,NULL,NULL,&format,NULL);
-	if (format.pixelFormat==OWF_IMAGE_NOT_SUPPORTED)
-		{
-		if (errorReturn)
-			{
-			*errorReturn=OWF_STREAM_ERROR_INVALID_STREAM;
-			}
-		return OWF_INVALID_HANDLE; 
-		}
-	owfNativeStreamAddReference(rv);
-	if (errorReturn)
-		{
-		*errorReturn=OWF_STREAM_ERROR_NONE;
-		}
-	return rv;
-	}
+OWF_API_CALL OWFNativeStreamType owfNativeStreamFromWFC(
+    WFCNativeStreamType publicStream, OWF_STREAM_ERROR *errorReturn) {
+    OWFNativeStreamType rv = (OWFNativeStreamType)publicStream;
+    OWF_IMAGE_FORMAT format;
+    owfNativeStreamGetHeader(rv, NULL, NULL, NULL, &format, NULL);
+    if (format.pixelFormat == OWF_IMAGE_NOT_SUPPORTED) {
+        if (errorReturn) {
+            *errorReturn = OWF_STREAM_ERROR_INVALID_STREAM;
+        }
+        return OWF_INVALID_HANDLE;
+    }
+    owfNativeStreamAddReference(rv);
+    if (errorReturn) {
+        *errorReturn = OWF_STREAM_ERROR_NONE;
+    }
+    return rv;
+}
 
 /*!---------------------------------------------------------------------------
  *  Increase stream's reference count
  *
  *  \param stream           Stream handle
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamAddReference(OWFNativeStreamType stream)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_API_CALL void owfNativeStreamAddReference(OWFNativeStreamType stream) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
 
@@ -488,10 +440,8 @@ owfNativeStreamAddReference(OWFNativeStreamType stream)
  *
  *  \param stream           Stream handle
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamRemoveReference(OWFNativeStreamType stream)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_API_CALL void owfNativeStreamRemoveReference(OWFNativeStreamType stream) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
 
@@ -507,10 +457,8 @@ owfNativeStreamRemoveReference(OWFNativeStreamType stream)
  *
  *  \param stream           Stream handle
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamDestroy(OWFNativeStreamType stream)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_PUBLIC void owfNativeStreamDestroy(OWFNativeStreamType stream) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM_NR();
@@ -528,9 +476,8 @@ owfNativeStreamDestroy(OWFNativeStreamType stream)
  *  are available.
  *----------------------------------------------------------------------------*/
 OWF_PUBLIC OWFNativeStreamBuffer
-owfNativeStreamAcquireReadBuffer(OWFNativeStreamType stream)
-{
-    OWF_NATIVE_STREAM* ns;
+owfNativeStreamAcquireReadBuffer(OWFNativeStreamType stream) {
+    OWF_NATIVE_STREAM *ns;
     OWFNativeStreamBuffer buffer = OWF_INVALID_HANDLE;
 
     GET_STREAM(ns, stream);
@@ -538,15 +485,12 @@ owfNativeStreamAcquireReadBuffer(OWFNativeStreamType stream)
 
     OWF_Mutex_Lock(&ns->mutex);
 
-    if (ns->bufferCount == 1)
-    {
+    if (ns->bufferCount == 1) {
         /* Single buffered stream.
          * A "Write lock" must not block reading */
         buffer = INDEX_TO_HANDLE(0);
         ++(ns->bufferRefs[0]); /* Increase buffer's reference count */
-    }
-    else
-    {
+    } else {
         buffer = INDEX_TO_HANDLE(ns->idxFront);
         /* Increase reference count of front buffer */
         ++(ns->bufferRefs[ns->idxFront]);
@@ -562,14 +506,12 @@ owfNativeStreamAcquireReadBuffer(OWFNativeStreamType stream)
  *  \param stream           Stream handle
  *  \param buf              Buffer handle
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamReleaseReadBuffer(OWFNativeStreamType stream,
-                                 OWFNativeStreamBuffer buf)
-{
-    OWFint           i = 0;
-    OWF_SYNC_DESC*   syncDesc = NULL;
+OWF_PUBLIC void owfNativeStreamReleaseReadBuffer(OWFNativeStreamType stream,
+                                                 OWFNativeStreamBuffer buf) {
+    OWFint i = 0;
+    OWF_SYNC_DESC *syncDesc = NULL;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM_NR();
@@ -584,10 +526,8 @@ owfNativeStreamReleaseReadBuffer(OWFNativeStreamType stream,
     --(ns->bufferRefs[i]);
 
     syncDesc = &ns->bufferSyncs[i];
-    if (syncDesc->sync != NULL)
-    {
-        DPRINT(("signalling synched buffer(%p, %x)",
-                stream, syncDesc->sync));
+    if (syncDesc->sync != NULL) {
+        DPRINT(("signalling synched buffer(%p, %x)", stream, syncDesc->sync));
 
         eglSignalSyncKHR(syncDesc->dpy, syncDesc->sync, EGL_SIGNALED_KHR);
         syncDesc->dpy = EGL_NO_DISPLAY;
@@ -607,11 +547,10 @@ owfNativeStreamReleaseReadBuffer(OWFNativeStreamType stream,
  *  buffer is available.
  *----------------------------------------------------------------------------*/
 OWF_PUBLIC OWFNativeStreamBuffer
-owfNativeStreamAcquireWriteBuffer(OWFNativeStreamType stream)
-{
-    OWFNativeStreamBuffer   buffer = OWF_INVALID_HANDLE;
+owfNativeStreamAcquireWriteBuffer(OWFNativeStreamType stream) {
+    OWFNativeStreamBuffer buffer = OWF_INVALID_HANDLE;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM(OWF_INVALID_HANDLE);
@@ -621,48 +560,38 @@ owfNativeStreamAcquireWriteBuffer(OWFNativeStreamType stream)
     /* write always blocks */
     OWF_Semaphore_Wait(&ns->writer);
 
-    if (ns->bufferCount == 1)
-    {
+    if (ns->bufferCount == 1) {
         /* Single buffered stream */
         buffer = INDEX_TO_HANDLE(0);
         ++(ns->bufferRefs[0]); /* Increase buffer's reference count */
-    }
-    else
-    {
-        if (ns->idxFront == ns->idxNextFree)
-        {
+    } else {
+        if (ns->idxFront == ns->idxNextFree) {
             buffer = OWF_INVALID_HANDLE;
-        }
-        else
-        {
+        } else {
             buffer = INDEX_TO_HANDLE(ns->idxNextFree);
 
             ++(ns->bufferRefs[ns->idxNextFree]); /* Increase buffer's
                                                     reference count */
             ++(ns->idxNextFree); /* Move pointer to next buffer */
-            if (ns->idxNextFree == ns->bufferCount)
-            {
+            if (ns->idxNextFree == ns->bufferCount) {
                 ns->idxNextFree = 0;
             }
         }
     }
 
-    if (buffer != OWF_INVALID_HANDLE)
-    {
+    if (buffer != OWF_INVALID_HANDLE) {
         /* Signal associated 'old' sync because
          * buffer gets 'dropped', never consumed
          */
 
-        OWFint           bufferIndex;
-        OWF_SYNC_DESC*   syncDesc;
+        OWFint bufferIndex;
+        OWF_SYNC_DESC *syncDesc;
 
         bufferIndex = HANDLE_TO_INDEX(buffer);
         syncDesc = &ns->bufferSyncs[bufferIndex];
 
-        if (syncDesc->sync != NULL)
-        {
-            DPRINT(("dropping synched buffer(%p, %x)",
-                    stream, syncDesc->sync));
+        if (syncDesc->sync != NULL) {
+            DPRINT(("dropping synched buffer(%p, %x)", stream, syncDesc->sync));
 
             eglSignalSyncKHR(syncDesc->dpy, syncDesc->sync, EGL_SIGNALED_KHR);
             syncDesc->dpy = EGL_NO_DISPLAY;
@@ -683,15 +612,13 @@ owfNativeStreamAcquireWriteBuffer(OWFNativeStreamType stream)
  *  \param sync             EGLSync object which is signalled when
  *                          release buffer gets consumed or dropped
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
-                                 OWFNativeStreamBuffer buf,
-                                 EGLDisplay dpy,
-                                 EGLSyncKHR sync)
-{
-    OWFint                  bufferIndex = 0;
+OWF_PUBLIC void owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
+                                                  OWFNativeStreamBuffer buf,
+                                                  EGLDisplay dpy,
+                                                  EGLSyncKHR sync) {
+    OWFint bufferIndex = 0;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM_NR();
@@ -705,8 +632,8 @@ owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
 
     /* Look up correct buffer (naive search) */
     --(ns->bufferRefs[bufferIndex]); /* Decrease buffer's reference count */
-    ns->idxFront = bufferIndex; /* Update front buffer to point to new
-                                   front buffer */
+    ns->idxFront = bufferIndex;      /* Update front buffer to point to new
+                                        front buffer */
 
     OWF_Semaphore_Post(&ns->writer);
 
@@ -714,15 +641,14 @@ owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
     ns->bufferSyncs[bufferIndex].dpy = dpy;
     ns->bufferSyncs[bufferIndex].sync = sync;
 
-    if (ns->newFlip != NS_FLIP_TARGET_NOT_SET)
-    {
+    if (ns->newFlip != NS_FLIP_TARGET_NOT_SET) {
         ns->flipState = ns->newFlip;
         ns->newFlip = NS_FLIP_TARGET_NOT_SET;
     }
-    
+
     OWF_Mutex_Unlock(&ns->mutex);
 
-    DPRINT(("Stream updated %p", stream ));
+    DPRINT(("Stream updated %p", stream));
 
     owfNativeStreamNotifyObservers(stream, OWF_STREAM_UPDATED);
 }
@@ -736,15 +662,12 @@ owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
  *  \param data             Optional data to pass to observer callback
  *                          function when event is dispatched.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWF_STREAM_ERROR
-owfNativeStreamAddObserver(OWFNativeStreamType stream,
-                           OWFStreamCallback observer,
-                           void* data)
-{
-    OWF_NODE*               node = NULL;
-    OWFStreamCallbackData* cbdata = NULL;
+OWF_PUBLIC OWF_STREAM_ERROR owfNativeStreamAddObserver(
+    OWFNativeStreamType stream, OWFStreamCallback observer, void *data) {
+    OWF_NODE *node = NULL;
+    OWFStreamCallbackData *cbdata = NULL;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM(OWF_STREAM_ERROR_INVALID_STREAM);
@@ -752,30 +675,26 @@ owfNativeStreamAddObserver(OWFNativeStreamType stream,
     /* exclusive access only for you my friend. */
     OWF_Mutex_Lock(&ns->mutex);
 
-
-
     /* new observer. allocate a slot with extra space needed
      * to store the callback data. */
     node = xalloc(sizeof(OWF_NODE) + sizeof(OWFStreamCallbackData), 1);
-    if (!node)
-    {
+    if (!node) {
         OWF_Mutex_Unlock(&ns->mutex);
         return OWF_STREAM_ERROR_OUT_OF_MEMORY;
     }
 
-    /* todo: bug 5188: There used to be a check for duplicates here which is redundant.
-     * It is better for duplicate entries to exist and be removed 1-for-1, or add reference counting.
+    /* todo: bug 5188: There used to be a check for duplicates here which is
+     * redundant. It is better for duplicate entries to exist and be removed
+     * 1-for-1, or add reference counting.
      */
     /* callback data is directly after node in the memory*/
-    cbdata = (OWFStreamCallbackData*) &node[1];
+    cbdata = (OWFStreamCallbackData *)&node[1];
     cbdata->callback = observer;
     cbdata->data = data;
     /* for convenience. */
-    node->data = (void*) cbdata;
+    node->data = (void *)cbdata;
 
-
-    if (node)
-    {
+    if (node) {
         /* append to callback-chain */
         ns->observers = OWF_List_Append(ns->observers, node);
     }
@@ -797,17 +716,15 @@ owfNativeStreamAddObserver(OWFNativeStreamType stream,
  *  (OWF_STREAM_ERROR_INVALID_STREAM if the stream is invalid;
  *   OWF_STREAM_ERROR_INVALID_OBSERVER if the observer is invalid.)
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWFint
-owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
-                              OWFStreamCallback observer,
-                              void* data)
-{
-    OWF_NODE*               node = NULL;
-    OWFStreamCallbackData   tmp;
+OWF_PUBLIC OWFint owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
+                                                OWFStreamCallback observer,
+                                                void *data) {
+    OWF_NODE *node = NULL;
+    OWFStreamCallbackData tmp;
 
-    NODECMPFUNC search=ObserversEqual;
+    NODECMPFUNC search = ObserversEqual;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM(OWF_STREAM_ERROR_INVALID_STREAM);
@@ -816,29 +733,21 @@ owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
 
     tmp.callback = observer;
     tmp.data = data;
-    if (!observer)
-    {
-        if (!data)
-        {
+    if (!observer) {
+        if (!data) {
             return OWF_STREAM_ERROR_INVALID_OBSERVER;
+        } else {
+            search = ObserverDatasEqual;
         }
-        else
-        {
-            search=ObserverDatasEqual;
-        }
-    }
-    else
-    {
-        if (!data)
-        {
-            search=ObserverFuncsEqual;
+    } else {
+        if (!data) {
+            search = ObserverFuncsEqual;
         }
     }
-    
+
     node = OWF_List_Find(ns->observers, search, &tmp);
 
-    if (node)
-    {
+    if (node) {
         /* taketh the observer away */
         ns->observers = OWF_List_Remove(ns->observers, node);
         /*  to death */
@@ -847,8 +756,7 @@ owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
 
     OWF_Mutex_Unlock(&ns->mutex);
 
-    return node ? OWF_STREAM_ERROR_NONE :
-                  OWF_STREAM_ERROR_INVALID_OBSERVER;
+    return node ? OWF_STREAM_ERROR_NONE : OWF_STREAM_ERROR_INVALID_OBSERVER;
 }
 
 /*!---------------------------------------------------------------------------
@@ -858,11 +766,9 @@ owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
  *  \param send             Boolean value indicating whether the stream should
  *                          send content notifications to its observers.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamEnableUpdateNotifications(OWFNativeStreamType stream,
-                                         OWFboolean send)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_API_CALL void owfNativeStreamEnableUpdateNotifications(
+    OWFNativeStreamType stream, OWFboolean send) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM_NR();
@@ -883,13 +789,11 @@ owfNativeStreamEnableUpdateNotifications(OWFNativeStreamType stream,
  *
  *  \return Pointer to buffers pixel data.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void*
-owfNativeStreamGetBufferPtr(OWFNativeStreamType stream,
-                            OWFNativeStreamBuffer buffer)
-{
-    void*                   bufferPtr = NULL;
+OWF_PUBLIC void *owfNativeStreamGetBufferPtr(OWFNativeStreamType stream,
+                                             OWFNativeStreamBuffer buffer) {
+    void *bufferPtr = NULL;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM(NULL);
@@ -914,15 +818,14 @@ owfNativeStreamGetBufferPtr(OWFNativeStreamType stream,
  *  \param stream           Stream handle
  *  \param flag             Protection status
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamSetProtectionFlag(OWFNativeStreamType stream, OWFboolean flag)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_API_CALL void owfNativeStreamSetProtectionFlag(OWFNativeStreamType stream,
+                                                   OWFboolean flag) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
     CHECK_STREAM_NR();
 
-	OWF_Mutex_Lock(&ns->mutex);
+    OWF_Mutex_Lock(&ns->mutex);
     ns->protected = flag;
     OWF_Mutex_Unlock(&ns->mutex);
 }
@@ -936,16 +839,16 @@ owfNativeStreamSetProtectionFlag(OWFNativeStreamType stream, OWFboolean flag)
  *  OWF_FALSE = unprotected)
  *----------------------------------------------------------------------------*/
 OWF_API_CALL OWFboolean
-owfNativeStreamGetProtectionFlag(OWFNativeStreamType stream)
-{
-    OWFboolean              protected = OWF_FALSE;
+owfNativeStreamGetProtectionFlag(OWFNativeStreamType stream) {
+    OWFboolean protected = OWF_FALSE;
 
-    OWF_NATIVE_STREAM* ns;
+    OWF_NATIVE_STREAM *ns;
     GET_STREAM(ns, stream);
 
     CHECK_STREAM(protected);
     OWF_Mutex_Lock(&ns->mutex);
-    protected = ns->protected;
+   protected
+    = ns->protected;
     OWF_Mutex_Unlock(&ns->mutex);
     return protected;
 }
@@ -968,90 +871,68 @@ owfNativeStreamGetProtectionFlag(OWFNativeStreamType stream)
  * parameters (stream_handle, &width, &height, NULL, NULL, NULL);
  *
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamGetHeader(OWFNativeStreamType stream,
-                           OWFint* width,
-                           OWFint* height,
-                           OWFint* stride,
-                           OWF_IMAGE_FORMAT* format,
-                           OWFint* pixelSize)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_PUBLIC void owfNativeStreamGetHeader(OWFNativeStreamType stream,
+                                         OWFint *width, OWFint *height,
+                                         OWFint *stride,
+                                         OWF_IMAGE_FORMAT *format,
+                                         OWFint *pixelSize) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
 
     CHECK_STREAM_NR();
 
     OWF_Mutex_Lock(&ns->mutex);
-    
-    if (width)
-    {
-        if (ns->flipState == NS_FLIP_TARGET_FLIPPED)
-        {
-            *width  = ns->height;
-        }
-        else
-        {
-            *width  = ns->width;
+
+    if (width) {
+        if (ns->flipState == NS_FLIP_TARGET_FLIPPED) {
+            *width = ns->height;
+        } else {
+            *width = ns->width;
         }
     }
-    if (height)
-    {
-        if (ns->flipState == NS_FLIP_TARGET_FLIPPED)
-        {
+    if (height) {
+        if (ns->flipState == NS_FLIP_TARGET_FLIPPED) {
             *height = ns->width;
-        }
-        else
-        {
+        } else {
             *height = ns->height;
         }
     }
-    if (stride)
-    {
-        if (ns->flipState == NS_FLIP_TARGET_FLIPPED)
-        {
-            *stride = OWF_Image_GetStride(ns->height,  &ns->colorFormat, 0);
-        }
-        else
-        {
+    if (stride) {
+        if (ns->flipState == NS_FLIP_TARGET_FLIPPED) {
+            *stride = OWF_Image_GetStride(ns->height, &ns->colorFormat, 0);
+        } else {
             *stride = ns->stride;
         }
     }
-    
-    if (format)
-    {
+
+    if (format) {
         memcpy(format, &ns->colorFormat, sizeof(*format));
     }
 
-    if (pixelSize)
-    {
+    if (pixelSize) {
         *pixelSize = OWF_Image_GetFormatPixelSize(ns->colorFormat.pixelFormat);
     }
-    
+
     OWF_Mutex_Unlock(&ns->mutex);
 }
 
-
-OWF_API_CALL void
-owfSetStreamFlipState(OWFNativeStreamType stream, OWFboolean flip)
-{
-    OWF_NATIVE_STREAM* ns;
+OWF_API_CALL void owfSetStreamFlipState(OWFNativeStreamType stream,
+                                        OWFboolean flip) {
+    OWF_NATIVE_STREAM *ns;
 
     GET_STREAM(ns, stream);
 
     CHECK_STREAM_NR();
-    
+
     OWF_Mutex_Lock(&ns->mutex);
-    
-    if (flip)
-    {
+
+    if (flip) {
         ns->newFlip = NS_FLIP_TARGET_FLIPPED;
-    }
-    else
-    {
+    } else {
         ns->newFlip = NS_FLIP_TARGET_NORMAL;
-    }        
-        
+    }
+
     OWF_Mutex_Unlock(&ns->mutex);
 }
 

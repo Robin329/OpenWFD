@@ -28,21 +28,18 @@
  *
  */
 
-#include "owftypes.h"
 #include "owfhash.h"
-
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct OWF_HDESC_s
-{
-    OWF_HASHTABLE*     hash;
-    OWF_MUTEX          mutex;
-    OWFint             next;
+typedef struct OWF_HDESC_s {
+    OWF_HASHTABLE *hash;
+    OWF_MUTEX mutex;
+    OWFint next;
 } OWF_HANDLE_DESC;
-
 
 /*! \brief Associates a new handle with an object
  * Function allocates a new handle and associate an object
@@ -57,8 +54,8 @@ typedef struct OWF_HDESC_s
  *  \return INVALID_HANDLE if handle could not be allocated
  *
  */
-OWF_API_CALL OWFHandle
-OWF_Handle_Create(OWF_HANDLE_DESC* hDesc, OWFuint8 objType, void* obj);
+OWF_API_CALL OWFHandle OWF_Handle_Create(OWF_HANDLE_DESC *hDesc,
+                                         OWFuint8 objType, void *obj);
 
 /*! \brief Get pointer to object a handle is associated with
  * Look for an object associated with a handle.
@@ -70,8 +67,8 @@ OWF_Handle_Create(OWF_HANDLE_DESC* hDesc, OWFuint8 objType, void* obj);
  *  \return pointer to an object or NULL if handle does not
  *         exist.
  */
-OWF_API_CALL void*
-OWF_Handle_GetObj(OWF_HANDLE_DESC* hDesc, OWFHandle handle, OWFuint8 objType);
+OWF_API_CALL void *OWF_Handle_GetObj(OWF_HANDLE_DESC *hDesc, OWFHandle handle,
+                                     OWFuint8 objType);
 
 /*! \brief Remove association between handle and object
  * Handle is deleted and no object can be accessed through
@@ -79,9 +76,7 @@ OWF_Handle_GetObj(OWF_HANDLE_DESC* hDesc, OWFHandle handle, OWFuint8 objType);
  *
  *  \param handle Object handle
  */
-OWF_API_CALL void
-OWF_Handle_Delete(OWF_HANDLE_DESC* hDesc, OWFHandle handle);
-
+OWF_API_CALL void OWF_Handle_Delete(OWF_HANDLE_DESC *hDesc, OWFHandle handle);
 
 #ifdef __cplusplus
 }

@@ -18,10 +18,11 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
- * 
+ *
  * OWF_DISPCTX is a handle to adaptation extensions to the WFC_CONTEXT.
- * This could be merged with SCREEN, but that is currently instanced at the DEVICE level
- * 
+ * This could be merged with SCREEN, but that is currently instanced at the
+ * DEVICE level
+ *
  */
 #ifndef OWFDISPLAYCONTEXTGENERAL_H_
 #define OWFDISPLAYCONTEXTGENERAL_H_
@@ -32,26 +33,31 @@
 extern "C" {
 #endif
 
-typedef OWFHandle   OWF_DISPCTX;
+typedef OWFHandle OWF_DISPCTX;
 
 /**
  * Create an extension object to be attached to the context
- * @param screenNum The screen number index to create it for. Negative indicates off-screen contexts
+ * @param screenNum The screen number index to create it for. Negative indicates
+ *off-screen contexts
  * @return OWF_DISPCTX handle to context object.
  **/
 OWF_DISPCTX OWF_DisplayContext_Create(OWFint32 screenNum);
 /**
  * Destroy the extension object to attached to the context
  * @param dc The display context handle of the object to be destroyed.
- * @param screenNum The screen number index associated with it. Negative indicates off-screen contexts
+ * @param screenNum The screen number index associated with it. Negative
+ *indicates off-screen contexts
  * @return OWF_DISPCTX handle to context object.
  **/
 void OWF_DisplayContext_Destroy(OWFint32 screenNum, OWF_DISPCTX dc);
 
 /**
- * Determine whether a particular screen number is connected to an on-screen context.
- * @param screenNum The screen number to check. Negative or out of range always returns false.
- * @return TRUE if the screen number is active, i.e. associated with a context. FALSE if available.
+ * Determine whether a particular screen number is connected to an on-screen
+ *context.
+ * @param screenNum The screen number to check. Negative or out of range always
+ *returns false.
+ * @return TRUE if the screen number is active, i.e. associated with a context.
+ *FALSE if available.
  **/
 OWFboolean OWF_DisplayContext_IsLive(OWFint32 screenNum);
 

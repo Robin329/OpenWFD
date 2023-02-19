@@ -23,24 +23,22 @@
 #ifndef OWF_MESSAGEQUEUE_H_
 #define OWF_MESSAGEQUEUE_H_
 
-#include "owftypes.h"
-#include "owfsemaphore.h"
 #include "owfmutex.h"
-
+#include "owfsemaphore.h"
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 typedef struct {
-    OWFuint                 id;
-    void*                   data;
+    OWFuint id;
+    void *data;
 } OWF_MESSAGE;
 
 typedef struct _MSGQUE {
-    OWFint                  read;
-    OWFint                  write;
+    OWFint read;
+    OWFint write;
 } OWF_MESSAGE_QUEUE;
 
 /*
@@ -48,8 +46,7 @@ typedef struct _MSGQUE {
  *
  *  \param queue Message queue to destroy
  */
-OWF_API_CALL void
-OWF_MessageQueue_Destroy(OWF_MESSAGE_QUEUE* queue);
+OWF_API_CALL void OWF_MessageQueue_Destroy(OWF_MESSAGE_QUEUE *queue);
 
 /*
  *  Initialize message queue
@@ -58,8 +55,7 @@ OWF_MessageQueue_Destroy(OWF_MESSAGE_QUEUE* queue);
  *  \return 0 if initialization succeeded, < 0 otherwise
  *
  */
-OWF_API_CALL OWFint
-OWF_MessageQueue_Init(OWF_MESSAGE_QUEUE* queue);
+OWF_API_CALL OWFint OWF_MessageQueue_Init(OWF_MESSAGE_QUEUE *queue);
 
 /*
  *  Check whether the message queue is empty
@@ -67,8 +63,7 @@ OWF_MessageQueue_Init(OWF_MESSAGE_QUEUE* queue);
  *  \param queue Queue to check
  *  \return OWF_TRUE if queue is empty, OWF_FALSE if not.
  */
-OWF_API_CALL OWFboolean
-OWF_MessageQueue_Empty(OWF_MESSAGE_QUEUE* queue);
+OWF_API_CALL OWFboolean OWF_MessageQueue_Empty(OWF_MESSAGE_QUEUE *queue);
 
 /*
  *  Insert message into message queue (send it to
@@ -79,10 +74,8 @@ OWF_MessageQueue_Empty(OWF_MESSAGE_QUEUE* queue);
  *  \param data Message contents
  *
  */
-OWF_API_CALL void
-OWF_Message_Send(OWF_MESSAGE_QUEUE* queue,
-                 OWFuint msg,
-                 void* data);
+OWF_API_CALL void OWF_Message_Send(OWF_MESSAGE_QUEUE *queue, OWFuint msg,
+                                   void *data);
 
 /*
  *  Poll message queue for incoming messages
@@ -94,9 +87,8 @@ OWF_Message_Send(OWF_MESSAGE_QUEUE* queue,
  *  received message is stored into OWF_MESSAGE structure pointed by the msg
  *  param
  */
-OWF_API_CALL OWFint
-OWF_Message_Poll(OWF_MESSAGE_QUEUE* queue,
-                 OWF_MESSAGE* msg);
+OWF_API_CALL OWFint OWF_Message_Poll(OWF_MESSAGE_QUEUE *queue,
+                                     OWF_MESSAGE *msg);
 
 /*
  *  Wait for message
@@ -110,15 +102,11 @@ OWF_Message_Poll(OWF_MESSAGE_QUEUE* queue,
  *  OWF_MESSAGE structure pointed by the msg param
  *
  */
-OWF_API_CALL OWFint
-OWF_Message_Wait(OWF_MESSAGE_QUEUE* queue,
-                 OWF_MESSAGE* msg,
-                 OWFint timeout);
-
+OWF_API_CALL OWFint OWF_Message_Wait(OWF_MESSAGE_QUEUE *queue, OWF_MESSAGE *msg,
+                                     OWFint timeout);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

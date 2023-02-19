@@ -55,9 +55,8 @@ extern "C" {
  *  or device id is unknown
  *
  */
-OWF_API_CALL WFDDevice OWF_APIENTRY
-WFD_Device_Allocate(WFDint deviceId) OWF_APIEXIT;
-
+OWF_API_CALL WFDDevice OWF_APIENTRY WFD_Device_Allocate(WFDint deviceId)
+    OWF_APIEXIT;
 
 /*!
  * \brief Releases a device.
@@ -75,8 +74,8 @@ WFD_Device_Allocate(WFDint deviceId) OWF_APIEXIT;
  * \param device A pointer to device object
  *
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Device_Release(WFD_DEVICE* device) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Device_Release(WFD_DEVICE* device)
+    OWF_APIEXIT;
 
 /*! \brief Check if the device is in use
  *
@@ -84,8 +83,8 @@ WFD_Device_Release(WFD_DEVICE* device) OWF_APIEXIT;
  *
  * \return WFD_TRUE of WFD_FALSE
  */
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Device_IsAllocated(WFDint deviceId) OWF_APIEXIT;
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Device_IsAllocated(WFDint deviceId)
+    OWF_APIEXIT;
 
 /*! \brief Get list of device ids in the system
  *
@@ -95,8 +94,7 @@ WFD_Device_IsAllocated(WFDint deviceId) OWF_APIEXIT;
  * \return number of devices in the system
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Device_GetIds(WFDint *idsList,
-                  WFDint listCapacity) OWF_APIEXIT;
+WFD_Device_GetIds(WFDint* idsList, WFDint listCapacity) OWF_APIEXIT;
 
 /*! \brief Get list of device ids in the system
  *
@@ -109,10 +107,8 @@ WFD_Device_GetIds(WFDint *idsList,
  *
  * \return number of devices matching filter rules
  */
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Device_FilterIds(WFDint *idsList,
-                     WFDint listCapacity,
-                     const WFDint *filterList) OWF_APIEXIT;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Device_FilterIds(
+    WFDint* idsList, WFDint listCapacity, const WFDint* filterList) OWF_APIEXIT;
 
 /*! \brief Find device object matching a device handle
  *
@@ -120,8 +116,8 @@ WFD_Device_FilterIds(WFDint *idsList,
  *
  * \return Pointer to device object or NULL
  */
-OWF_API_CALL WFD_DEVICE* OWF_APIENTRY
-WFD_Device_FindByHandle(WFDDevice device) OWF_APIEXIT;
+OWF_API_CALL WFD_DEVICE* OWF_APIENTRY WFD_Device_FindByHandle(WFDDevice device)
+    OWF_APIEXIT;
 
 /*! \brief Find static device configuration matching device id
  *
@@ -132,22 +128,17 @@ WFD_Device_FindByHandle(WFDDevice device) OWF_APIEXIT;
 OWF_API_CALL WFD_DEVICE_CONFIG* OWF_APIENTRY
 WFD_Device_FindById(WFDint deviceId) OWF_APIEXIT;
 
+/*! \brief Get integer attribute value
+ *
+ */
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Device_GetAttribi(
+    WFD_DEVICE* device, WFDDeviceAttrib attrib, WFDint* attrValue) OWF_APIEXIT;
 
 /*! \brief Get integer attribute value
  *
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Device_GetAttribi(WFD_DEVICE* device,
-                      WFDDeviceAttrib attrib,
-                      WFDint* attrValue) OWF_APIEXIT;
-
-/*! \brief Get integer attribute value
- *
- */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Device_SetAttribi(WFD_DEVICE* device,
-                      WFDDeviceAttrib attrib,
-                      WFDint attrValue) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Device_SetAttribi(
+    WFD_DEVICE* device, WFDDeviceAttrib attrib, WFDint attrValue) OWF_APIEXIT;
 
 /*! \brief Set device error code
  *
@@ -159,8 +150,7 @@ WFD_Device_SetAttribi(WFD_DEVICE* device,
  *
  */
 OWF_API_CALL void OWF_APIENTRY
-WFD_Device_SetError(WFD_DEVICE* device,
-                    WFDErrorCode error) OWF_APIEXIT;
+WFD_Device_SetError(WFD_DEVICE* device, WFDErrorCode error) OWF_APIEXIT;
 
 /*! \brief Get device error code
  *
@@ -170,8 +160,8 @@ WFD_Device_SetError(WFD_DEVICE* device,
  *
  * \return Error code
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Device_GetError(WFD_DEVICE* device) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Device_GetError(WFD_DEVICE* device)
+    OWF_APIEXIT;
 
 /*! \brief Commit changes to device configuration
  *
@@ -186,12 +176,8 @@ WFD_Device_GetError(WFD_DEVICE* device) OWF_APIEXIT;
  *
  * \return error code
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Device_Commit(WFD_DEVICE* device,
-                  WFD_PORT* port,
-                  WFD_PIPELINE* pipeline) OWF_APIEXIT;
-
-
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Device_Commit(
+    WFD_DEVICE* device, WFD_PORT* port, WFD_PIPELINE* pipeline) OWF_APIEXIT;
 
 /*! \brief Create a stream provider object for a pipeline
  *
@@ -202,11 +188,9 @@ WFD_Device_Commit(WFD_DEVICE* device,
  *
  * \return pointer to image provide object
  */
-OWF_API_CALL WFD_IMAGE_PROVIDER* OWF_APIENTRY
-WFD_Device_CreateStreamProvider(WFD_DEVICE* device,
-                                WFD_PIPELINE* pipeline,
-                                WFDNativeStreamType source,
-                                WFD_IMAGE_PROVIDER_TYPE type) OWF_APIEXIT;
+OWF_API_CALL WFD_IMAGE_PROVIDER* OWF_APIENTRY WFD_Device_CreateStreamProvider(
+    WFD_DEVICE* device, WFD_PIPELINE* pipeline, WFDNativeStreamType source,
+    WFD_IMAGE_PROVIDER_TYPE type) OWF_APIEXIT;
 
 /*! \brief Create an image provider object for a pipeline
  *
@@ -217,11 +201,9 @@ WFD_Device_CreateStreamProvider(WFD_DEVICE* device,
  *
  * \return pointer to image provider object
  */
-OWF_API_CALL WFD_IMAGE_PROVIDER* OWF_APIENTRY
-WFD_Device_CreateImageProvider(WFD_DEVICE* device,
-                               WFD_PIPELINE* pipeline,
-                               WFDEGLImage source,
-                               WFD_IMAGE_PROVIDER_TYPE type) OWF_APIEXIT;
+OWF_API_CALL WFD_IMAGE_PROVIDER* OWF_APIENTRY WFD_Device_CreateImageProvider(
+    WFD_DEVICE* device, WFD_PIPELINE* pipeline, WFDEGLImage source,
+    WFD_IMAGE_PROVIDER_TYPE type) OWF_APIEXIT;
 
 /*! \brief Destroy a stream or image provider
  *
@@ -230,9 +212,8 @@ WFD_Device_CreateImageProvider(WFD_DEVICE* device,
  *
  * \return status code
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Device_DestroyImageProvider(WFD_DEVICE* device,
-                                WFDHandle handle) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Device_DestroyImageProvider(
+    WFD_DEVICE* device, WFDHandle handle) OWF_APIEXIT;
 #ifdef __cplusplus
 }
 #endif

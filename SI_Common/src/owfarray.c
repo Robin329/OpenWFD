@@ -20,23 +20,19 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-
-#include <string.h>
-#include <stdlib.h>
-
 #include "owfarray.h"
-#include "owftypes.h"
+
+#include <stdlib.h>
+#include <string.h>
+
 #include "owfdebug.h"
+#include "owftypes.h"
 
-
-
-#define MINIMUM_CAPACITY    8
+#define MINIMUM_CAPACITY 8
 
 /* switch debug messages off (1) or off (0) */
 #if 1
@@ -46,43 +42,32 @@ extern "C"
 #define DPRINT(x)
 #endif
 
-#define SHIFT(a,f,t,n)        memmove(&(a)->items[t], \
-                                    &(a)->items[f], \
-                                    (n) * sizeof(OWF_ARRAY_ITEM))
+#define SHIFT(a, f, t, n) \
+    memmove(&(a)->items[t], &(a)->items[f], (n) * sizeof(OWF_ARRAY_ITEM))
 
-
-void
-OWF_Array_Initialize(OWF_ARRAY* array)
-{
+void OWF_Array_Initialize(OWF_ARRAY *array) {
     OWF_ASSERT(array);
 
     memset(array, 0, sizeof(OWF_ARRAY));
 }
 
-void
-OWF_Array_Reset(OWF_ARRAY* array)
-{
+void OWF_Array_Reset(OWF_ARRAY *array) {
     OWF_ASSERT(array);
 
     array->length = 0;
     memset(array->items, 0, sizeof(OWF_ARRAY_ITEM) * array->capacity);
-
 }
 
-void
-OWF_Array_Destroy(OWF_ARRAY* array)
-{
+void OWF_Array_Destroy(OWF_ARRAY *array) {
     OWF_ASSERT(array);
 
     free(array->items);
     OWF_Array_Initialize(array);
 }
 
-static OWFboolean
-OWF_Array_Enlarge(OWF_ARRAY* array)
-{
-    OWF_ARRAY_ITEM*         temp        = NULL;
-    OWFint                  newcapacity = 0;
+static OWFboolean OWF_Array_Enlarge(OWF_ARRAY *array) {
+    OWF_ARRAY_ITEM *temp = NULL;
+    OWFint newcapacity = 0;
 
     OWF_ASSERT(array);
 
@@ -95,11 +80,10 @@ OWF_Array_Enlarge(OWF_ARRAY* array)
     */
     newcapacity = MAX(MINIMUM_CAPACITY, 2 * array->capacity);
 
-    temp = (OWF_ARRAY_ITEM*) realloc(array->items,
+    temp = (OWF_ARRAY_ITEM *)realloc(array->items,
                                      sizeof(OWF_ARRAY_ITEM) * newcapacity);
 
-    if (!temp)
-    {
+    if (!temp) {
         return OWF_FALSE;
     }
 
@@ -111,18 +95,13 @@ OWF_Array_Enlarge(OWF_ARRAY* array)
     return OWF_TRUE;
 }
 
-OWFboolean
-OWF_Array_AppendItem(OWF_ARRAY* array,
-                      OWF_ARRAY_ITEM item)
-{
+OWFboolean OWF_Array_AppendItem(OWF_ARRAY *array, OWF_ARRAY_ITEM item) {
     OWF_ASSERT(array);
 
     DPRINT(("OWF_Array_AppendItem\n"));
 
-    if (array->length >= array->capacity)
-    {
-        if (!OWF_Array_Enlarge(array))
-        {
+    if (array->length >= array->capacity) {
+        if (!OWF_Array_Enlarge(array)) {
             return OWF_FALSE;
         }
     }
@@ -135,27 +114,21 @@ OWF_Array_AppendItem(OWF_ARRAY* array,
     return OWF_TRUE;
 }
 
-OWFboolean
-OWF_Array_InsertItem(OWF_ARRAY*    array,
-                     OWFint position,
-                     OWF_ARRAY_ITEM item)
-{
+OWFboolean OWF_Array_InsertItem(OWF_ARRAY *array, OWFint position,
+                                OWF_ARRAY_ITEM item) {
     OWF_ASSERT(array);
 
     DPRINT(("bounds check\n"));
 
     /* check bounds */
-    if (position < 0 || position > array->length)
-    {
+    if (position < 0 || position > array->length) {
         return OWF_FALSE;
     }
 
     DPRINT(("enlarge\n"));
 
-    if (array->length >= array->capacity)
-    {
-        if (!OWF_Array_Enlarge(array))
-        {
+    if (array->length >= array->capacity) {
+        if (!OWF_Array_Enlarge(array)) {
             return OWF_FALSE;
         }
     }
@@ -175,18 +148,14 @@ OWF_Array_InsertItem(OWF_ARRAY*    array,
 }
 
 OWF_ARRAY_ITEM
-OWF_Array_RemoveItem(OWF_ARRAY* array,
-                     OWF_ARRAY_ITEM item)
-{
-    OWFint                    ii = 0;
-    OWF_ARRAY_ITEM            result = NULL;
+OWF_Array_RemoveItem(OWF_ARRAY *array, OWF_ARRAY_ITEM item) {
+    OWFint ii = 0;
+    OWF_ARRAY_ITEM result = NULL;
 
     OWF_ASSERT(array);
 
-    for (ii = 0; ii < array->length; ii++)
-    {
-        if (array->items[ii] == item)
-        {
+    for (ii = 0; ii < array->length; ii++) {
+        if (array->items[ii] == item) {
             result = OWF_Array_RemoveItemAt(array, ii);
             break;
         }
@@ -195,16 +164,13 @@ OWF_Array_RemoveItem(OWF_ARRAY* array,
 }
 
 OWF_ARRAY_ITEM
-OWF_Array_RemoveItemAt(OWF_ARRAY* array,
-                          OWFint position)
-{
-    OWF_ARRAY_ITEM            result;
+OWF_Array_RemoveItemAt(OWF_ARRAY *array, OWFint position) {
+    OWF_ARRAY_ITEM result;
 
     OWF_ASSERT(array);
 
     /* check bounds */
-    if (position < 0 || position >= array->length)
-    {
+    if (position < 0 || position >= array->length) {
         return NULL;
     }
 
@@ -216,13 +182,10 @@ OWF_Array_RemoveItemAt(OWF_ARRAY* array,
 }
 
 OWF_ARRAY_ITEM
-OWF_Array_GetItemAt(OWF_ARRAY* array,
-                    OWFint position)
-{
+OWF_Array_GetItemAt(OWF_ARRAY *array, OWFint position) {
     OWF_ASSERT(array);
 
-    if (position < 0 || position >= array->length)
-    {
+    if (position < 0 || position >= array->length) {
         return NULL;
     }
 
@@ -232,4 +195,3 @@ OWF_Array_GetItemAt(OWF_ARRAY* array,
 #ifdef __cplusplus
 }
 #endif
-

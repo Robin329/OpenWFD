@@ -20,35 +20,28 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include <string.h>
+#include "owfconfig.h"
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include "owfconfig.h"
-
+#include <stdio.h>
+#include <string.h>
 
 #define DEFAULT_CONFIG "openwf_config.xml"
 
 OWF_CONF_DOCUMENT
-OWF_Conf_GetGetDocument(const char* str)
-{
-    xmlDoc* doc = NULL;
+OWF_Conf_GetGetDocument(const char *str) {
+    xmlDoc *doc = NULL;
 
-    if (str)
-    {
+    if (str) {
         doc = xmlReadFile(str, NULL, 0);
     }
 
-    if (!doc)
-    {
+    if (!doc) {
         doc = xmlReadFile(DEFAULT_CONFIG, NULL, 0);
     }
 
@@ -56,21 +49,19 @@ OWF_Conf_GetGetDocument(const char* str)
 }
 
 OWF_CONF_GROUP
-OWF_Conf_GetRoot(OWF_CONF_DOCUMENT doc, const char* elementName)
-{
+OWF_Conf_GetRoot(OWF_CONF_DOCUMENT doc, const char *elementName) {
     xmlNode *root = NULL;
 
     root = xmlDocGetRootElement(doc);
 
-    if (root == NULL)
-    {
-        fprintf(stderr,"error: empty document\n");
+    if (root == NULL) {
+        fprintf(stderr, "error: empty document\n");
         return NULL;
     }
 
-    if (xmlStrcmp(root->name, (const xmlChar *) elementName))
-    {
-        fprintf(stderr,"error: document of the wrong type, root node != %s", elementName);
+    if (xmlStrcmp(root->name, (const xmlChar *)elementName)) {
+        fprintf(stderr, "error: document of the wrong type, root node != %s",
+                elementName);
         return NULL;
     }
 
@@ -78,14 +69,11 @@ OWF_Conf_GetRoot(OWF_CONF_DOCUMENT doc, const char* elementName)
 }
 
 OWF_CONF_ELEMENT
-OWF_Conf_GetElement(const OWF_CONF_GROUP cur, const char* elementName)
-{
-    xmlNode *child = (cur) ? ((xmlNode*)cur)->xmlChildrenNode : NULL;
+OWF_Conf_GetElement(const OWF_CONF_GROUP cur, const char *elementName) {
+    xmlNode *child = (cur) ? ((xmlNode *)cur)->xmlChildrenNode : NULL;
 
-    while (child != NULL)
-    {
-        if ((xmlStrcmp(child->name, (const xmlChar *)elementName)==0))
-        {
+    while (child != NULL) {
+        if ((xmlStrcmp(child->name, (const xmlChar *)elementName) == 0)) {
             return child;
         }
 
@@ -93,27 +81,20 @@ OWF_Conf_GetElement(const OWF_CONF_GROUP cur, const char* elementName)
     }
 
     return NULL;
-
 }
 
-OWFint
-OWF_Conf_GetNbrElements(const OWF_CONF_GROUP cur, const char* elementName)
-{
+OWFint OWF_Conf_GetNbrElements(const OWF_CONF_GROUP cur,
+                               const char *elementName) {
     OWFint nbr = 0;
 
-    xmlNode *child = (cur) ? ((xmlNode*)cur)->xmlChildrenNode : NULL;
+    xmlNode *child = (cur) ? ((xmlNode *)cur)->xmlChildrenNode : NULL;
 
-    while (child != NULL)
-    {
-        if (elementName)
-        {
-            if ((xmlStrcmp(child->name, (const xmlChar *)elementName)==0))
-            {
+    while (child != NULL) {
+        if (elementName) {
+            if ((xmlStrcmp(child->name, (const xmlChar *)elementName) == 0)) {
                 nbr++;
             }
-        }
-        else
-        {
+        } else {
             nbr++;
         }
 
@@ -123,16 +104,12 @@ OWF_Conf_GetNbrElements(const OWF_CONF_GROUP cur, const char* elementName)
     return nbr;
 }
 
-
 OWF_CONF_ELEMENT
-OWF_Conf_GetNextElement(const OWF_CONF_ELEMENT cur, const char* elementName)
-{
-    xmlNode *sib = (cur) ? ((xmlNode*)cur)->next : NULL;
+OWF_Conf_GetNextElement(const OWF_CONF_ELEMENT cur, const char *elementName) {
+    xmlNode *sib = (cur) ? ((xmlNode *)cur)->next : NULL;
 
-    while (sib != NULL)
-    {
-        if ((xmlStrcmp(sib->name, (const xmlChar *)elementName)==0))
-        {
+    while (sib != NULL) {
+        if ((xmlStrcmp(sib->name, (const xmlChar *)elementName) == 0)) {
             return sib;
         }
 
@@ -142,93 +119,69 @@ OWF_Conf_GetNextElement(const OWF_CONF_ELEMENT cur, const char* elementName)
     return NULL;
 }
 
-OWFint
-OWF_Conf_GetContenti(const OWF_CONF_ELEMENT cur, OWFint deflt)
-{
-    xmlChar* str = NULL;
+OWFint OWF_Conf_GetContenti(const OWF_CONF_ELEMENT cur, OWFint deflt) {
+    xmlChar *str = NULL;
 
-    if (cur)
-    {
-        str = xmlNodeGetContent(((xmlNode*)cur)->xmlChildrenNode);
+    if (cur) {
+        str = xmlNodeGetContent(((xmlNode *)cur)->xmlChildrenNode);
     }
 
-    if (str)
-    {
+    if (str) {
         OWFint base;
         OWFint value;
-        const xmlChar* c = xmlStrstr(str, (xmlChar*) "0x");
+        const xmlChar *c = xmlStrstr(str, (xmlChar *)"0x");
 
         base = (c) ? 16 : 10;
-        value = (OWFint)strtol((char*)str, NULL, base);
+        value = (OWFint)strtol((char *)str, NULL, base);
         xmlFree(str);
         return value;
-    }
-    else
-    {
+    } else {
         return deflt;
     }
 }
 
-OWFfloat
-OWF_Conf_GetContentf(const OWF_CONF_ELEMENT cur, OWFfloat deflt)
-{
-    xmlChar* str = NULL;
+OWFfloat OWF_Conf_GetContentf(const OWF_CONF_ELEMENT cur, OWFfloat deflt) {
+    xmlChar *str = NULL;
 
-    if (cur)
-    {
-        str = xmlNodeGetContent(((xmlNode*)cur)->xmlChildrenNode);
+    if (cur) {
+        str = xmlNodeGetContent(((xmlNode *)cur)->xmlChildrenNode);
     }
-    if (str)
-    {
+    if (str) {
         OWFfloat value;
 
-        value = (OWFfloat)atof((char*)str);
+        value = (OWFfloat)atof((char *)str);
         xmlFree(str);
         return value;
-    }
-    else
-    {
+    } else {
         return deflt;
     }
 }
 
-char*
-OWF_Conf_GetContentStr(const OWF_CONF_ELEMENT cur, char* deflt)
-{
-    xmlChar* str = NULL;
+char *OWF_Conf_GetContentStr(const OWF_CONF_ELEMENT cur, char *deflt) {
+    xmlChar *str = NULL;
 
-    if (cur)
-        str = xmlNodeGetContent(((xmlNode*)cur)->xmlChildrenNode);
-    return (str) ? (char*)str : deflt;
+    if (cur) str = xmlNodeGetContent(((xmlNode *)cur)->xmlChildrenNode);
+    return (str) ? (char *)str : deflt;
 }
 
-void
-OWF_Conf_FreeContent(char* str)
-{
-    xmlFree(str);
-}
+void OWF_Conf_FreeContent(char *str) { xmlFree(str); }
 
-OWFint
-OWF_Conf_GetElementContenti(const OWF_CONF_GROUP cur, const char* elementName, OWFint deflt)
-{
+OWFint OWF_Conf_GetElementContenti(const OWF_CONF_GROUP cur,
+                                   const char *elementName, OWFint deflt) {
     return OWF_Conf_GetContenti(OWF_Conf_GetElement(cur, elementName), deflt);
 }
 
-OWFfloat
-OWF_Conf_GetElementContentf(const OWF_CONF_GROUP cur, const char* elementName, OWFfloat deflt)
-{
+OWFfloat OWF_Conf_GetElementContentf(const OWF_CONF_GROUP cur,
+                                     const char *elementName, OWFfloat deflt) {
     return OWF_Conf_GetContentf(OWF_Conf_GetElement(cur, elementName), deflt);
 }
 
-char*
-OWF_Conf_GetElementContentStr(const OWF_CONF_GROUP cur, const char* elementName, char* deflt)
-{
+char *OWF_Conf_GetElementContentStr(const OWF_CONF_GROUP cur,
+                                    const char *elementName, char *deflt) {
     return OWF_Conf_GetContentStr(OWF_Conf_GetElement(cur, elementName), deflt);
 }
 
-void
-OWF_Conf_Cleanup(OWF_CONF_DOCUMENT doc)
-{
+void OWF_Conf_Cleanup(OWF_CONF_DOCUMENT doc) {
     xmlFreeDoc(doc);
     xmlCleanupParser();
 }
@@ -236,4 +189,3 @@ OWF_Conf_Cleanup(OWF_CONF_DOCUMENT doc)
 #ifdef __cplusplus
 }
 #endif
-

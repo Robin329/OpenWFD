@@ -24,46 +24,36 @@
 extern "C" {
 #endif
 
+#include "owfmutex.h"
 
-#include <pthread.h>
 #include <errno.h>
+#include <pthread.h>
 #include <stdlib.h>
 
 #include "owfmemory.h"
-#include "owfmutex.h"
 
+#define MUTEX(x) (pthread_mutex_t *)(*x)
 
-
-#define MUTEX(x)        (pthread_mutex_t*)(*x)
-
-OWF_API_CALL OWFint
-OWF_Mutex_Init(OWF_MUTEX* mutex)
-{
-    if (!mutex)
-    {
+OWF_API_CALL OWFint OWF_Mutex_Init(OWF_MUTEX *mutex) {
+    if (!mutex) {
         return EINVAL;
     }
 
     *mutex = xalloc(1, sizeof(pthread_mutex_t));
-    if (!*mutex)
-    {
+    if (!*mutex) {
         return ENOMEM;
     }
     return pthread_mutex_init(MUTEX(mutex), NULL);
 }
 
-OWF_API_CALL OWFint
-OWF_Mutex_Destroy(OWF_MUTEX* mutex)
-{
-    OWFint             err = EINVAL;
+OWF_API_CALL OWFint OWF_Mutex_Destroy(OWF_MUTEX *mutex) {
+    OWFint err = EINVAL;
 
-    if (!mutex)
-    {
+    if (!mutex) {
         return EINVAL;
     }
 
-    if (*mutex)
-    {
+    if (*mutex) {
         err = pthread_mutex_destroy(MUTEX(mutex));
         xfree(*mutex);
         *mutex = NULL;
@@ -71,30 +61,21 @@ OWF_Mutex_Destroy(OWF_MUTEX* mutex)
     return err;
 }
 
-OWF_API_CALL OWFint
-OWF_Mutex_Lock(OWF_MUTEX* mutex)
-{
-    if (!(mutex && *mutex))
-    {
+OWF_API_CALL OWFint OWF_Mutex_Lock(OWF_MUTEX *mutex) {
+    if (!(mutex && *mutex)) {
         return EINVAL;
     }
 
     return pthread_mutex_lock(MUTEX(mutex));
 }
 
-OWF_API_CALL OWFint
-OWF_Mutex_Unlock(OWF_MUTEX* mutex)
-{
-    if (!(mutex && *mutex))
-    {
+OWF_API_CALL OWFint OWF_Mutex_Unlock(OWF_MUTEX *mutex) {
+    if (!(mutex && *mutex)) {
         return EINVAL;
     }
     return pthread_mutex_unlock(MUTEX(mutex));
 }
 
-
 #ifdef __cplusplus
 }
 #endif
-
-

@@ -20,7 +20,6 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
 /*! \ingroup wfd
  *  \file wfdstructs.h
  *  \brief Display SI internal data structure definitions
@@ -33,41 +32,35 @@
 
 #include "owfarray.h"
 #include "owfattributes.h"
+#include "owfcond.h"
+#include "owfhash.h"
 #include "owfimage.h"
 #include "owflinkedlist.h"
 #include "owfmessagequeue.h"
-#include "owfthread.h"
 #include "owfmutex.h"
-#include "owfcond.h"
 #include "owfstream.h"
-#include "owfhash.h"
-#include "owfimage.h"
+#include "owfthread.h"
 #include "owftypes.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-
-typedef enum
-{
+typedef enum {
     WFD_SOURCE_IMAGE = 0xA000,
     WFD_SOURCE_STREAM
 } WFD_IMAGE_PROVIDER_SOURCE_TYPE;
 
-typedef enum
-{
+typedef enum {
     WFD_IMAGE_SOURCE = 0xB000,
     WFD_IMAGE_MASK
 } WFD_IMAGE_PROVIDER_TYPE;
 
 /* forward references */
-typedef struct WFD_DEVICE_              WFD_DEVICE;
-typedef struct WFD_PIPELINE_            WFD_PIPELINE;
-typedef struct WFD_PORT_                WFD_PORT;
-typedef struct WFD_PIPELINE_BINDINGS_   WFD_PIPELINE_BINDINGS;
-
+typedef struct WFD_DEVICE_ WFD_DEVICE;
+typedef struct WFD_PIPELINE_ WFD_PIPELINE;
+typedef struct WFD_PORT_ WFD_PORT;
+typedef struct WFD_PIPELINE_BINDINGS_ WFD_PIPELINE_BINDINGS;
 
 /* ======================================================== */
 /*   I M A G E   P R O V I D E R S                          */
@@ -78,48 +71,43 @@ typedef struct WFD_PIPELINE_BINDINGS_   WFD_PIPELINE_BINDINGS;
  *  of providers, and also when a provider is used as source
  *  or as mask.
  */
-typedef struct WFD_IMAGE_PROVIDER_
-{
-    WFD_DEVICE*             device;
-    WFD_PIPELINE*           pipeline;
-    WFDHandle               handle;
+typedef struct WFD_IMAGE_PROVIDER_ {
+    WFD_DEVICE *device;
+    WFD_PIPELINE *pipeline;
+    WFDHandle handle;
     WFD_IMAGE_PROVIDER_TYPE type;
     WFD_IMAGE_PROVIDER_SOURCE_TYPE sourceType;
-    union
-    {
-        OWF_IMAGE*          image;
-        OWF_STREAM*         stream;
+    union {
+        OWF_IMAGE *image;
+        OWF_STREAM *stream;
     } source;
 } WFD_IMAGE_PROVIDER;
 
 typedef struct WFD_IMAGE_PROVIDER_ WFD_SOURCE;
 typedef struct WFD_IMAGE_PROVIDER_ WFD_MASK;
 
-
 /* ======================================================== */
 /*   P O R T                                                */
 /* ======================================================== */
 
 /*! Number of scratch buffers created per port */
-#define WFD_PORT_SCRATCH_COUNT        3
+#define WFD_PORT_SCRATCH_COUNT 3
 /*! Index of the scratch buffer used for masks */
-#define WFD_PORT_MASK_INDEX           2
+#define WFD_PORT_MASK_INDEX 2
 
 /*! Pointers for bound and cached pipelines. Only
  * the other of the two is in use at any moment of time,
  * but this structure fits best the ref counting implementation.
  */
-typedef struct WFD_PORT_BINDING_
-{
-    WFD_PIPELINE* boundPipeline;
-    WFD_PIPELINE* cachedPipeline;
+typedef struct WFD_PORT_BINDING_ {
+    WFD_PIPELINE *boundPipeline;
+    WFD_PIPELINE *cachedPipeline;
 } WFD_PORT_BINDING;
 
 /*! Port mode attributes defined by OpenWF display specification.
  *  These are all READ-ONLY attributes and never cached.
  */
-typedef struct
-{
+typedef struct {
     WFDPortMode id;
     WFDint width;
     WFDint height;
@@ -129,22 +117,20 @@ typedef struct
     WFDboolean interlaced;
 } WFD_PORT_MODE;
 
-typedef struct
-{
+typedef struct {
     WFDDisplayDataFormat format;
     WFDint dataSize;
-    WFDuint8* data;
+    WFDuint8 *data;
 } WFD_DISPLAY_DATA;
 
 /*! Port attributes defined by OpenWF display specification.
  *
  */
-typedef struct WFD_PORT_CONFIG_
-{
+typedef struct WFD_PORT_CONFIG_ {
     /*! A pointer to current pipeline object, NULL if pipeline is
      * unallocated
      */
-    WFD_PORT* inUse;
+    WFD_PORT *inUse;
 
     WFDint id;
     WFDPortType type;
@@ -165,7 +151,7 @@ typedef struct WFD_PORT_CONFIG_
     WFDPartialRefresh partialRefreshEnable;
     WFDint partialRefreshRectangle[4];
     WFDint pipelineIdCount;
-    WFDint* pipelineIds;
+    WFDint *pipelineIds;
     WFDboolean protectionEnable;
 
     /*! Port mode count */
@@ -173,31 +159,30 @@ typedef struct WFD_PORT_CONFIG_
     /*! Preconfigured port mode */
     WFDPortMode preconfiguredMode;
     /*! An array of pointers to port mode configurations */
-    WFD_PORT_MODE* modes;
+    WFD_PORT_MODE *modes;
 
     WFDint displayDataCount;
     /*! An array of pointers to display data blocks */
-    WFD_DISPLAY_DATA* displayData;
+    WFD_DISPLAY_DATA *displayData;
 
 } WFD_PORT_CONFIG;
 
-struct WFD_PORT_
-{
+struct WFD_PORT_ {
     /*! my handle */
     WFDPort handle;
     /*! backpointer to device */
-    WFD_DEVICE* device;
+    WFD_DEVICE *device;
 
     /*! hardware configuration area */
-    WFD_PORT_CONFIG* config;
+    WFD_PORT_CONFIG *config;
 
     /*! attribute cache */
     OWF_ATTRIBUTE_LIST attributes;
 
     /*! current port mode */
-    WFD_PORT_MODE* currentMode;
+    WFD_PORT_MODE *currentMode;
     /*! non-committed cached mode */
-    WFD_PORT_MODE* cachedMode;
+    WFD_PORT_MODE *cachedMode;
     /*! caching flag */
     WFDboolean modeDirty;
 
@@ -212,9 +197,9 @@ struct WFD_PORT_
     WFDboolean destroyPending;
 
     /*! scratch buffers  for the SI */
-    OWF_IMAGE* scratch[WFD_PORT_SCRATCH_COUNT];
+    OWF_IMAGE *scratch[WFD_PORT_SCRATCH_COUNT];
     /*! Final port image buffers */
-    OWF_IMAGE* surface[2];
+    OWF_IMAGE *surface[2];
     /*! Mutex protecting frameBuffer field */
     OWF_MUTEX frMutex;
     /*! index to current surface */
@@ -227,7 +212,7 @@ struct WFD_PORT_
 
     /*! An array for current pipeline bindings; One item
      * for each bindable pipeline */
-    WFD_PORT_BINDING* bindings;
+    WFD_PORT_BINDING *bindings;
 
     /*! Screen refresher thread */
     OWF_THREAD blitter;
@@ -243,47 +228,44 @@ struct WFD_PORT_
 #define WFD_PIPELINE_SCRATCH_COUNT 2
 
 /*! transparent source color */
-typedef struct WFD_TS_COLOR_
-{
+typedef struct WFD_TS_COLOR_ {
     WFDTSColorFormat colorFormat;
     OWFpixel color;
 } WFD_TS_COLOR;
 
-struct WFD_PIPELINE_BINDINGS_
-{
+struct WFD_PIPELINE_BINDINGS_ {
     /*! backpointer to pipeline */
-    WFD_PIPELINE* pipeline;
+    WFD_PIPELINE *pipeline;
 
-    WFD_PORT* boundPort;
-    WFD_PORT* cachedPort;
+    WFD_PORT *boundPort;
+    WFD_PORT *cachedPort;
     WFDboolean portDirty;
 
-    WFD_SOURCE* boundSource;
+    WFD_SOURCE *boundSource;
     WFDTransition boundSrcTransition;
     WFDboolean sourceDirty;
 
-    WFD_SOURCE* cachedSource;
+    WFD_SOURCE *cachedSource;
     WFDTransition cachedSrcTransition;
 
     WFDRect boundRegion;
     WFDRect cachedRegion;
 
-    WFD_MASK* boundMask;
+    WFD_MASK *boundMask;
     WFDTransition boundMaskTransition;
     WFDboolean maskDirty;
-    WFD_MASK* cachedMask;
+    WFD_MASK *cachedMask;
     WFDTransition cachedMaskTransition;
 };
 
 /*! Pipeline attributes defined by OpenWF display specification.
  *
  */
-typedef struct WFD_PIPELINE_CONFIG_
-{
+typedef struct WFD_PIPELINE_CONFIG_ {
     /*! A pointer to current pipeline object, NULL if pipeline is
      * unallocated
      */
-    WFD_PIPELINE* inUse;
+    WFD_PIPELINE *inUse;
 
     WFDint id;
     WFDPort portId;
@@ -305,20 +287,18 @@ typedef struct WFD_PIPELINE_CONFIG_
     /*! number of transparency features supported */
     WFDint transparencyFeatureCount;
     /*! array of different transparency features */
-    WFDbitfield* transparencyFeatures;
+    WFDbitfield *transparencyFeatures;
 } WFD_PIPELINE_CONFIG;
 
-
-struct WFD_PIPELINE_
-{
+struct WFD_PIPELINE_ {
     /*! my handle */
     WFDPipeline handle;
 
     /*! backpointer to device */
-    WFD_DEVICE* device;
+    WFD_DEVICE *device;
 
     /*! hardware configuration area */
-    WFD_PIPELINE_CONFIG* config;
+    WFD_PIPELINE_CONFIG *config;
 
     /*! attribute cache */
     OWF_ATTRIBUTE_LIST attributes;
@@ -327,52 +307,44 @@ struct WFD_PIPELINE_
     WFD_TS_COLOR tsColor;
 
     /*! current and cached bindings */
-    WFD_PIPELINE_BINDINGS* bindings;
+    WFD_PIPELINE_BINDINGS *bindings;
 
     /*! scratch buffers for the SI */
-    OWF_IMAGE* scratch[WFD_PIPELINE_SCRATCH_COUNT];
+    OWF_IMAGE *scratch[WFD_PIPELINE_SCRATCH_COUNT];
 
     /*! latest rendered pipeline image  (one of the scratch buffers) */
-    OWF_IMAGE* frontBuffer;
+    OWF_IMAGE *frontBuffer;
 };
 
-typedef struct WFD_EVENT_
-{
+typedef struct WFD_EVENT_ {
     WFDEventType type;
-    union
-    {
-        struct
-        {
+    union {
+        struct {
             WFDint portId;
             WFDboolean attached;
         } portAttachEvent;
 
-        struct
-        {
+        struct {
             WFDint pipelineId;
             WFDHandle handle;
             WFDboolean overflow;
         } pipelineBindEvent;
 
-        struct
-        {
+        struct {
             WFDint portId;
         } portProtectionEvent;
 
     } data;
 } WFD_EVENT;
 
-
-
 #define WFD_FIRST_FILTERED WFD_EVENT_NONE
 #define WFD_LAST_FILTERED WFD_EVENT_PIPELINE_BIND_MASK_COMPLETE
 /*! \brief Number of filtered event types  */
 #define WFD_EVENT_FILTER_SIZE (WFD_LAST_FILTERED - WFD_FIRST_FILTERED + 1)
 
-typedef struct WFD_EVENT_CONTAINER_
-{
+typedef struct WFD_EVENT_CONTAINER_ {
     /*! backpointer to device object */
-    WFD_DEVICE* device;
+    WFD_DEVICE *device;
 
     /*! handle of this container */
     WFDEvent handle;
@@ -384,7 +356,7 @@ typedef struct WFD_EVENT_CONTAINER_
     WFDint pipelineBindQueueSize;
 
     /*! latest signaled event, not in queue */
-    WFD_EVENT* event;
+    WFD_EVENT *event;
 
     /*! display associated with sync */
     WFDEGLDisplay display;
@@ -394,12 +366,12 @@ typedef struct WFD_EVENT_CONTAINER_
     /*! current length of the event queue */
     WFDint queueLength;
     /*! all queued events */
-    OWF_NODE* eventQueue;
+    OWF_NODE *eventQueue;
 
     /*! pre-allocated pool of list nodes */
-    OWF_POOL* nodePool;
+    OWF_POOL *nodePool;
     /*! pre-allocated pool of event records */
-    OWF_POOL* eventPool;
+    OWF_POOL *eventPool;
 
     /*! mutex protecting event container access */
     OWF_MUTEX mutex;
@@ -409,33 +381,29 @@ typedef struct WFD_EVENT_CONTAINER_
     OWF_COND cond;
 } WFD_EVENT_CONTAINER;
 
-
-typedef struct WFD_DEVICE_CONFIG_
-{
+typedef struct WFD_DEVICE_CONFIG_ {
     /*! A pointer to current device object, NULL if device is
      * unallocated
      */
-    WFD_DEVICE* inUse;
+    WFD_DEVICE *inUse;
 
     /*! Device id */
     WFDint id;
     WFDint portCount;
     /*! An array of pointers to port configurations */
-    WFD_PORT_CONFIG* ports;
+    WFD_PORT_CONFIG *ports;
 
     WFDint pipelineCount;
     /* An array of pointers to pipeline configurations */
-    WFD_PIPELINE_CONFIG* pipelines;
+    WFD_PIPELINE_CONFIG *pipelines;
 } WFD_DEVICE_CONFIG;
 
-
-struct WFD_DEVICE_
-{
+struct WFD_DEVICE_ {
     /*! handle of this device */
     WFDDevice handle;
 
     /*! a pointer to hw configuration */
-    WFD_DEVICE_CONFIG* config;
+    WFD_DEVICE_CONFIG *config;
 
     WFDErrorCode lastUnreadError;
 
@@ -452,22 +420,19 @@ struct WFD_DEVICE_
     WFDboolean busyFlag;
 
     /*! container for stream handles */
-    OWF_HASHTABLE* streams;
+    OWF_HASHTABLE *streams;
     /*! container for source/mask handles */
-    OWF_HASHTABLE* imageProviders;
+    OWF_HASHTABLE *imageProviders;
 };
 
 /*! System configuration root */
-typedef struct WFD_CONFIG_
-{
+typedef struct WFD_CONFIG_ {
     WFDint devCount;
-    WFD_DEVICE_CONFIG* devices;
+    WFD_DEVICE_CONFIG *devices;
 } WFD_CONFIG;
-
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /*WFDSTRUCTS_H_*/
-

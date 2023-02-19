@@ -35,22 +35,20 @@
 extern "C" {
 #endif
 
-
 /*!
  * \brief Vendor, renderer and version strings
  *
  *
  */
-static const char* wfd_strings[] =
-{
-        "Ardites",
-        "Sample Implementation",
-        "1.0",
+static const char *wfd_strings[] = {
+    "Ardites",
+    "Sample Implementation",
+    "1.0",
 };
 
-#define WFD_VENDOR_INDEX        (0)
-#define WFD_RENDERER_INDEX      (1)
-#define WFD_VERSION_INDEX       (2)
+#define WFD_VENDOR_INDEX (0)
+#define WFD_RENDERER_INDEX (1)
+#define WFD_VERSION_INDEX (2)
 
 /*!
  * \brief Names of the supported extensions
@@ -67,24 +65,20 @@ static const char* wfd_strings[] =
  * that the array IS ALWAYS null-terminated.
  */
 
-static const char* wfd_extensions[] =
-{
-     /* wfdSampleExtensionName, */
-     NULL
-};
+static const char *wfd_extensions[] = {
+    /* wfdSampleExtensionName, */
+    NULL};
 
 /*
  * Static extension declarations
  */
 
- #ifdef WFD_EXT_SampleExtension
-    WFD_API_CALL void WFD_APIENTRY
-    wfdSampleExtensionFunc() WFD_API_EXIT;
- #endif
+#ifdef WFD_EXT_SampleExtension
+WFD_API_CALL void WFD_APIENTRY wfdSampleExtensionFunc() WFD_API_EXIT;
+#endif
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* WFDEXT_H_ */

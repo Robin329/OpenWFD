@@ -24,19 +24,16 @@
 
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-
-typedef void*                 OWF_ARRAY_ITEM;
+typedef void *OWF_ARRAY_ITEM;
 
 typedef struct {
-    OWF_ARRAY_ITEM* items;
-    OWFint          capacity;
-    OWFint          length;
+    OWF_ARRAY_ITEM *items;
+    OWFint capacity;
+    OWFint length;
 } OWF_ARRAY;
 
 /*!
@@ -44,8 +41,7 @@ typedef struct {
  *
  *  \param array Array object
  */
-OWF_API_CALL void
-OWF_Array_Initialize(OWF_ARRAY* array);
+OWF_API_CALL void OWF_Array_Initialize(OWF_ARRAY *array);
 
 /*!
  *  Reset array. Frees resources allocated by the array.
@@ -54,8 +50,7 @@ OWF_Array_Initialize(OWF_ARRAY* array);
  *
  *  \param array Array object
  */
-OWF_API_CALL void
-OWF_Array_Reset(OWF_ARRAY* array);
+OWF_API_CALL void OWF_Array_Reset(OWF_ARRAY *array);
 
 /*!
  *  Destroy array. Free all resources allocated
@@ -63,8 +58,7 @@ OWF_Array_Reset(OWF_ARRAY* array);
  *
  *  \param array Array object
  */
-OWF_API_CALL void
-OWF_Array_Destroy(OWF_ARRAY* array);
+OWF_API_CALL void OWF_Array_Destroy(OWF_ARRAY *array);
 
 /*!
  *  Append item to array
@@ -74,9 +68,8 @@ OWF_Array_Destroy(OWF_ARRAY* array);
  *
  *  \return OWF_TRUE if the operation succeeded, OWF_FALSE otherwise
  */
-OWF_API_CALL OWFboolean
-OWF_Array_AppendItem(OWF_ARRAY* array,
-                      OWF_ARRAY_ITEM item);
+OWF_API_CALL OWFboolean OWF_Array_AppendItem(OWF_ARRAY *array,
+                                             OWF_ARRAY_ITEM item);
 
 /*!
  *  Insert item into the array
@@ -87,10 +80,8 @@ OWF_Array_AppendItem(OWF_ARRAY* array,
  *
  *  \return OWF_TRUE if the operation succeeded, OWF_FALSE otherwise
  */
-OWF_API_CALL OWFboolean
-OWF_Array_InsertItem(OWF_ARRAY*    array,
-                     OWFint position,
-                     OWF_ARRAY_ITEM item);
+OWF_API_CALL OWFboolean OWF_Array_InsertItem(OWF_ARRAY *array, OWFint position,
+                                             OWF_ARRAY_ITEM item);
 
 /*!
  *  Remove item (by value) from the array
@@ -101,9 +92,8 @@ OWF_Array_InsertItem(OWF_ARRAY*    array,
  *  \return Removed item or NULL if the item is invalid.
  *
  */
-OWF_API_CALL OWF_ARRAY_ITEM
-OWF_Array_RemoveItem(OWF_ARRAY* array,
-                      OWF_ARRAY_ITEM item);
+OWF_API_CALL OWF_ARRAY_ITEM OWF_Array_RemoveItem(OWF_ARRAY *array,
+                                                 OWF_ARRAY_ITEM item);
 
 /*!
  *  Remove item (by index) from the array
@@ -113,9 +103,8 @@ OWF_Array_RemoveItem(OWF_ARRAY* array,
  *
  *  \return Removed item or NULL if the index is out of bounds.
  */
-OWF_API_CALL OWF_ARRAY_ITEM
-OWF_Array_RemoveItemAt(OWF_ARRAY* array,
-                          OWFint position);
+OWF_API_CALL OWF_ARRAY_ITEM OWF_Array_RemoveItemAt(OWF_ARRAY *array,
+                                                   OWFint position);
 
 /*!
  *  Get item from array
@@ -126,10 +115,8 @@ OWF_Array_RemoveItemAt(OWF_ARRAY* array,
  *  \return Item or NULL, if the position argument is out of bounds.
  *
  */
-OWF_API_CALL OWF_ARRAY_ITEM
-OWF_Array_GetItemAt(OWF_ARRAY* array,
-                    OWFint position);
-
+OWF_API_CALL OWF_ARRAY_ITEM OWF_Array_GetItemAt(OWF_ARRAY *array,
+                                                OWFint position);
 
 #ifdef __cplusplus
 }

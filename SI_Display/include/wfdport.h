@@ -39,8 +39,7 @@ extern "C" {
 /*! \brief Transition messages passed to rendering routine
  *
  */
-typedef enum
-{
+typedef enum {
     /*! debugging - transition always */
     WFD_MESSAGE_NONE = 0,
     /*! shutdown rendering */
@@ -53,8 +52,6 @@ typedef enum
     WFD_MESSAGE_SOURCE_UPDATED
 } WFD_MESSAGES;
 
-
-
 /*! \brief Retrieve port ids of the system
  *
  *  \param pDevice Pointer to previously allocated device structure
@@ -64,10 +61,8 @@ typedef enum
  *  \return number of ids in idsList, or if idsList is NULL
  *  total number of ports in the system
  */
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetIds(WFD_DEVICE* pDevice,
-                WFDint* idsList,
-                WFDint listCapacity) OWF_APIEXIT;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Port_GetIds(
+    WFD_DEVICE *pDevice, WFDint *idsList, WFDint listCapacity) OWF_APIEXIT;
 
 /*! \brief Find a port by port id
  *
@@ -77,8 +72,8 @@ WFD_Port_GetIds(WFD_DEVICE* pDevice,
  *  \return Pointer to static configuration area of the port
  *  or NULL if port does not exist
  */
-OWF_API_CALL WFD_PORT_CONFIG* OWF_APIENTRY
-WFD_Port_FindById(WFD_DEVICE* pDevice, WFDint id) OWF_APIEXIT;
+OWF_API_CALL WFD_PORT_CONFIG *OWF_APIENTRY
+WFD_Port_FindById(WFD_DEVICE *pDevice, WFDint id) OWF_APIEXIT;
 
 /*! \brief Find a port by port handle
  *
@@ -87,8 +82,8 @@ WFD_Port_FindById(WFD_DEVICE* pDevice, WFDint id) OWF_APIEXIT;
  *  \return on success a pointer to port object
  *  \return on failure NULL
  */
-OWF_API_CALL WFD_PORT* OWF_APIENTRY
-WFD_Port_FindByHandle(WFD_DEVICE* pDevice,WFDPort handle) OWF_APIEXIT;
+OWF_API_CALL WFD_PORT *OWF_APIENTRY
+WFD_Port_FindByHandle(WFD_DEVICE *pDevice, WFDPort handle) OWF_APIEXIT;
 
 /*! \brief Seize port lock for port update
  *
@@ -96,8 +91,8 @@ WFD_Port_FindByHandle(WFD_DEVICE* pDevice,WFDPort handle) OWF_APIEXIT;
  *
  *  \param pPort pointer to port object
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_AcquireLock(WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_AcquireLock(WFD_PORT *pPort)
+    OWF_APIEXIT;
 
 /*! \brief Release port lock
  *
@@ -105,8 +100,8 @@ WFD_Port_AcquireLock(WFD_PORT* pPort) OWF_APIEXIT;
  *
  *  \param pPort pointer to port object
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_ReleaseLock(WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_ReleaseLock(WFD_PORT *pPort)
+    OWF_APIEXIT;
 
 /*! \brief Check if port is in use already
  *
@@ -119,8 +114,7 @@ WFD_Port_ReleaseLock(WFD_PORT* pPort) OWF_APIEXIT;
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_IsAllocated(WFD_DEVICE* pDevice,
-                     WFDint portId) OWF_APIEXIT;
+WFD_Port_IsAllocated(WFD_DEVICE *pDevice, WFDint portId) OWF_APIEXIT;
 
 /*! \brief  Allocate port and assign a handle for it
  *
@@ -133,9 +127,8 @@ WFD_Port_IsAllocated(WFD_DEVICE* pDevice,
  *  \return on success return a handle to allocated pipeline
  *  \return on failure return WFD_INVALID_HANDLE
  */
-OWF_API_CALL WFDPort OWF_APIENTRY
-WFD_Port_Allocate(WFD_DEVICE* pDevice,
-                  WFDint portId) OWF_APIEXIT;
+OWF_API_CALL WFDPort OWF_APIENTRY WFD_Port_Allocate(WFD_DEVICE *pDevice,
+                                                    WFDint portId) OWF_APIEXIT;
 
 /*! \brief elease all resources reserved for port
  *
@@ -145,9 +138,8 @@ WFD_Port_Allocate(WFD_DEVICE* pDevice,
  *  \param pDevice Pointer to device object
  *  \param pPort Pointer to port object
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_Release(WFD_DEVICE* pDevice,
-                 WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_Release(WFD_DEVICE *pDevice,
+                                                WFD_PORT *pPort) OWF_APIEXIT;
 
 /*! \brief Find port mode
  *
@@ -159,9 +151,8 @@ WFD_Port_Release(WFD_DEVICE* pDevice,
  *
  *  \return Pointer to port mode
  */
-OWF_API_CALL WFD_PORT_MODE* OWF_APIENTRY
-WFD_Port_FindMode(WFD_PORT* pPort,
-                  WFDPortMode mode) OWF_APIEXIT;
+OWF_API_CALL WFD_PORT_MODE *OWF_APIENTRY
+WFD_Port_FindMode(WFD_PORT *pPort, WFDPortMode mode) OWF_APIEXIT;
 
 /*! \brief Retrieve all port modes of a port
  *
@@ -173,10 +164,8 @@ WFD_Port_FindMode(WFD_PORT* pPort,
  *  \return if modes is non-NULL, number of modes written into modes
  *  array is returned
  */
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetModes(WFD_PORT* pPort,
-                  WFDPortMode* modes,
-                  WFDint modesCount) OWF_APIEXIT;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Port_GetModes(
+    WFD_PORT *pPort, WFDPortMode *modes, WFDint modesCount) OWF_APIEXIT;
 
 /*! \brief Retrieve a pointer to current port mode object
  *
@@ -185,15 +174,15 @@ WFD_Port_GetModes(WFD_PORT* pPort,
  *
  *  \param pPort Pointer to port object
  */
-OWF_API_CALL WFD_PORT_MODE* OWF_APIENTRY
-WFD_Port_GetModePtr(WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL WFD_PORT_MODE *OWF_APIENTRY WFD_Port_GetModePtr(WFD_PORT *pPort)
+    OWF_APIEXIT;
 
 /*! \brief Retrieve a handle to current port mode
  *
  *  \param pPort Pointer to port object
  */
-OWF_API_CALL WFDPortMode OWF_APIENTRY
-WFD_Port_GetCurrentMode(WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL WFDPortMode OWF_APIENTRY WFD_Port_GetCurrentMode(WFD_PORT *pPort)
+    OWF_APIEXIT;
 
 /*! \brief Set current port mode
  *
@@ -201,91 +190,73 @@ WFD_Port_GetCurrentMode(WFD_PORT* pPort) OWF_APIEXIT;
  *  \param mode Port mode to set
  */
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_SetMode(WFD_PORT* pPort, WFDPortMode mode) OWF_APIEXIT;
+WFD_Port_SetMode(WFD_PORT *pPort, WFDPortMode mode) OWF_APIEXIT;
 
 /*! \brief Get port mode attribute value
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_PortMode_GetAttribf(WFD_PORT_MODE* pPortMode,
-                        WFDPortModeAttrib attrib,
-                        WFDfloat* attrValue) OWF_APIEXIT;
+WFD_PortMode_GetAttribf(WFD_PORT_MODE *pPortMode, WFDPortModeAttrib attrib,
+                        WFDfloat *attrValue) OWF_APIEXIT;
+
+/*! \brief Get port mode attribute value
+ *
+ */
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_GetAttribi(
+    WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDint *value) OWF_APIEXIT;
 
 /*! \brief Get port mode attribute value
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribi(WFD_PORT* pPort,
-                    WFDPortConfigAttrib attrib,
-                    WFDint* value) OWF_APIEXIT;
+WFD_PortMode_GetAttribi(WFD_PORT_MODE *pPortMode, WFDPortModeAttrib attrib,
+                        WFDint *attrValue) OWF_APIEXIT;
 
-/*! \brief Get port mode attribute value
+/*! \brief Get port attribute value
  *
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_PortMode_GetAttribi(WFD_PORT_MODE* pPortMode,
-                        WFDPortModeAttrib attrib,
-                        WFDint* attrValue) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_GetAttribf(
+    WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDfloat *value) OWF_APIEXIT;
 
 /*! \brief Get port attribute value
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribf(WFD_PORT* pPort,
-                    WFDPortConfigAttrib attrib,
-                    WFDfloat* value) OWF_APIEXIT;
+WFD_Port_GetAttribiv(WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDint count,
+                     WFDint *value) OWF_APIEXIT;
 
 /*! \brief Get port attribute value
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribiv(WFD_PORT* pPort,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     WFDint* value) OWF_APIEXIT;
+WFD_Port_GetAttribfv(WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDint count,
+                     WFDfloat *value) OWF_APIEXIT;
 
-/*! \brief Get port attribute value
+/*! \brief Set port attribute value
  *
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_GetAttribfv(WFD_PORT* pPort,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     WFDfloat* value) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_SetAttribi(
+    WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDint value) OWF_APIEXIT;
+
+/*! \brief Set port attribute value
+ *
+ */
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Port_SetAttribf(
+    WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDfloat value) OWF_APIEXIT;
 
 /*! \brief Set port attribute value
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribi(WFD_PORT* pPort,
-                    WFDPortConfigAttrib attrib,
-                    WFDint value) OWF_APIEXIT;
+WFD_Port_SetAttribiv(WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDint count,
+                     const WFDint *values) OWF_APIEXIT;
 
 /*! \brief Set port attribute value
  *
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribf(WFD_PORT* pPort,
-                    WFDPortConfigAttrib attrib,
-                    WFDfloat value) OWF_APIEXIT;
-
-/*! \brief Set port attribute value
- *
- */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribiv(WFD_PORT* pPort,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     const WFDint* values) OWF_APIEXIT;
-
-/*! \brief Set port attribute value
- *
- */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Port_SetAttribfv(WFD_PORT* pPort,
-                     WFDPortConfigAttrib attrib,
-                     WFDint count,
-                     const WFDfloat* values) OWF_APIEXIT;
+WFD_Port_SetAttribfv(WFD_PORT *pPort, WFDPortConfigAttrib attrib, WFDint count,
+                     const WFDfloat *values) OWF_APIEXIT;
 
 /*! \brief Get index of pipeline in port's bindable pipelines array
  *
@@ -295,7 +266,7 @@ WFD_Port_SetAttribfv(WFD_PORT* pPort,
  *  \return index to bindable pipelines array.
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_PipelineNbr(WFD_PORT* pPort, WFD_PIPELINE* pPipeline) OWF_APIEXIT;
+WFD_Port_PipelineNbr(WFD_PORT *pPort, WFD_PIPELINE *pPipeline) OWF_APIEXIT;
 
 /*! \brief Check if pipeline can be bound to port
  *
@@ -304,8 +275,7 @@ WFD_Port_PipelineNbr(WFD_PORT* pPort, WFD_PIPELINE* pPipeline) OWF_APIEXIT;
  *  \return WFD_TRUE or WFD_FALSE
  */
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_PipelineBindable(WFD_PORT* pPort,
-                          WFDint pipelineId) OWF_APIEXIT;
+WFD_Port_PipelineBindable(WFD_PORT *pPort, WFDint pipelineId) OWF_APIEXIT;
 
 /*! \brief Check if pipeline is bound to port
  *
@@ -314,10 +284,9 @@ WFD_Port_PipelineBindable(WFD_PORT* pPort,
  *  \return WFD_TRUE if pipeline is currently bound to port
  *  \return WFD_FALSE if pipeline is not bound to port or
  *  binding is not committed.
-  */
+ */
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_PipelineBound(WFD_PORT* pPort,
-                       WFD_PIPELINE* pPipeline) OWF_APIEXIT;
+WFD_Port_PipelineBound(WFD_PORT *pPort, WFD_PIPELINE *pPipeline) OWF_APIEXIT;
 
 /*! \brief Bind port to pipeline
  *
@@ -327,9 +296,8 @@ WFD_Port_PipelineBound(WFD_PORT* pPort,
  *  \param pPort pointer to port object
  *  \param pPipeline pointer to pipeline object
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_PipelineCacheBinding(WFD_PORT* pPort,
-                              WFD_PIPELINE* pPipeline) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_PipelineCacheBinding(
+    WFD_PORT *pPort, WFD_PIPELINE *pPipeline) OWF_APIEXIT;
 
 /*! \brief Get supported display data formats
  *
@@ -342,8 +310,7 @@ WFD_Port_PipelineCacheBinding(WFD_PORT* pPort,
  *  into format array
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetDisplayDataFormats(WFD_PORT* pPort,
-                               WFDDisplayDataFormat *format,
+WFD_Port_GetDisplayDataFormats(WFD_PORT *pPort, WFDDisplayDataFormat *format,
                                WFDint formatCount) OWF_APIEXIT;
 
 /*! \brief Check if port support a display data format
@@ -352,9 +319,8 @@ WFD_Port_GetDisplayDataFormats(WFD_PORT* pPort,
  *  \param format format to check support for
  *  \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_HasDisplayData(WFD_PORT* pPort,
-                        WFDDisplayDataFormat format) OWF_APIEXIT;
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Port_HasDisplayData(
+    WFD_PORT *pPort, WFDDisplayDataFormat format) OWF_APIEXIT;
 
 /*! \brief Retrieve display data of a format
  *
@@ -370,17 +336,14 @@ WFD_Port_HasDisplayData(WFD_PORT* pPort,
  *  into data array
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetDisplayData(WFD_PORT* pPort,
-                        WFDDisplayDataFormat format,
-                        WFDuint8* data,
-                        WFDint dataCount) OWF_APIEXIT;
+WFD_Port_GetDisplayData(WFD_PORT *pPort, WFDDisplayDataFormat format,
+                        WFDuint8 *data, WFDint dataCount) OWF_APIEXIT;
 
 /*! \brief Commit all changes to port
  *
  *  \param pPort Pointer to port object
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_Commit(WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_Commit(WFD_PORT *pPort) OWF_APIEXIT;
 
 /*! \brief Check if changes to port can be committed
  *
@@ -389,15 +352,15 @@ WFD_Port_Commit(WFD_PORT* pPort) OWF_APIEXIT;
  *  \return WFD_TRUE or WFD_FALSE
  */
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Port_IsCommitConsistent(WFD_PORT* pPort, WFDCommitType type) OWF_APIEXIT;
+WFD_Port_IsCommitConsistent(WFD_PORT *pPort, WFDCommitType type) OWF_APIEXIT;
 
 /*! \brief Performs port-side actions when committing a single pipeline
  *
  *  \param pPipeline Pointer to pipeline object
  *  \param hasImmT The pipeline requires immediate transition.
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Port_CommitForSinglePipeline(WFD_PIPELINE* pipeline, WFDboolean hasImmT) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Port_CommitForSinglePipeline(
+    WFD_PIPELINE *pipeline, WFDboolean hasImmT) OWF_APIEXIT;
 
 /*! \brief Get port's maximum refresh rate
  *
@@ -408,7 +371,7 @@ WFD_Port_CommitForSinglePipeline(WFD_PIPELINE* pipeline, WFDboolean hasImmT) OWF
  *  \return Ceiling of the port's maximum refresh rate
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_GetMaxRefreshRate(WFD_PORT_CONFIG* pPort) OWF_APIEXIT;
+WFD_Port_GetMaxRefreshRate(WFD_PORT_CONFIG *pPort) OWF_APIEXIT;
 
 /*! \brief Query pipeline's relative layering order
  *
@@ -424,11 +387,13 @@ WFD_Port_GetMaxRefreshRate(WFD_PORT_CONFIG* pPort) OWF_APIEXIT;
  * to the port.
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Port_QueryPipelineLayerOrder(WFD_PORT* pPort, WFD_PIPELINE* pPipeline);
+WFD_Port_QueryPipelineLayerOrder(WFD_PORT *pPort, WFD_PIPELINE *pPipeline);
 
-/* ============================================================================= */
-/*                           T E S T   O N L Y                                   */
-/* ============================================================================= */
+/* =============================================================================
+ */
+/*                           T E S T   O N L Y */
+/* =============================================================================
+ */
 
 /*! \brief Make copy of port's current front buffer
  *
@@ -439,8 +404,7 @@ WFD_Port_QueryPipelineLayerOrder(WFD_PORT* pPort, WFD_PIPELINE* pPipeline);
  *  \return copy of port's current front buffer
  */
 OWF_API_CALL WFDEGLImage OWF_APIENTRY
-WFD_Port_AcquireCurrentImage(WFD_PORT* pPort) OWF_APIEXIT;
-
+WFD_Port_AcquireCurrentImage(WFD_PORT *pPort) OWF_APIEXIT;
 
 #ifdef __cplusplus
 }

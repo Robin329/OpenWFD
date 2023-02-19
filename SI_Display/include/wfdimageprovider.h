@@ -33,41 +33,33 @@
 #include <stdlib.h>
 
 #include "WF/wfd.h"
-#include "wfdstructs.h"
 #include "owfstream.h"
+#include "wfdstructs.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
+OWF_API_CALL WFD_IMAGE_PROVIDER *WFD_ImageProvider_Create(
+    WFD_DEVICE *device, WFD_PIPELINE *pipeline, void *source,
+    WFD_IMAGE_PROVIDER_SOURCE_TYPE sourceType,
+    WFD_IMAGE_PROVIDER_TYPE providerType) OWF_APIEXIT;
 
-OWF_API_CALL WFD_IMAGE_PROVIDER*
-WFD_ImageProvider_Create(WFD_DEVICE* device,
-                         WFD_PIPELINE* pipeline,
-                         void* source,
-                         WFD_IMAGE_PROVIDER_SOURCE_TYPE sourceType,
-                         WFD_IMAGE_PROVIDER_TYPE providerType) OWF_APIEXIT;
+OWF_API_CALL OWF_IMAGE *WFD_ImageProvider_LockForReading(
+    WFD_IMAGE_PROVIDER *provider) OWF_APIEXIT;
 
-OWF_API_CALL OWF_IMAGE*
-WFD_ImageProvider_LockForReading(WFD_IMAGE_PROVIDER* provider) OWF_APIEXIT;
+OWF_API_CALL void WFD_ImageProvider_Unlock(WFD_IMAGE_PROVIDER *provider)
+    OWF_APIEXIT;
 
-OWF_API_CALL void
-WFD_ImageProvider_Unlock(WFD_IMAGE_PROVIDER* provider) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_ImageProvider_IsRegionValid(
+    WFD_IMAGE_PROVIDER *provider, const WFDRect *region) OWF_APIEXIT;
 
-OWF_API_CALL WFDboolean
-WFD_ImageProvider_IsRegionValid(WFD_IMAGE_PROVIDER* provider,
-                                const WFDRect *region) OWF_APIEXIT;
-
-OWF_API_CALL void
-WFD_ImageProvider_GetDimensions(WFD_IMAGE_PROVIDER* provider,
-                                WFDint* width,
-                                WFDint* height) OWF_APIEXIT;
+OWF_API_CALL void WFD_ImageProvider_GetDimensions(WFD_IMAGE_PROVIDER *provider,
+                                                  WFDint *width,
+                                                  WFDint *height) OWF_APIEXIT;
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* WFCIMAGEPROVIDER_H_ */

@@ -26,14 +26,12 @@
  *  \brief Platform specific type definitions
  */
 
-
 #ifndef _WFDPLATFORM_H_
 #define _WFDPLATFORM_H_
 #include <KHR/khrplatform.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #ifndef WFD_API_CALL
@@ -48,19 +46,19 @@ extern "C"
 #define WFD_APIEXIT KHRONOS_APIATTRIBUTES
 #endif
 
-typedef khronos_uint8_t             WFDuint8;
-typedef khronos_int32_t             WFDint;
-typedef khronos_float_t             WFDfloat;
-typedef khronos_uint32_t            WFDbitfield;
-typedef khronos_uint32_t            WFDHandle;
+typedef khronos_uint8_t WFDuint8;
+typedef khronos_int32_t WFDint;
+typedef khronos_float_t WFDfloat;
+typedef khronos_uint32_t WFDbitfield;
+typedef khronos_uint32_t WFDHandle;
 typedef khronos_utime_nanoseconds_t WFDtime;
 
 #define WFD_FOREVER (0xFFFFFFFFFFFFFFFF)
 
-typedef void*                       WFDEGLDisplay; /* An opaque handle to an EGLDisplay */
-typedef void*                       WFDEGLSync; /* An opaque handle to an EGLSyncKHR */
-typedef void*                       WFDEGLImage; /* An opaque handle to an EGLImage */
-typedef WFDHandle                   WFDNativeStreamType;
+typedef void *WFDEGLDisplay; /* An opaque handle to an EGLDisplay */
+typedef void *WFDEGLSync;    /* An opaque handle to an EGLSyncKHR */
+typedef void *WFDEGLImage;   /* An opaque handle to an EGLImage */
+typedef WFDHandle WFDNativeStreamType;
 
 #define WFD_INVALID_SYNC ((WFDEGLSync)0)
 
@@ -68,4 +66,3 @@ typedef WFDHandle                   WFDNativeStreamType;
 }
 #endif
 #endif /* _WFDPLATFORM_H_ */
-

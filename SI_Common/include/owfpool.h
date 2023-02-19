@@ -27,26 +27,22 @@
 #define OWFPOOL_H_
 
 #include <stdlib.h>
+
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
+#define EOC (OWFuint32)0xFFFFFFFF
 
-#define EOC         (OWFuint32) 0xFFFFFFFF
-
-
-typedef struct
-{
+typedef struct {
     /*! linked list of free entries */
-    OWFuint32* entries;
+    OWFuint32 *entries;
     /*! solid chunk of memory containing all the objects;
      * no book-keeping data here, plain sequentially
      * stored objects only */
-    char* chunk;
+    char *chunk;
     /*! index number of the first free object in the pool;
      * EOC if the pool is empty */
     OWFuint32 firstFree;
@@ -67,8 +63,7 @@ typedef struct
  *
  *  \return New pool or NULL
  */
-OWF_API_CALL OWF_POOL*
-OWF_Pool_Create(size_t objectSize, size_t objectCount);
+OWF_API_CALL OWF_POOL *OWF_Pool_Create(size_t objectSize, size_t objectCount);
 
 /*!
  *  Allocate object from pool. The pool retains ownership of
@@ -78,16 +73,14 @@ OWF_Pool_Create(size_t objectSize, size_t objectCount);
  *
  *  \return Object or NULL
  */
-OWF_API_CALL void*
-OWF_Pool_GetObject(OWF_POOL* pool);
+OWF_API_CALL void *OWF_Pool_GetObject(OWF_POOL *pool);
 
 /*!
  *  Returns previously allocated object back to the pool.
  *
  *  \param object Object (must be valid pool object)
  */
-OWF_API_CALL void
-OWF_Pool_PutObject(void* object);
+OWF_API_CALL void OWF_Pool_PutObject(void *object);
 
 /*!
  *  Destroys a pool. Frees all resources allocated by
@@ -96,13 +89,10 @@ OWF_Pool_PutObject(void* object);
  *
  *  \param pool Pool to destroy
  */
-OWF_API_CALL void
-OWF_Pool_Destroy(OWF_POOL* pool);
-
+OWF_API_CALL void OWF_Pool_Destroy(OWF_POOL *pool);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* OWFPOOL_H_ */

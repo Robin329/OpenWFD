@@ -20,101 +20,70 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
+#include "owflinkedlist.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "owfmemory.h"
-#include "owflinkedlist.h"
-#include "owftypes.h"
 #include "owfpool.h"
+#include "owftypes.h"
 
-
-
-
-OWF_API_CALL OWF_NODE*
-OWF_Node_Create(OWF_POOL* pool, void* data)
-{
-    OWF_NODE*               node;
+OWF_API_CALL OWF_NODE *OWF_Node_Create(OWF_POOL *pool, void *data) {
+    OWF_NODE *node;
 
     node = OWF_Pool_GetObject(pool);
-    if (node)
-    {
+    if (node) {
         node->data = data;
     }
     return node;
 }
 
-OWF_API_CALL void
-OWF_Node_Destroy(OWF_NODE* node)
-{
-    OWF_Pool_PutObject(node);
-}
+OWF_API_CALL void OWF_Node_Destroy(OWF_NODE *node) { OWF_Pool_PutObject(node); }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Tail(OWF_NODE* root)
-{
-    if (root)
-    {
-        while (root->next)
-        {
+OWF_API_CALL OWF_NODE *OWF_List_Tail(OWF_NODE *root) {
+    if (root) {
+        while (root->next) {
             root = root->next;
         }
     }
     return root;
 }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Append(OWF_NODE* root, OWF_NODE* node)
-{
-    OWF_NODE*               tail;
+OWF_API_CALL OWF_NODE *OWF_List_Append(OWF_NODE *root, OWF_NODE *node) {
+    OWF_NODE *tail;
 
     tail = OWF_List_Tail(root);
-    if (tail)
-    {
+    if (tail) {
         tail->next = node;
-    }
-    else
-    {
+    } else {
         root = node;
     }
     return root;
 }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Insert(OWF_NODE* root, OWF_NODE* node)
-{
-    if (root)
-    {
+OWF_API_CALL OWF_NODE *OWF_List_Insert(OWF_NODE *root, OWF_NODE *node) {
+    if (root) {
         node->next = root;
     }
     root = node;
     return root;
 }
 
-OWF_API_CALL void
-OWF_List_InsertAfter(OWF_NODE* pred, OWF_NODE* succ)
-{
-    if (pred && succ)
-    {
+OWF_API_CALL void OWF_List_InsertAfter(OWF_NODE *pred, OWF_NODE *succ) {
+    if (pred && succ) {
         succ->next = pred->next;
         pred->next = succ;
     }
 }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Contains(OWF_NODE* root, void* data)
-{
-    while (root)
-    {
-        if (root->data == data)
-        {
+OWF_API_CALL OWF_NODE *OWF_List_Contains(OWF_NODE *root, void *data) {
+    while (root) {
+        if (root->data == data) {
             break;
         }
         root = root->next;
@@ -123,28 +92,20 @@ OWF_List_Contains(OWF_NODE* root, void* data)
     return root;
 }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Remove(OWF_NODE* root, OWF_NODE* node)
-{
-    OWF_NODE*                iter = NULL;
+OWF_API_CALL OWF_NODE *OWF_List_Remove(OWF_NODE *root, OWF_NODE *node) {
+    OWF_NODE *iter = NULL;
 
-    if (root)
-    {
-        if (node != root)
-        {
+    if (root) {
+        if (node != root) {
             iter = root;
-            while (iter)
-            {
-                if (iter->next == node)
-                {
+            while (iter) {
+                if (iter->next == node) {
                     iter->next = node->next;
                     break;
                 }
                 iter = iter->next;
             }
-        }
-        else
-        {
+        } else {
             root = root->next;
         }
     }
@@ -152,12 +113,9 @@ OWF_List_Remove(OWF_NODE* root, OWF_NODE* node)
     return root;
 }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Clear(OWF_NODE* root)
-{
-    OWF_NODE* next = NULL;
-    while (root)
-    {
+OWF_API_CALL OWF_NODE *OWF_List_Clear(OWF_NODE *root) {
+    OWF_NODE *next = NULL;
+    while (root) {
         next = root->next;
         OWF_Node_Destroy(root);
         root = next;
@@ -165,9 +123,8 @@ OWF_List_Clear(OWF_NODE* root)
     return root;
 }
 
-OWF_API_CALL void
-OWF_List_ForEach(OWF_NODE* root, NODEITERFUNC func, void* data)
-{
+OWF_API_CALL void OWF_List_ForEach(OWF_NODE *root, NODEITERFUNC func,
+                                   void *data) {
     while (root) {
         if (!func(root->data, data)) {
             return;
@@ -176,9 +133,8 @@ OWF_List_ForEach(OWF_NODE* root, NODEITERFUNC func, void* data)
     }
 }
 
-OWF_API_CALL OWF_NODE*
-OWF_List_Find(OWF_NODE* root, NODECMPFUNC func, void* data)
-{
+OWF_API_CALL OWF_NODE *OWF_List_Find(OWF_NODE *root, NODECMPFUNC func,
+                                     void *data) {
     while (root) {
         if (func(root->data, data)) {
             break;
@@ -187,7 +143,6 @@ OWF_List_Find(OWF_NODE* root, NODECMPFUNC func, void* data)
     }
     return root;
 }
-
 
 #ifdef __cplusplus
 }

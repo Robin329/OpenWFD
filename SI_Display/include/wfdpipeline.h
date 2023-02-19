@@ -44,8 +44,7 @@ extern "C" {
  * or pipeline id is unknown
  */
 OWF_API_CALL WFDPipeline OWF_APIENTRY
-WFD_Pipeline_Allocate(WFD_DEVICE* pDevice,
-                        WFDint pipelineId) OWF_APIEXIT;
+WFD_Pipeline_Allocate(WFD_DEVICE* pDevice, WFDint pipelineId) OWF_APIEXIT;
 
 /*!\brief Release all resources reserved for pipeline
  *
@@ -53,8 +52,7 @@ WFD_Pipeline_Allocate(WFD_DEVICE* pDevice,
  * \param pPipeline Pointer to pipeline object
  */
 OWF_API_CALL void OWF_APIENTRY
-WFD_Pipeline_Release(WFD_DEVICE* pDevice,
-                     WFD_PIPELINE* pPipeline) OWF_APIEXIT;
+WFD_Pipeline_Release(WFD_DEVICE* pDevice, WFD_PIPELINE* pPipeline) OWF_APIEXIT;
 
 /*!\brief Get ids of available pipelines in the system
  *
@@ -66,10 +64,8 @@ WFD_Pipeline_Release(WFD_DEVICE* pDevice,
  * \return Number of pipelines found or when idList is not NULL, number
  * of ids written to idsList array.
  */
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Pipeline_GetIds(WFD_DEVICE* pDevice,
-                    WFDint* idsList,
-                    WFDint listCapacity) OWF_APIEXIT;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Pipeline_GetIds(
+    WFD_DEVICE* pDevice, WFDint* idsList, WFDint listCapacity) OWF_APIEXIT;
 
 /*!\brief Check if a hw pipeline is already in use by OpenWF Display
  *
@@ -81,8 +77,7 @@ WFD_Pipeline_GetIds(WFD_DEVICE* pDevice,
  * \return WFD_ERROR_ILLEGAL_ARGUMENT pipeline id is invalid
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_IsAllocated(WFD_DEVICE* pDevice,
-                         WFDint pipelineId) OWF_APIEXIT;
+WFD_Pipeline_IsAllocated(WFD_DEVICE* pDevice, WFDint pipelineId) OWF_APIEXIT;
 
 /*! \brief Locate pipeline's static config area
  *
@@ -102,8 +97,7 @@ WFD_Pipeline_IsAllocated(WFD_DEVICE* pDevice,
  * \return A pointer to configuration are or NULL if id is not found
  */
 OWF_API_CALL WFD_PIPELINE_CONFIG* OWF_APIENTRY
-WFD_Pipeline_FindById(WFD_DEVICE* pDevice,
-                      WFDint pipelineId) OWF_APIEXIT;
+WFD_Pipeline_FindById(WFD_DEVICE* pDevice, WFDint pipelineId) OWF_APIEXIT;
 
 /*!\brief Find pipeline object
  *
@@ -114,8 +108,7 @@ WFD_Pipeline_FindById(WFD_DEVICE* pDevice,
  * or is not a pipeline handle
  */
 OWF_API_CALL WFD_PIPELINE* OWF_APIENTRY
-WFD_Pipeline_FindByHandle(WFD_DEVICE* pDevice,
-                          WFDPipeline handle) OWF_APIEXIT;
+WFD_Pipeline_FindByHandle(WFD_DEVICE* pDevice, WFDPipeline handle) OWF_APIEXIT;
 
 /*!\brief
  *
@@ -124,9 +117,8 @@ WFD_Pipeline_FindByHandle(WFD_DEVICE* pDevice,
  *
  * \return
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_IsImageValidSource(WFD_PIPELINE* pPipeline,
-                                WFDEGLImage image) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_IsImageValidSource(
+    WFD_PIPELINE* pPipeline, WFDEGLImage image) OWF_APIEXIT;
 
 /*! \brief Check if stream is a valid stream for pipeline
  *
@@ -142,9 +134,8 @@ WFD_Pipeline_IsImageValidSource(WFD_PIPELINE* pPipeline,
  *     stream is not suitable for use by device or pipeline
  *
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_IsStreamValidSource(WFD_PIPELINE* pPipeline,
-                                 WFDNativeStreamType stream) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_IsStreamValidSource(
+    WFD_PIPELINE* pPipeline, WFDNativeStreamType stream) OWF_APIEXIT;
 
 /*!\brief
  *
@@ -153,9 +144,8 @@ WFD_Pipeline_IsStreamValidSource(WFD_PIPELINE* pPipeline,
  *
  * \return
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_IsImageValidMask(WFD_PIPELINE* pPipeline,
-                              WFDEGLImage image) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_IsImageValidMask(
+    WFD_PIPELINE* pPipeline, WFDEGLImage image) OWF_APIEXIT;
 
 /*! \brief Check if stream is a valid mask for pipeline
  *
@@ -171,9 +161,8 @@ WFD_Pipeline_IsImageValidMask(WFD_PIPELINE* pPipeline,
  *     stream is not suitable for use by device or pipeline
  *
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_IsStreamValidMask(WFD_PIPELINE* pPipeline,
-                               WFDNativeStreamType stream) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_IsStreamValidMask(
+    WFD_PIPELINE* pPipeline, WFDNativeStreamType stream) OWF_APIEXIT;
 
 /*!\brief Update pipeline's binding cache with a reference to mask object
  *
@@ -185,9 +174,8 @@ WFD_Pipeline_IsStreamValidMask(WFD_PIPELINE* pPipeline,
  * \param transition Desired transition type
  */
 OWF_API_CALL void OWF_APIENTRY
-WFD_Pipeline_MaskCacheBinding(WFD_PIPELINE* pPipeline,
-                                WFD_MASK* pMask,
-                                WFDTransition transition) OWF_APIEXIT;
+WFD_Pipeline_MaskCacheBinding(WFD_PIPELINE* pPipeline, WFD_MASK* pMask,
+                              WFDTransition transition) OWF_APIEXIT;
 
 /*!\brief  Update pipeline's binding cache with a reference to source object
  *
@@ -200,11 +188,9 @@ WFD_Pipeline_MaskCacheBinding(WFD_PIPELINE* pPipeline,
  * \param region a rectangle of the image that has
  *  changed from the previous image
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Pipeline_SourceCacheBinding(WFD_PIPELINE* pPipeline,
-                                WFD_SOURCE* pSource,
-                                WFDTransition transition,
-                                const WFDRect *region) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Pipeline_SourceCacheBinding(
+    WFD_PIPELINE* pPipeline, WFD_SOURCE* pSource, WFDTransition transition,
+    const WFDRect* region) OWF_APIEXIT;
 
 /*!\brief Generate an event after source transition completed
  *
@@ -244,10 +230,8 @@ WFD_Pipeline_MaskRemoveBinding(WFD_PIPELINE* pPipeline) OWF_APIEXIT;
  * \param pPipeline Pointer to pipeline object
  * \param cached Remove cached binding (otherwise committed binding)
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Pipeline_PortRemoveBinding(WFD_PORT* pPort,
-                               WFD_PIPELINE* pPipeline,
-                               WFDboolean cached);
+OWF_API_CALL void OWF_APIENTRY WFD_Pipeline_PortRemoveBinding(
+    WFD_PORT* pPort, WFD_PIPELINE* pPipeline, WFDboolean cached);
 
 /*!\brief Get integer attribute value
  *
@@ -256,8 +240,7 @@ WFD_Pipeline_PortRemoveBinding(WFD_PORT* pPort,
  * \return Error code indicating result of the operation
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_GetAttribi(WFD_PIPELINE* pPipeline,
-                        WFDPipelineConfigAttrib attrib,
+WFD_Pipeline_GetAttribi(WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib,
                         WFDint* value) OWF_APIEXIT;
 
 /*!\brief Get float attribute value
@@ -268,8 +251,7 @@ WFD_Pipeline_GetAttribi(WFD_PIPELINE* pPipeline,
  * \return Error code indicating result of the operation
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_GetAttribf(WFD_PIPELINE* pPipeline,
-                        WFDPipelineConfigAttrib attrib,
+WFD_Pipeline_GetAttribf(WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib,
                         WFDfloat* value) OWF_APIEXIT;
 
 /*!\brief Get integer attribute vector value
@@ -279,11 +261,9 @@ WFD_Pipeline_GetAttribf(WFD_PIPELINE* pPipeline,
  *
  * \return Error code indicating result of the operation
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_GetAttribiv(WFD_PIPELINE* pPipeline,
-                          WFDPipelineConfigAttrib attrib,
-                          WFDint count,
-                          WFDint* value) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_GetAttribiv(
+    WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib, WFDint count,
+    WFDint* value) OWF_APIEXIT;
 
 /*!\brief Get float attribute vector value
  *
@@ -292,11 +272,9 @@ WFD_Pipeline_GetAttribiv(WFD_PIPELINE* pPipeline,
  *
  * \return Error code indicating result of the operation
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_GetAttribfv(WFD_PIPELINE* pPipeline,
-                          WFDPipelineConfigAttrib attrib,
-                          WFDint count,
-                          WFDfloat* value) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_GetAttribfv(
+    WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib, WFDint count,
+    WFDfloat* value) OWF_APIEXIT;
 
 /*!\brief Set integer attribute value
  *
@@ -306,8 +284,7 @@ WFD_Pipeline_GetAttribfv(WFD_PIPELINE* pPipeline,
  * \return Error code indicating result of the operation
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_SetAttribi(WFD_PIPELINE* pPipeline,
-                        WFDPipelineConfigAttrib attrib,
+WFD_Pipeline_SetAttribi(WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib,
                         WFDint value) OWF_APIEXIT;
 
 /*!\brief Set float attribute value
@@ -318,8 +295,7 @@ WFD_Pipeline_SetAttribi(WFD_PIPELINE* pPipeline,
  * \return Error code indicating result of the operation
  */
 OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_SetAttribf(WFD_PIPELINE* pPipeline,
-                        WFDPipelineConfigAttrib attrib,
+WFD_Pipeline_SetAttribf(WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib,
                         WFDfloat value) OWF_APIEXIT;
 
 /*!\brief Set integer attribute vector value
@@ -329,11 +305,9 @@ WFD_Pipeline_SetAttribf(WFD_PIPELINE* pPipeline,
  *
  * \return Error code indicating result of the operation
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_SetAttribiv(WFD_PIPELINE* pPipeline,
-                          WFDPipelineConfigAttrib attrib,
-                          WFDint count,
-                          const WFDint* values) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_SetAttribiv(
+    WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib, WFDint count,
+    const WFDint* values) OWF_APIEXIT;
 
 /*!\brief Set float attribute vector value
  *
@@ -342,11 +316,9 @@ WFD_Pipeline_SetAttribiv(WFD_PIPELINE* pPipeline,
  *
  * \return Error code indicating result of the operation
  */
-OWF_API_CALL WFDErrorCode OWF_APIENTRY
-WFD_Pipeline_SetAttribfv(WFD_PIPELINE* pPipeline,
-                          WFDPipelineConfigAttrib attrib,
-                          WFDint count,
-                          const WFDfloat* values) OWF_APIEXIT;
+OWF_API_CALL WFDErrorCode OWF_APIENTRY WFD_Pipeline_SetAttribfv(
+    WFD_PIPELINE* pPipeline, WFDPipelineConfigAttrib attrib, WFDint count,
+    const WFDfloat* values) OWF_APIEXIT;
 
 /*!\brief Check if a transparency combination is supported by the pipeline
  *
@@ -357,9 +329,8 @@ WFD_Pipeline_SetAttribfv(WFD_PIPELINE* pPipeline,
  *
  * \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean
-WFD_Pipeline_IsTransparencyFeatureSupported(WFD_PIPELINE* pPipeline,
-                                            WFDbitfield feature) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_Pipeline_IsTransparencyFeatureSupported(
+    WFD_PIPELINE* pPipeline, WFDbitfield feature) OWF_APIEXIT;
 
 /*!\brief Check if a single transparency feature is present in any
  *  of the supported transparency feature combinations
@@ -369,9 +340,8 @@ WFD_Pipeline_IsTransparencyFeatureSupported(WFD_PIPELINE* pPipeline,
  *
  * \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean
-WFD_Pipeline_IsTransparencySupported(WFD_PIPELINE* pPipeline,
-                                     WFDTransparency trans) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_Pipeline_IsTransparencySupported(
+    WFD_PIPELINE* pPipeline, WFDTransparency trans) OWF_APIEXIT;
 
 /*!\brief Retrieve all transparency feature combination supported
  * by the pipeline
@@ -385,10 +355,8 @@ WFD_Pipeline_IsTransparencySupported(WFD_PIPELINE* pPipeline,
  * trans is not NULL, the number of transparency feature combinations written
  * into trans array.
  */
-OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Pipeline_GetTransparencyFeatures(WFD_PIPELINE* pPipeline,
-                                     WFDbitfield *trans,
-                                     WFDint transCount) OWF_APIEXIT;
+OWF_API_CALL WFDint OWF_APIENTRY WFD_Pipeline_GetTransparencyFeatures(
+    WFD_PIPELINE* pPipeline, WFDbitfield* trans, WFDint transCount) OWF_APIEXIT;
 
 /*!\brief Set transparency source color
  *
@@ -404,10 +372,8 @@ WFD_Pipeline_GetTransparencyFeatures(WFD_PIPELINE* pPipeline,
  * \return
  */
 OWF_API_CALL void OWF_APIENTRY
-WFD_Pipeline_SetTSColor(WFD_PIPELINE* pPipeline,
-                        WFDTSColorFormat colorFormat,
-                        WFDint count,
-                        const void *color) OWF_APIEXIT;
+WFD_Pipeline_SetTSColor(WFD_PIPELINE* pPipeline, WFDTSColorFormat colorFormat,
+                        WFDint count, const void* color) OWF_APIEXIT;
 
 /*! \brief Render an image from source to pipeline's front buffer
  *
@@ -447,8 +413,8 @@ WFD_Pipeline_Disabled(WFD_PIPELINE* pPipeline) OWF_APIEXIT;
  *
  * \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean
-WFD_Pipeline_IsCommitConsistent(WFD_PIPELINE* pPipeline, WFDCommitType type) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_Pipeline_IsCommitConsistent(
+    WFD_PIPELINE* pPipeline, WFDCommitType type) OWF_APIEXIT;
 
 /*! \brief Commit changes to pipeline
  *
@@ -457,14 +423,14 @@ WFD_Pipeline_IsCommitConsistent(WFD_PIPELINE* pPipeline, WFDCommitType type) OWF
  *
  *  If pPort is NULL:
  *  - the commit is only to the pipeline
- *  - the commit has to check if the pipeline is 
+ *  - the commit has to check if the pipeline is
  *    bound to a port and if the pipeline has to be
  *    rendered immediately.
  *
  * \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean
-WFD_Pipeline_Commit(WFD_PIPELINE* pPipeline, WFD_PORT* pPort) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_Pipeline_Commit(WFD_PIPELINE* pPipeline,
+                                            WFD_PORT* pPort) OWF_APIEXIT;
 
 /*! \brief Clear pipeline's front buffer
  *
@@ -475,8 +441,8 @@ WFD_Pipeline_Commit(WFD_PIPELINE* pPipeline, WFD_PORT* pPort) OWF_APIEXIT;
  *
  * \param pPipeline Pointer to pipeline object
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Pipeline_Clear(WFD_PIPELINE* pPipeline) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Pipeline_Clear(WFD_PIPELINE* pPipeline)
+    OWF_APIEXIT;
 
 #ifdef __cplusplus
 }

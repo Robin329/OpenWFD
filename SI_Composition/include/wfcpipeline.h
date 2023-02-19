@@ -28,23 +28,22 @@
 #ifndef WFCPIPELINE_H_
 #define WFCPIPELINE_H_
 
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "WF/wfc.h"
+#include "owfdebug.h"
+#include "owfimage.h"
+#include "owfmemory.h"
+#include "owfnativestream.h"
+#include "owfobject.h"
+#include "owfstream.h"
 #include "wfccontext.h"
 #include "wfcelement.h"
 #include "wfcimageprovider.h"
-#include "wfcstructs.h"
 #include "wfcscene.h"
-
-#include "owfobject.h"
-#include "owfstream.h"
-#include "owfnativestream.h"
-#include "owfmemory.h"
-#include "owfimage.h"
-#include "owfdebug.h"
+#include "wfcstructs.h"
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Composition pipeline preparation
@@ -54,9 +53,8 @@
  *
  *  \return Boolean value indicating whether preparation succeeded
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL WFC_ELEMENT_STATE* 
-WFC_Pipeline_BeginComposition(WFC_CONTEXT* context, WFC_ELEMENT* element);
-
+OWF_API_CALL WFC_ELEMENT_STATE* WFC_Pipeline_BeginComposition(
+    WFC_CONTEXT* context, WFC_ELEMENT* element);
 
 /*------------------------------------------------------------------------ *//*!
  *  Composition pipeline cleanup
@@ -64,8 +62,9 @@ WFC_Pipeline_BeginComposition(WFC_CONTEXT* context, WFC_ELEMENT* element);
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_EndComposition(WFC_CONTEXT* context, WFC_ELEMENT* element,WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_EndComposition(WFC_CONTEXT* context,
+                                              WFC_ELEMENT* element,
+                                              WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Source conversion stage
@@ -73,8 +72,8 @@ WFC_Pipeline_EndComposition(WFC_CONTEXT* context, WFC_ELEMENT* element,WFC_ELEME
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_ExecuteSourceConversionStage(WFC_CONTEXT* context,WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_ExecuteSourceConversionStage(
+    WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Crop stage
@@ -82,8 +81,8 @@ WFC_Pipeline_ExecuteSourceConversionStage(WFC_CONTEXT* context,WFC_ELEMENT_STATE
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_ExecuteCropStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_ExecuteCropStage(
+    WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Flip stage
@@ -91,8 +90,8 @@ WFC_Pipeline_ExecuteCropStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementSt
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_ExecuteFlipStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_ExecuteFlipStage(
+    WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Rotation stage
@@ -100,8 +99,8 @@ WFC_Pipeline_ExecuteFlipStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementSt
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_ExecuteRotationStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_ExecuteRotationStage(
+    WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Scaling stage
@@ -109,8 +108,8 @@ WFC_Pipeline_ExecuteRotationStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* eleme
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_ExecuteScalingStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_ExecuteScalingStage(
+    WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Blending stage
@@ -118,8 +117,8 @@ WFC_Pipeline_ExecuteScalingStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elemen
  *  \param context          Context
  *  \param element          Element
  *//*-------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Pipeline_ExecuteBlendingStage(WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
+OWF_API_CALL void WFC_Pipeline_ExecuteBlendingStage(
+    WFC_CONTEXT* context, WFC_ELEMENT_STATE* elementState);
 
 /*------------------------------------------------------------------------ *//*!
  *  \brief Composition pipeline preparation per context creation
@@ -138,7 +137,6 @@ OWF_API_CALL OWFboolean WFC_Pipeline_CreateState(WFC_CONTEXT* context);
  *  \return Boolean value indicating whether preparation succeeded
  *//*-------------------------------------------------------------------------*/
 OWF_API_CALL void WFC_Pipeline_DestroyState(WFC_CONTEXT* context);
-
 
 #ifdef __cplusplus
 }

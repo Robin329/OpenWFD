@@ -21,21 +21,20 @@
  */
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
-#include "owfobject.h"
 #include "owfimage.h"
-#include "owfutils.h"
-#include "owfmemory.h"
-#include "owfdebug.h"
 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "owfdebug.h"
+#include "owfmemory.h"
+#include "owfobject.h"
+#include "owfutils.h"
 
 #ifdef OWF_IMAGE_INTERNAL_PIXEL_IS_FLOAT
 #define roundSubPixel(p) ((OWFuint32)((p) + 0.5f))
@@ -43,84 +42,67 @@ extern "C"
 #define roundSubPixel(p) (p)
 #endif
 
+/*----------------------------------------------------------------------------*/
+OWF_API_CALL void OWF_IMAGE_Ctor(void *self) { self = self; }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_IMAGE_Ctor(void* self)
-{
-    self = self;
-}
+OWF_API_CALL void OWF_IMAGE_Dtor(void *self) {
+    OWF_IMAGE *image;
 
-/*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_IMAGE_Dtor(void* self)
-{
-    OWF_IMAGE* image;
+    image = (OWF_IMAGE *)self;
 
-    image = (OWF_IMAGE*)self;
-
-    if (image && image->data)
-    {
-        if (!image->foreign)
-        {
+    if (image && image->data) {
+        if (!image->foreign) {
             OWF_Image_FreeData(&image->data);
         }
     }
 
-    if (image)
-    {
+    if (image) {
         memset(image, 0, sizeof(OWF_IMAGE));
     }
 }
 
 /*----------------------------------------------------------------------------*/
-static OWFfloat
-NonLinear(OWFfloat x)
-{
-    if (x <= 0.00304f)
-    {
+static OWFfloat NonLinear(OWFfloat x) {
+    if (x <= 0.00304f) {
         return 12.92f * x;
     }
-    return 1.0556f * pow(x, 1.f/2.4f) - 0.0556f;
+    return 1.0556f * pow(x, 1.f / 2.4f) - 0.0556f;
 }
 
 /*----------------------------------------------------------------------------*/
-static OWFfloat
-Linear(OWFfloat x)
-{
-    if (x <= 0.03928)
-    {
+static OWFfloat Linear(OWFfloat x) {
+    if (x <= 0.03928) {
         return x / 12.92f;
     }
     return pow((x + 0.0556f) / 1.0556f, 2.4f);
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_NonLinearizeData(OWF_IMAGE* image)\
-{
-    OWFpixel*            ptr;
-    OWFint               count;
+OWF_API_CALL void OWF_Image_NonLinearizeData(OWF_IMAGE *image) {
+    OWFpixel *ptr;
+    OWFint count;
 
     OWF_ASSERT(image != NULL && image->data != NULL);
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
-    if (!image->format.linear)
-    {
+    if (!image->format.linear) {
         return;
     }
 
-    ptr = (OWFpixel*) image->data;
+    ptr = (OWFpixel *)image->data;
     count = image->width * image->height;
 
-    while (count > 0)
-    {
-        ptr->color.red   = (OWFsubpixel) NonLinear(ptr->color.red /
-                               OWF_RED_MAX_VALUE) * OWF_RED_MAX_VALUE;
-        ptr->color.green = (OWFsubpixel) NonLinear(ptr->color.green /
-                               OWF_GREEN_MAX_VALUE) * OWF_GREEN_MAX_VALUE;
-        ptr->color.blue  = (OWFsubpixel) NonLinear(ptr->color.blue /
-                               OWF_BLUE_MAX_VALUE) * OWF_BLUE_MAX_VALUE;
+    while (count > 0) {
+        ptr->color.red =
+            (OWFsubpixel)NonLinear(ptr->color.red / OWF_RED_MAX_VALUE) *
+            OWF_RED_MAX_VALUE;
+        ptr->color.green =
+            (OWFsubpixel)NonLinear(ptr->color.green / OWF_GREEN_MAX_VALUE) *
+            OWF_GREEN_MAX_VALUE;
+        ptr->color.blue =
+            (OWFsubpixel)NonLinear(ptr->color.blue / OWF_BLUE_MAX_VALUE) *
+            OWF_BLUE_MAX_VALUE;
 
         --count;
         ptr++;
@@ -130,67 +112,61 @@ OWF_Image_NonLinearizeData(OWF_IMAGE* image)\
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_LinearizeData(OWF_IMAGE* image)
-{
-    OWFpixel*               ptr;
-    OWFuint                 count;
+OWF_API_CALL void OWF_Image_LinearizeData(OWF_IMAGE *image) {
+    OWFpixel *ptr;
+    OWFuint count;
 
     OWF_ASSERT(image != NULL && image->data != NULL);
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
-    if (image->format.linear)
-    {
+    if (image->format.linear) {
         return;
     }
 
-    ptr = (OWFpixel*) image->data;
+    ptr = (OWFpixel *)image->data;
     count = image->width * image->height;
 
-    while (count > 0)
-    {
-        ptr->color.red   = (OWFsubpixel) Linear(ptr->color.red /
-                               OWF_RED_MAX_VALUE) * OWF_RED_MAX_VALUE;
-        ptr->color.green = (OWFsubpixel) Linear(ptr->color.green /
-                               OWF_GREEN_MAX_VALUE) * OWF_GREEN_MAX_VALUE;
-        ptr->color.blue  = (OWFsubpixel) Linear(ptr->color.blue /
-                               OWF_BLUE_MAX_VALUE) * OWF_BLUE_MAX_VALUE;
+    while (count > 0) {
+        ptr->color.red =
+            (OWFsubpixel)Linear(ptr->color.red / OWF_RED_MAX_VALUE) *
+            OWF_RED_MAX_VALUE;
+        ptr->color.green =
+            (OWFsubpixel)Linear(ptr->color.green / OWF_GREEN_MAX_VALUE) *
+            OWF_GREEN_MAX_VALUE;
+        ptr->color.blue =
+            (OWFsubpixel)Linear(ptr->color.blue / OWF_BLUE_MAX_VALUE) *
+            OWF_BLUE_MAX_VALUE;
         --count;
         ptr += image->pixelSize;
     }
 
     image->format.linear = OWF_TRUE;
-
 }
 
 /*----------------------------------------------------------------------------*/
-#define GAMMA(color, max, gamma) (max * pow(color/max, gamma))
+#define GAMMA(color, max, gamma) (max * pow(color / max, gamma))
 
-OWF_API_CALL void
-OWF_Image_Gamma(OWF_IMAGE* image, OWFfloat gamma)
-{
-    OWFpixel*            ptr;
-    OWFint               count;
+OWF_API_CALL void OWF_Image_Gamma(OWF_IMAGE *image, OWFfloat gamma) {
+    OWFpixel *ptr;
+    OWFint count;
 
     OWF_ASSERT(image != NULL && image->data != NULL);
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
-    if (gamma == 1.0f)
-    {
+    if (gamma == 1.0f) {
         return;
     }
 
-    ptr = (OWFpixel*) image->data;
+    ptr = (OWFpixel *)image->data;
     count = image->width * image->height;
 
-    while (count > 0)
-    {
-        ptr->color.red   =
-            (OWFsubpixel) GAMMA(ptr->color.red, OWF_RED_MAX_VALUE, gamma);
+    while (count > 0) {
+        ptr->color.red =
+            (OWFsubpixel)GAMMA(ptr->color.red, OWF_RED_MAX_VALUE, gamma);
         ptr->color.green =
-            (OWFsubpixel) GAMMA(ptr->color.green, OWF_GREEN_MAX_VALUE, gamma);
-        ptr->color.blue  =
-            (OWFsubpixel) GAMMA(ptr->color.blue, OWF_BLUE_MAX_VALUE, gamma);
+            (OWFsubpixel)GAMMA(ptr->color.green, OWF_GREEN_MAX_VALUE, gamma);
+        ptr->color.blue =
+            (OWFsubpixel)GAMMA(ptr->color.blue, OWF_BLUE_MAX_VALUE, gamma);
 
         --count;
         ptr++;
@@ -198,180 +174,177 @@ OWF_Image_Gamma(OWF_IMAGE* image, OWFfloat gamma)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_EdgeReplication(OWF_IMAGE* image)
-{
-    OWFint          y;
-    OWFint          copyStride;
-    OWFuint8*       srcPtr      = NULL;
-    OWFuint8*       dstPtr      = NULL;
-    
+OWF_API_CALL void OWF_Image_EdgeReplication(OWF_IMAGE *image) {
+    OWFint y;
+    OWFint copyStride;
+    OWFuint8 *srcPtr = NULL;
+    OWFuint8 *dstPtr = NULL;
+
     OWF_ASSERT(image);
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
     OWF_ASSERT(image->width >= 3 && image->height >= 3);
-    
-    copyStride = image->width * image->pixelSize;    
-    
+
+    copyStride = image->width * image->pixelSize;
+
     /* top side replication */
-    srcPtr = (OWFuint8*) image->data;
+    srcPtr = (OWFuint8 *)image->data;
     srcPtr += 1 * image->stride + 0 * image->pixelSize;
-    dstPtr = (OWFuint8*) image->data;
+    dstPtr = (OWFuint8 *)image->data;
 
     memcpy(dstPtr, srcPtr, copyStride);
-    
+
     /* bottom side replication */
-    srcPtr = (OWFuint8*) image->data;
-    srcPtr += (image->height-2) * image->stride + 0 * image->pixelSize;        
-    dstPtr = (OWFuint8*) image->data;
-    dstPtr += (image->height-1) * image->stride + 0 * image->pixelSize;
-    
+    srcPtr = (OWFuint8 *)image->data;
+    srcPtr += (image->height - 2) * image->stride + 0 * image->pixelSize;
+    dstPtr = (OWFuint8 *)image->data;
+    dstPtr += (image->height - 1) * image->stride + 0 * image->pixelSize;
+
     memcpy(dstPtr, srcPtr, copyStride);
-    
+
     /* left side replication */
-    for (y = 0; y < image->height; y++)
-    {
+    for (y = 0; y < image->height; y++) {
         OWF_Image_SetPixel(image, 0, y, OWF_Image_GetPixelPtr(image, 1, y));
     }
-    
+
     /* right side replication */
-    for (y = 0; y < image->height; y++)
-    {
-        OWF_Image_SetPixel(image, image->width-1, y, OWF_Image_GetPixelPtr(image,
-                                                              image->width-2,
-                                                              y));
-    }   
-    
+    for (y = 0; y < image->height; y++) {
+        OWF_Image_SetPixel(image, image->width - 1, y,
+                           OWF_Image_GetPixelPtr(image, image->width - 2, y));
+    }
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_SourceFormatConversion(OWF_IMAGE* dst, OWF_IMAGE* src)
-{
-    OWFint      countY, widthDiff, heightDiff;
-    void*       srcLinePtr;
-    OWFpixel*   dstLinePtr;
-    OWFboolean  replicateEdges = OWF_FALSE;
-    
+OWF_API_CALL OWFboolean OWF_Image_SourceFormatConversion(OWF_IMAGE *dst,
+                                                         OWF_IMAGE *src) {
+    OWFint countY, widthDiff, heightDiff;
+    void *srcLinePtr;
+    OWFpixel *dstLinePtr;
+    OWFboolean replicateEdges = OWF_FALSE;
 
     OWF_ASSERT(dst != 0 && dst->data != NULL);
     OWF_ASSERT(src != 0 && src->data != NULL);
-    OWF_ASSERT(dst->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
-    
+    OWF_ASSERT(dst->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+
     srcLinePtr = src->data;
-    dstLinePtr = (OWFpixel*) dst->data;    
-    
-    /* dst image must either be the same size as the src image or 2 pixels 
+    dstLinePtr = (OWFpixel *)dst->data;
+
+    /* dst image must either be the same size as the src image or 2 pixels
        bigger (enough space to perform edge replication) */
-    if (dst->width != src->width || dst->height != src->height)
-    {
+    if (dst->width != src->width || dst->height != src->height) {
         widthDiff = dst->width - src->width;
         heightDiff = dst->height - src->height;
-        
-        if (widthDiff == 2 && heightDiff == 2)
-        {
-            replicateEdges = OWF_TRUE;   
+
+        if (widthDiff == 2 && heightDiff == 2) {
+            replicateEdges = OWF_TRUE;
             /* start of the destination buffer should have a 1 pixel offset */
-            dstLinePtr = (OWFpixel*) dst->data + 1 * dst->width + 1;
-        }
-        else
-        {
+            dstLinePtr = (OWFpixel *)dst->data + 1 * dst->width + 1;
+        } else {
             return OWF_FALSE;
         }
     }
 
-    if (dst->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL)
-    {
+    if (dst->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL) {
         return OWF_FALSE;
     }
 
-    for (countY = src->height; countY; countY--)
-    {
+    for (countY = src->height; countY; countY--) {
         OWFint count = src->width;
-        OWFpixel* dstPtr = dstLinePtr;
-    
-        switch (src->format.pixelFormat)
-        {
-            case OWF_IMAGE_ARGB8888:
-            {
-                OWFuint32* srcPtr = (OWFuint32*) srcLinePtr;
-    
-                while (count > 0)
-                {
-                    dstPtr->color.alpha = (OWFsubpixel)
-                        OWF_ALPHA_MAX_VALUE * ((*srcPtr & ARGB8888_ALPHA_MASK) >> ARGB8888_ALPHA_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr->color.red   = (OWFsubpixel)
-                        OWF_RED_MAX_VALUE * ((*srcPtr & ARGB8888_RED_MASK) >> ARGB8888_RED_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr->color.green = (OWFsubpixel)
-                        OWF_GREEN_MAX_VALUE * ((*srcPtr & ARGB8888_GREEN_MASK)>> ARGB8888_GREEN_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr->color.blue  = (OWFsubpixel)
-                        OWF_BLUE_MAX_VALUE * ((*srcPtr & ARGB8888_BLUE_MASK) >> ARGB8888_BLUE_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr ++;
-                    srcPtr ++;
+        OWFpixel *dstPtr = dstLinePtr;
+
+        switch (src->format.pixelFormat) {
+            case OWF_IMAGE_ARGB8888: {
+                OWFuint32 *srcPtr = (OWFuint32 *)srcLinePtr;
+
+                while (count > 0) {
+                    dstPtr->color.alpha = (OWFsubpixel)OWF_ALPHA_MAX_VALUE *
+                                          ((*srcPtr & ARGB8888_ALPHA_MASK) >>
+                                           ARGB8888_ALPHA_SHIFT) /
+                                          OWF_BYTE_MAX_VALUE;
+                    dstPtr->color.red =
+                        (OWFsubpixel)OWF_RED_MAX_VALUE *
+                        ((*srcPtr & ARGB8888_RED_MASK) >> ARGB8888_RED_SHIFT) /
+                        OWF_BYTE_MAX_VALUE;
+                    dstPtr->color.green = (OWFsubpixel)OWF_GREEN_MAX_VALUE *
+                                          ((*srcPtr & ARGB8888_GREEN_MASK) >>
+                                           ARGB8888_GREEN_SHIFT) /
+                                          OWF_BYTE_MAX_VALUE;
+                    dstPtr->color.blue = (OWFsubpixel)OWF_BLUE_MAX_VALUE *
+                                         ((*srcPtr & ARGB8888_BLUE_MASK) >>
+                                          ARGB8888_BLUE_SHIFT) /
+                                         OWF_BYTE_MAX_VALUE;
+                    dstPtr++;
+                    srcPtr++;
                     count--;
                 }
                 break;
             }
-    
-            case OWF_IMAGE_XRGB8888:
-            {
-                OWFuint32* srcPtr = (OWFuint32*) srcLinePtr;
-                while (count > 0)
-                {
+
+            case OWF_IMAGE_XRGB8888: {
+                OWFuint32 *srcPtr = (OWFuint32 *)srcLinePtr;
+                while (count > 0) {
                     dstPtr->color.alpha = OWF_FULLY_OPAQUE;
-                    dstPtr->color.red   = (OWFsubpixel)
-                        OWF_RED_MAX_VALUE * ((*srcPtr & ARGB8888_RED_MASK) >> ARGB8888_RED_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr->color.green = (OWFsubpixel)
-                        OWF_GREEN_MAX_VALUE * ((*srcPtr & ARGB8888_GREEN_MASK) >> ARGB8888_GREEN_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr->color.blue  = (OWFsubpixel)
-                        OWF_BLUE_MAX_VALUE * ((*srcPtr & ARGB8888_BLUE_MASK) >> ARGB8888_BLUE_SHIFT) / OWF_BYTE_MAX_VALUE;
-                    dstPtr ++;
-                    srcPtr ++;
+                    dstPtr->color.red =
+                        (OWFsubpixel)OWF_RED_MAX_VALUE *
+                        ((*srcPtr & ARGB8888_RED_MASK) >> ARGB8888_RED_SHIFT) /
+                        OWF_BYTE_MAX_VALUE;
+                    dstPtr->color.green = (OWFsubpixel)OWF_GREEN_MAX_VALUE *
+                                          ((*srcPtr & ARGB8888_GREEN_MASK) >>
+                                           ARGB8888_GREEN_SHIFT) /
+                                          OWF_BYTE_MAX_VALUE;
+                    dstPtr->color.blue = (OWFsubpixel)OWF_BLUE_MAX_VALUE *
+                                         ((*srcPtr & ARGB8888_BLUE_MASK) >>
+                                          ARGB8888_BLUE_SHIFT) /
+                                         OWF_BYTE_MAX_VALUE;
+                    dstPtr++;
+                    srcPtr++;
                     count--;
                 }
                 break;
             }
-    
-            case OWF_IMAGE_RGB565:
-            {
+
+            case OWF_IMAGE_RGB565: {
                 OWFfloat tmp;
-                OWFuint16* srcPtr = (OWFuint16*) srcLinePtr;
-                while (count > 0)
-                {
+                OWFuint16 *srcPtr = (OWFuint16 *)srcLinePtr;
+                while (count > 0) {
                     /*
                      * Formula for converting channel value is:
                      * Each channel is multiplied by (2^d - 1)/(2^s -1)
-                     * where d is dest channel bits and s is source channel bits.
+                     * where d is dest channel bits and s is source channel
+                     * bits.
                      */
-                    dstPtr->color.alpha = (OWFsubpixel) OWF_FULLY_OPAQUE;
-    
-                    tmp = (OWFfloat)((*srcPtr & RGB565_RED_MASK) >> RGB565_RED_SHIFT);
-                    dstPtr->color.red   = (OWFsubpixel)OWF_RED_MAX_VALUE * tmp / 31.0f;
-    
-                    tmp = (OWFfloat)((*srcPtr & RGB565_GREEN_MASK) >> RGB565_GREEN_SHIFT);
-                    dstPtr->color.green = (OWFsubpixel)OWF_GREEN_MAX_VALUE * tmp / 63.0f;
-    
+                    dstPtr->color.alpha = (OWFsubpixel)OWF_FULLY_OPAQUE;
+
+                    tmp = (OWFfloat)((*srcPtr & RGB565_RED_MASK) >>
+                                     RGB565_RED_SHIFT);
+                    dstPtr->color.red =
+                        (OWFsubpixel)OWF_RED_MAX_VALUE * tmp / 31.0f;
+
+                    tmp = (OWFfloat)((*srcPtr & RGB565_GREEN_MASK) >>
+                                     RGB565_GREEN_SHIFT);
+                    dstPtr->color.green =
+                        (OWFsubpixel)OWF_GREEN_MAX_VALUE * tmp / 63.0f;
+
                     tmp = (OWFfloat)(*srcPtr & RGB565_BLUE_MASK);
-                    dstPtr->color.blue  = (OWFsubpixel)OWF_BLUE_MAX_VALUE * tmp / 31.0f;
-    
-                    dstPtr ++;
-                    srcPtr ++;
+                    dstPtr->color.blue =
+                        (OWFsubpixel)OWF_BLUE_MAX_VALUE * tmp / 31.0f;
+
+                    dstPtr++;
+                    srcPtr++;
                     count--;
                 }
                 break;
             }
-    
-            default:
-            {
+
+            default: {
                 return OWF_FALSE; /* source format not supported */
             }
         }
-        
-        dstLinePtr+=dst->width;
-        srcLinePtr=(OWFuint8*)srcLinePtr+src->stride;
+
+        dstLinePtr += dst->width;
+        srcLinePtr = (OWFuint8 *)srcLinePtr + src->stride;
     }
-    
-    if (replicateEdges)
-    {
+
+    if (replicateEdges) {
         OWF_Image_EdgeReplication(dst);
     }
 
@@ -379,35 +352,30 @@ OWF_Image_SourceFormatConversion(OWF_IMAGE* dst, OWF_IMAGE* src)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_PUBLIC OWFint
-OWF_Image_GetStride(OWFint width, const OWF_IMAGE_FORMAT* format, OWFint minimumStride)
-{
-    OWFint                  size;
-    OWFint                  pixelSize;
+OWF_PUBLIC OWFint OWF_Image_GetStride(OWFint width,
+                                      const OWF_IMAGE_FORMAT *format,
+                                      OWFint minimumStride) {
+    OWFint size;
+    OWFint pixelSize;
 
     OWF_ASSERT(format);
 
     pixelSize = OWF_Image_GetFormatPixelSize(format->pixelFormat);
 
-    if (pixelSize < 0)
-    {
+    if (pixelSize < 0) {
         /* negative pixelSize means that pixel size is a fraction
          * (1/-pixelSize) of a byte, e.g. -8 means pixel has size
          * of one bit. */
 
         size = (width + 1) / -pixelSize;
-    }
-    else
-    {
+    } else {
         size = width * pixelSize;
     }
-    
-    if (size<minimumStride)
-    {
-        size=minimumStride;
+
+    if (size < minimumStride) {
+        size = minimumStride;
     }
-    if (format->rowPadding)
-    {
+    if (format->rowPadding) {
         size += format->rowPadding - 1;
         size -= size % format->rowPadding;
     }
@@ -415,95 +383,95 @@ OWF_Image_GetStride(OWFint width, const OWF_IMAGE_FORMAT* format, OWFint minimum
     return size;
 }
 
-
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_DestinationFormatConversion(OWF_IMAGE* dst, OWF_IMAGE* src)
-{
-    OWFint                  countY;
-    OWFuint32*              dstPtr;
-    OWFpixel*               srcPtr;
+OWF_API_CALL OWFboolean OWF_Image_DestinationFormatConversion(OWF_IMAGE *dst,
+                                                              OWF_IMAGE *src) {
+    OWFint countY;
+    OWFuint32 *dstPtr;
+    OWFpixel *srcPtr;
 
     OWF_ASSERT(dst != 0 && dst->data != NULL);
     OWF_ASSERT(src != 0 && src->data != NULL);
-    OWF_ASSERT(src->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(src->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
-    if (src->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL)
-    {
+    if (src->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL) {
         return OWF_FALSE;
     }
 
     /* src and data must have equal amount of pixels */
-    if (dst->width != src->width || dst->height != src->height)
-    {
+    if (dst->width != src->width || dst->height != src->height) {
         return OWF_FALSE;
     }
 
-    dstPtr = (OWFuint32*) dst->data;
-    srcPtr = (OWFpixel*) src->data;
+    dstPtr = (OWFuint32 *)dst->data;
+    srcPtr = (OWFpixel *)src->data;
 
-    if (dst->format.premultiplied && !src->format.premultiplied)
-    {
+    if (dst->format.premultiplied && !src->format.premultiplied) {
         OWF_Image_PremultiplyAlpha(src);
-    }
-    else if (!dst->format.premultiplied && src->format.premultiplied)
-    {
+    } else if (!dst->format.premultiplied && src->format.premultiplied) {
         OWF_Image_UnpremultiplyAlpha(src);
     }
 
-    for (countY = 0; countY < src->height; countY++)
-    {   
-        OWFuint8* destination = (OWFuint8*) dst->data;
-        destination += countY*dst->stride;
-        dstPtr = (OWFuint32*) destination;    
-    
-        switch (dst->format.pixelFormat)
-        {
-            case OWF_IMAGE_ARGB8888:
-            {
+    for (countY = 0; countY < src->height; countY++) {
+        OWFuint8 *destination = (OWFuint8 *)dst->data;
+        destination += countY * dst->stride;
+        dstPtr = (OWFuint32 *)destination;
+
+        switch (dst->format.pixelFormat) {
+            case OWF_IMAGE_ARGB8888: {
                 OWFint countX;
                 OWFuint32 dstPixel = 0;
-                
-                for (countX = 0; countX < src->width; countX++)
-                {
-                    dstPixel  = ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.alpha / OWF_ALPHA_MAX_VALUE)) <<
-                                ARGB8888_ALPHA_SHIFT);
-                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.red / OWF_RED_MAX_VALUE))   <<
-                                ARGB8888_RED_SHIFT);
-                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.green / OWF_GREEN_MAX_VALUE)) <<
-                                ARGB8888_GREEN_SHIFT);
-                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.blue / OWF_BLUE_MAX_VALUE))  <<
-                                ARGB8888_BLUE_SHIFT);
+
+                for (countX = 0; countX < src->width; countX++) {
+                    dstPixel = ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                         srcPtr->color.alpha /
+                                                         OWF_ALPHA_MAX_VALUE))
+                                << ARGB8888_ALPHA_SHIFT);
+                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                          srcPtr->color.red /
+                                                          OWF_RED_MAX_VALUE))
+                                 << ARGB8888_RED_SHIFT);
+                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                          srcPtr->color.green /
+                                                          OWF_GREEN_MAX_VALUE))
+                                 << ARGB8888_GREEN_SHIFT);
+                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                          srcPtr->color.blue /
+                                                          OWF_BLUE_MAX_VALUE))
+                                 << ARGB8888_BLUE_SHIFT);
                     *dstPtr = dstPixel;
-                    dstPtr ++;
-                    srcPtr ++;
+                    dstPtr++;
+                    srcPtr++;
                 }
                 break;
             }
-    
-            case OWF_IMAGE_XRGB8888:
-            {
+
+            case OWF_IMAGE_XRGB8888: {
                 OWFint countX;
                 OWFuint32 dstPixel = 0;
-                
-                for (countX = 0; countX < src->width; countX++)
-                {
-                    dstPixel  = ARGB8888_ALPHA_MASK;
-                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.red / OWF_RED_MAX_VALUE))   <<
-                                ARGB8888_RED_SHIFT);
-                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.green / OWF_GREEN_MAX_VALUE)) <<
-                                ARGB8888_GREEN_SHIFT);
-                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE * srcPtr->color.blue / OWF_BLUE_MAX_VALUE))  <<
-                                ARGB8888_BLUE_SHIFT);
+
+                for (countX = 0; countX < src->width; countX++) {
+                    dstPixel = ARGB8888_ALPHA_MASK;
+                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                          srcPtr->color.red /
+                                                          OWF_RED_MAX_VALUE))
+                                 << ARGB8888_RED_SHIFT);
+                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                          srcPtr->color.green /
+                                                          OWF_GREEN_MAX_VALUE))
+                                 << ARGB8888_GREEN_SHIFT);
+                    dstPixel |= ((OWFuint8)(roundSubPixel(OWF_BYTE_MAX_VALUE *
+                                                          srcPtr->color.blue /
+                                                          OWF_BLUE_MAX_VALUE))
+                                 << ARGB8888_BLUE_SHIFT);
                     *dstPtr = dstPixel;
-                    dstPtr ++;
-                    srcPtr ++;
+                    dstPtr++;
+                    srcPtr++;
                 }
                 break;
             }
-    
-            default:
-            {
+
+            default: {
                 return OWF_FALSE; /* destination format not supported */
             }
         }
@@ -513,40 +481,33 @@ OWF_Image_DestinationFormatConversion(OWF_IMAGE* dst, OWF_IMAGE* src)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Init(OWF_IMAGE* image)
-{
+OWF_API_CALL void OWF_Image_Init(OWF_IMAGE *image) {
     OWF_ASSERT(NULL != image);
     memset(image, 0, sizeof(OWF_IMAGE));
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_PUBLIC OWF_IMAGE*
-OWF_Image_Create(OWFint width,
-                 OWFint height,
-                 const OWF_IMAGE_FORMAT* format,
-                 void* buffer,
-                 OWFint minimumStride)
-{
-    OWF_IMAGE*      image;
+OWF_PUBLIC OWF_IMAGE *OWF_Image_Create(OWFint width, OWFint height,
+                                       const OWF_IMAGE_FORMAT *format,
+                                       void *buffer, OWFint minimumStride) {
+    OWF_IMAGE *image;
 
     image = CREATE(OWF_IMAGE);
 
-    if (image)
-    {
-
-        image->format.pixelFormat   = format->pixelFormat;
-        image->format.linear        = format->linear;
+    if (image) {
+        image->format.pixelFormat = format->pixelFormat;
+        image->format.linear = format->linear;
         image->format.premultiplied = format->premultiplied;
-        image->format.rowPadding    = format->rowPadding;
+        image->format.rowPadding = format->rowPadding;
 
-        image->pixelSize    = OWF_Image_GetFormatPixelSize(format->pixelFormat);
-        image->width        = width;
-        image->height       = height;
+        image->pixelSize = OWF_Image_GetFormatPixelSize(format->pixelFormat);
+        image->width = width;
+        image->height = height;
 
         /* stride is row length in bytes (aligned according to image format) */
-        image->stride = OWF_Image_GetStride(width, &image->format, minimumStride);
-        image->foreign  = (buffer) ? OWF_TRUE : OWF_FALSE;
+        image->stride =
+            OWF_Image_GetStride(width, &image->format, minimumStride);
+        image->foreign = (buffer) ? OWF_TRUE : OWF_FALSE;
         image->dataMax = image->stride * height;
 
         DPRINT(("OWF_Image_Create:"));
@@ -560,30 +521,27 @@ OWF_Image_Create(OWFint width,
         DPRINT(("  Stride           = %d", image->stride));
         DPRINT(("  Foreign data     = %d", image->foreign));
         DPRINT(("  Data size        = %d", image->dataMax));
-        if (image->dataMax > 0)
-        {
-            image->data = (image->foreign) ? (buffer) :
-                OWF_Image_AllocData(width, height, format->pixelFormat);
-        }
-        else
-        {
+        if (image->dataMax > 0) {
+            image->data =
+                (image->foreign)
+                    ? (buffer)
+                    : OWF_Image_AllocData(width, height, format->pixelFormat);
+        } else {
             /* either overflow occured or width/height is zero */
-            if (width && height)
-            {
-                DPRINT(("OWF_Image_Create: Overflow in image size calculation."));
-            }
-            else
-            {
+            if (width && height) {
+                DPRINT(
+                    ("OWF_Image_Create: Overflow in image size calculation."));
+            } else {
                 DPRINT(("OWF_Image_Create: width or height is zero."));
             }
         }
     }
 
-    if (!(image && image->data && (image->dataMax > 0)))
-    {
-        DPRINT(("OWF_Image_Create: Image creation failed (image = %p, "
-                "data = %p, dataSize = %d)",
-                image, image ? image->data : NULL, image->dataMax));
+    if (!(image && image->data && (image->dataMax > 0))) {
+        DPRINT(
+            ("OWF_Image_Create: Image creation failed (image = %p, "
+             "data = %p, dataSize = %d)",
+             image, image ? image->data : NULL, image->dataMax));
         DESTROY(image);
         return NULL;
     }
@@ -591,35 +549,26 @@ OWF_Image_Create(OWFint width,
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_PUBLIC void OWF_Image_Destroy(OWF_IMAGE* image)
-{
-    if (image)
-        {
+OWF_PUBLIC void OWF_Image_Destroy(OWF_IMAGE *image) {
+    if (image) {
         DESTROY(image);
-        }
+    }
 }
 
-
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWF_IMAGE*
-OWF_Image_Copy(const OWF_IMAGE* image)
-{
-    OWF_IMAGE* newImage = NULL;
+OWF_API_CALL OWF_IMAGE *OWF_Image_Copy(const OWF_IMAGE *image) {
+    OWF_IMAGE *newImage = NULL;
 
     OWF_ASSERT(image);
 
     newImage = CREATE(OWF_IMAGE);
-    if (newImage)
-    {
+    if (newImage) {
         memcpy(newImage, image, sizeof(*newImage));
-        if (!image->foreign)
-        {
+        if (!image->foreign) {
             newImage->data = xalloc(1, image->dataMax);
-            if (newImage->data)
-            {
-                memcpy(newImage->data,
-                       image->data,
-                       image->height*image->stride);
+            if (newImage->data) {
+                memcpy(newImage->data, image->data,
+                       image->height * image->stride);
             }
         }
     }
@@ -628,133 +577,111 @@ OWF_Image_Copy(const OWF_IMAGE* image)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_SetSize(OWF_IMAGE* image,
-                  OWFint width,
-                  OWFint height)
-{
-    OWFint                  size;
-    OWFint                  stride;
+OWF_API_CALL OWFboolean OWF_Image_SetSize(OWF_IMAGE *image, OWFint width,
+                                          OWFint height) {
+    OWFint size;
+    OWFint stride;
 
     OWF_ASSERT(image);
-            
+
     /** note that this setsize ignores any specialised stride **/
     stride = OWF_Image_GetStride(width, &image->format, 0);
     size = height * stride;
 
     /* change source size if buffer have enough space */
-    if (size > 0 && size <= image->dataMax)
-    {
+    if (size > 0 && size <= image->dataMax) {
         image->height = height;
-        image->width  = width;
+        image->width = width;
         image->stride = stride;
         return OWF_TRUE;
     }
     return OWF_FALSE;
 }
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SetFlags(OWF_IMAGE* image,
-                  OWFboolean premultiply,
-                  OWFboolean linear)
-    {
+OWF_API_CALL void OWF_Image_SetFlags(OWF_IMAGE *image, OWFboolean premultiply,
+                                     OWFboolean linear) {
     OWF_ASSERT(image);
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL ||
-            image->format.pixelFormat==OWF_IMAGE_L32);
-            
-    image->format.linear=linear;
-    image->format.premultiplied=premultiply;
-    }
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL ||
+               image->format.pixelFormat == OWF_IMAGE_L32);
+
+    image->format.linear = linear;
+    image->format.premultiplied = premultiply;
+}
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SetPixelBuffer(OWF_IMAGE* image,      void* buffer)
-    {
+OWF_API_CALL void OWF_Image_SetPixelBuffer(OWF_IMAGE *image, void *buffer) {
     OWF_ASSERT(image);
     OWF_ASSERT(buffer);
     OWF_ASSERT(image->foreign);
-    if (image->foreign)
-        {
-        image->data=buffer;
-        }
+    if (image->foreign) {
+        image->data = buffer;
     }
+}
 /*----------------------------------------------------------------------------*/
 /* NEVER USED */
-OWF_API_CALL OWFboolean
-OWF_Image_SetPixelData(OWF_IMAGE* image,
-                       OWFint width,
-                       OWFint height,
-                       const OWF_IMAGE_FORMAT* format,
-                       void* buffer)
-{
-    OWFint                  size = 0,
-                            stride = 0;
+OWF_API_CALL OWFboolean OWF_Image_SetPixelData(OWF_IMAGE *image, OWFint width,
+                                               OWFint height,
+                                               const OWF_IMAGE_FORMAT *format,
+                                               void *buffer) {
+    OWFint size = 0, stride = 0;
 
     OWF_ASSERT(image && format);
 
-    stride  = OWF_Image_GetStride(width, format, 0);
-    size    = height * stride;
+    stride = OWF_Image_GetStride(width, format, 0);
+    size = height * stride;
 
-    if (size <= 0)
-    {
+    if (size <= 0) {
         return OWF_FALSE; /* overflow */
     }
 
-    if (!image->foreign)
-    {
+    if (!image->foreign) {
         OWF_Image_FreeData(&image->data);
     }
 
-    image->format.pixelFormat   = format->pixelFormat;
-    image->format.linear        = format->linear;
+    image->format.pixelFormat = format->pixelFormat;
+    image->format.linear = format->linear;
     image->format.premultiplied = format->premultiplied;
-    image->format.rowPadding    = format->rowPadding;
+    image->format.rowPadding = format->rowPadding;
 
-    image->pixelSize    = OWF_Image_GetFormatPixelSize(format->pixelFormat);
-    image->width        = width;
-    image->height       = height;
-    image->stride       = stride;
-    image->foreign      = OWF_TRUE;
-    image->dataMax      = size;
-    image->data         = buffer;
+    image->pixelSize = OWF_Image_GetFormatPixelSize(format->pixelFormat);
+    image->width = width;
+    image->height = height;
+    image->stride = stride;
+    image->foreign = OWF_TRUE;
+    image->dataMax = size;
+    image->data = buffer;
 
     return OWF_TRUE;
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_Blit(OWF_IMAGE* dst,
-               OWF_RECTANGLE const* dstRect,
-               OWF_IMAGE const* src,
-               OWF_RECTANGLE const* srcRect)
-{
-    OWF_RECTANGLE           bounds, rect, drect, srect;
-    OWFint                  lineCount   = 0;
-    OWFint                  copyStride  = 0;
-    OWFuint8*               srcPtr      = NULL;
-    OWFuint8*               dstPtr      = NULL;
+OWF_API_CALL OWFboolean OWF_Image_Blit(OWF_IMAGE *dst,
+                                       OWF_RECTANGLE const *dstRect,
+                                       OWF_IMAGE const *src,
+                                       OWF_RECTANGLE const *srcRect) {
+    OWF_RECTANGLE bounds, rect, drect, srect;
+    OWFint lineCount = 0;
+    OWFint copyStride = 0;
+    OWFuint8 *srcPtr = NULL;
+    OWFuint8 *dstPtr = NULL;
 
     OWF_ASSERT(dst != 0 && dst->data != NULL);
     OWF_ASSERT(src != 0 && src->data != NULL);
-    OWF_ASSERT(dst->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
-    OWF_ASSERT(src->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(dst->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(src->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
     OWF_Rect_Set(&bounds, 0, 0, dst->width, dst->height);
-    OWF_Rect_Set(&rect,
-                 dstRect->x, dstRect->y,
-                 srcRect->width, srcRect->height);
-    OWF_Rect_Set(&srect,
-                 srcRect->x, srcRect->y,
-                 srcRect->width, srcRect->height);
+    OWF_Rect_Set(&rect, dstRect->x, dstRect->y, srcRect->width,
+                 srcRect->height);
+    OWF_Rect_Set(&srect, srcRect->x, srcRect->y, srcRect->width,
+                 srcRect->height);
 
     /* clip destination rectangle against bounds */
-    if (!OWF_Rect_Clip(&drect, &rect, &bounds))
-    {
+    if (!OWF_Rect_Clip(&drect, &rect, &bounds)) {
         return OWF_FALSE;
     }
 
-    if (src->pixelSize != dst->pixelSize)
-    {
+    if (src->pixelSize != dst->pixelSize) {
         DPRINT(("OWF_Image_Blit(): pixels sizes differ\n"));
         return OWF_FALSE;
     }
@@ -763,13 +690,12 @@ OWF_Image_Blit(OWF_IMAGE* dst,
     copyStride = srect.width * src->pixelSize;
 
     /* use bytepointers in copy  - generic */
-    srcPtr = (OWFuint8*) src->data;
+    srcPtr = (OWFuint8 *)src->data;
     srcPtr += srect.y * src->stride + srect.x * src->pixelSize;
-    dstPtr = (OWFuint8*)dst->data;
+    dstPtr = (OWFuint8 *)dst->data;
     dstPtr += drect.y * dst->stride + drect.x * src->pixelSize;
 
-    while (lineCount > 0)
-    {
+    while (lineCount > 0) {
         --lineCount;
 
         memcpy(dstPtr, srcPtr, copyStride);
@@ -782,51 +708,41 @@ OWF_Image_Blit(OWF_IMAGE* dst,
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFpixel*
-OWF_Image_GetPixelPtr(OWF_IMAGE* image,
-                      OWFint x,
-                      OWFint y)
-{
-    OWF_ASSERT(image && image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
-    if (!(image && image->data))
-    {
+OWF_API_CALL OWFpixel *OWF_Image_GetPixelPtr(OWF_IMAGE *image, OWFint x,
+                                             OWFint y) {
+    OWF_ASSERT(image && image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+    if (!(image && image->data)) {
         return 0;
     }
 
-    x = CLAMP(x, 0, image->width-1);
-    y = CLAMP(y, 0, image->height-1);
+    x = CLAMP(x, 0, image->width - 1);
+    y = CLAMP(y, 0, image->height - 1);
 
-    return (OWFpixel*)image->data + y * image->width  + x ;
+    return (OWFpixel *)image->data + y * image->width + x;
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_GetPixel(OWF_IMAGE* image,
-                   OWFint x,
-                   OWFint y,
-                   OWFpixel* pixel)
-{
-    OWFpixel*               temp = NULL;
+OWF_API_CALL void OWF_Image_GetPixel(OWF_IMAGE *image, OWFint x, OWFint y,
+                                     OWFpixel *pixel) {
+    OWFpixel *temp = NULL;
 
     OWF_ASSERT(pixel);
 
-    if (!(image && image->data))
-    {
+    if (!(image && image->data)) {
         return;
     }
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
     pixel->color.alpha = 0;
     pixel->color.red = 0;
     pixel->color.green = 0;
     pixel->color.blue = 0;
 
-    if (x < 0 || y < 0 || x >= image->width || y >= image->height)
-    {
+    if (x < 0 || y < 0 || x >= image->width || y >= image->height) {
         return;
     }
 
-    temp = (OWFpixel*)image->data + y * image->width  + x;
+    temp = (OWFpixel *)image->data + y * image->width + x;
 
     pixel->color.alpha = temp->color.alpha;
     pixel->color.red = temp->color.red;
@@ -835,27 +751,20 @@ OWF_Image_GetPixel(OWF_IMAGE* image,
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SetPixel(OWF_IMAGE* image,
-                   OWFint x,
-                   OWFint y,
-                   OWFpixel const* pixel)
-{
-    OWFpixel*               data = NULL;
+OWF_API_CALL void OWF_Image_SetPixel(OWF_IMAGE *image, OWFint x, OWFint y,
+                                     OWFpixel const *pixel) {
+    OWFpixel *data = NULL;
 
-    if (!(image && image->data))
-    {
+    if (!(image && image->data)) {
         return;
     }
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
-    if(x < 0 || y < 0 || x >= image->width || y >= image->height)
-    {
+    if (x < 0 || y < 0 || x >= image->width || y >= image->height) {
         return;
     }
 
-
-    data = (OWFpixel*)image->data + y * image->width + x;
+    data = (OWFpixel *)image->data + y * image->width + x;
 
     data->color.red = pixel->color.red;
     data->color.green = pixel->color.green;
@@ -864,152 +773,125 @@ OWF_Image_SetPixel(OWF_IMAGE* image,
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_PointSamplingStretchBlit(OWF_IMAGE* dst,
-                                   OWF_RECTANGLE* dstRect,
-                                   OWF_IMAGE* src,
-                                   OWFfloat* srcRect)
-{
-    OWFint                  ox = 0, oy = 0;
-    OWFfloat                dx = 0.f, dy = 0.f; 
-    OWFint                  x, y;
+OWF_API_CALL OWFboolean OWF_Image_PointSamplingStretchBlit(
+    OWF_IMAGE *dst, OWF_RECTANGLE *dstRect, OWF_IMAGE *src, OWFfloat *srcRect) {
+    OWFint ox = 0, oy = 0;
+    OWFfloat dx = 0.f, dy = 0.f;
+    OWFint x, y;
 
     /* images must be valid */
-    if (!((src != NULL) && (src->data != NULL) &&
-          (dst != NULL) && (dst->data != NULL)))
-    {
+    if (!((src != NULL) && (src->data != NULL) && (dst != NULL) &&
+          (dst->data != NULL))) {
         return OWF_FALSE;
     }
-    OWF_ASSERT(src->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
-    OWF_ASSERT(dst->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(src->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(dst->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
     /* ditto with rectangles, too */
     if (!((dstRect != NULL) && (dstRect->width && dstRect->height) &&
-          (srcRect != NULL) && (srcRect[2] && srcRect[3])))
-    {
+          (srcRect != NULL) && (srcRect[2] && srcRect[3]))) {
         return OWF_FALSE;
     }
 
     /* Note: bounds check missing */
 
-    if (src->pixelSize != dst->pixelSize)
-    {
+    if (src->pixelSize != dst->pixelSize) {
         return OWF_FALSE;
     }
 
     /* solve scaling ratios for image */
-    dx = (OWFfloat) srcRect[2] / (OWFfloat) dstRect->width;
-    dy = (OWFfloat) srcRect[3] / (OWFfloat) dstRect->height;
+    dx = (OWFfloat)srcRect[2] / (OWFfloat)dstRect->width;
+    dy = (OWFfloat)srcRect[3] / (OWFfloat)dstRect->height;
 
-    for (y = 0; y < dstRect->height; y++)
-    {
-        for (x = 0; x < dstRect->width; x++)
-        {
-            OWFpixel*       pixel;     
-            
+    for (y = 0; y < dstRect->height; y++) {
+        for (x = 0; x < dstRect->width; x++) {
+            OWFpixel *pixel;
+
             /* NOTE This code uses pixel center points to calculate distances
                     and factors. Results can differ slightly when pixel corner
                     coordinates are used */
 
             /* coordinates of nearest pixel in original image */
-            ox = (int) floor((((OWFfloat) x + 0.5) * dx) + srcRect[0]);
-            oy = (int) floor((((OWFfloat) y + 0.5) * dy) + srcRect[1]);   
-            
-            pixel = OWF_Image_GetPixelPtr(src,
-                                          ox,
-                                          oy);            
-            
-            OWF_Image_SetPixel(dst,
-                               dstRect->x + x,
-                               dstRect->y + y,
-                               pixel);
+            ox = (int)floor((((OWFfloat)x + 0.5) * dx) + srcRect[0]);
+            oy = (int)floor((((OWFfloat)y + 0.5) * dy) + srcRect[1]);
+
+            pixel = OWF_Image_GetPixelPtr(src, ox, oy);
+
+            OWF_Image_SetPixel(dst, dstRect->x + x, dstRect->y + y, pixel);
         }
     }
     return OWF_TRUE;
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_BilinearStretchBlit(OWF_IMAGE* dst,
-                              OWF_RECTANGLE* dstRect,
-                              OWF_IMAGE* src,
-                              OWFfloat* srcRect)
-{
-    OWFint                  x = 0, y = 0;
-    OWFint                  ox = 0, oy = 0;
-    OWFfloat                dx = 0.f, dy = 0.f, wx = 0.f, wy = 0.f;
-    OWFfloat                w[2 * 2];
-    OWFpixel*               sample[4];
-    OWFpixel*               pixel = NULL;
+OWF_API_CALL OWFboolean OWF_Image_BilinearStretchBlit(OWF_IMAGE *dst,
+                                                      OWF_RECTANGLE *dstRect,
+                                                      OWF_IMAGE *src,
+                                                      OWFfloat *srcRect) {
+    OWFint x = 0, y = 0;
+    OWFint ox = 0, oy = 0;
+    OWFfloat dx = 0.f, dy = 0.f, wx = 0.f, wy = 0.f;
+    OWFfloat w[2 * 2];
+    OWFpixel *sample[4];
+    OWFpixel *pixel = NULL;
 
     /* images must be valid */
-    if (!((src != NULL) && (src->data != NULL) &&
-          (dst != NULL) && (dst->data != NULL)))
-    {
+    if (!((src != NULL) && (src->data != NULL) && (dst != NULL) &&
+          (dst->data != NULL))) {
         return OWF_FALSE;
     }
-    OWF_ASSERT(src->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
-    OWF_ASSERT(dst->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(src->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(dst->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
     /* ditto with rectangles, too */
     if (!((dstRect != NULL) && (dstRect->width && dstRect->height) &&
-          (srcRect != NULL) && (srcRect[2] && srcRect[3])))
-    {
+          (srcRect != NULL) && (srcRect[2] && srcRect[3]))) {
         return OWF_FALSE;
     }
 
-    if (src->pixelSize != dst->pixelSize)
-    {
+    if (src->pixelSize != dst->pixelSize) {
         return OWF_FALSE;
     }
 
     /* solve scaling ratios for image */
-    dx = (OWFfloat) srcRect[2] / (OWFfloat) dstRect->width;
-    dy = (OWFfloat) srcRect[3] / (OWFfloat) dstRect->height;
+    dx = (OWFfloat)srcRect[2] / (OWFfloat)dstRect->width;
+    dy = (OWFfloat)srcRect[3] / (OWFfloat)dstRect->height;
 
-    for (y = 0; y < dstRect->height; y++)
-    {
-        for (x = 0; x < dstRect->width; x++)
-        {
-            OWFfloat tempOx, tempOy;            
-            
+    for (y = 0; y < dstRect->height; y++) {
+        for (x = 0; x < dstRect->width; x++) {
+            OWFfloat tempOx, tempOy;
+
             /* NOTE This code uses pixel center points to calculate distances
                     and factors. Results can differ slightly when pixel corner
                     coordinates are used */
 
             /* coordinates of nearest pixel in original image */
-            tempOx = (((OWFfloat) x + 0.5) * dx) + srcRect[0];
-            tempOy = (((OWFfloat) y + 0.5) * dy) + srcRect[1];            
-            
-            ox = (int) floor((((OWFfloat) x + 0.5) * dx) + srcRect[0]);
-            oy = (int) floor((((OWFfloat) y + 0.5) * dy) + srcRect[1]);    
+            tempOx = (((OWFfloat)x + 0.5) * dx) + srcRect[0];
+            tempOy = (((OWFfloat)y + 0.5) * dy) + srcRect[1];
 
-            /* Distances to nearest pixel, eg. fractional part of coordinate */    
-            wx = (OWFfloat) ox + 0.5 - tempOx;
-            wy = (OWFfloat) oy + 0.5 - tempOy;
+            ox = (int)floor((((OWFfloat)x + 0.5) * dx) + srcRect[0]);
+            oy = (int)floor((((OWFfloat)y + 0.5) * dy) + srcRect[1]);
+
+            /* Distances to nearest pixel, eg. fractional part of coordinate */
+            wx = (OWFfloat)ox + 0.5 - tempOx;
+            wy = (OWFfloat)oy + 0.5 - tempOy;
 
             /* If distance is positive, we should use left or upper pixel for
              * second nearest pixel. */
-            if (wx > 0.0)
-            {
+            if (wx > 0.0) {
                 ox--;
                 wx = 1.0 - wx;
-            }
-            else
-            {
+            } else {
                 wx = -wx; /* abs */
             }
 
-            if (wy > 0.0)
-            {
+            if (wy > 0.0) {
                 oy--;
                 wy = 1.0 - wy;
-            }
-            else
-            {
+            } else {
                 wy = -wy;
             }
-            
+
             /* Calculate weights for samples */
             w[0] = (1.0 - wx) * (1.0 - wy);
             w[1] = wx * (1.0 - wy);
@@ -1026,47 +908,44 @@ OWF_Image_BilinearStretchBlit(OWF_IMAGE* dst,
             pixel = OWF_Image_GetPixelPtr(dst, x, y);
 
             /* calculate final color */
-            pixel->color.red   =
+            pixel->color.red =
                 sample[0]->color.red * w[0] + sample[1]->color.red * w[1] +
-                sample[2]->color.red * w[2] + sample[3]->color.red * w[3] + OWF_BILINEAR_ROUNDING_VALUE;
+                sample[2]->color.red * w[2] + sample[3]->color.red * w[3] +
+                OWF_BILINEAR_ROUNDING_VALUE;
 
             pixel->color.green =
                 sample[0]->color.green * w[0] + sample[1]->color.green * w[1] +
-                sample[2]->color.green * w[2] + sample[3]->color.green * w[3] + OWF_BILINEAR_ROUNDING_VALUE;
+                sample[2]->color.green * w[2] + sample[3]->color.green * w[3] +
+                OWF_BILINEAR_ROUNDING_VALUE;
 
-            pixel->color.blue  =
+            pixel->color.blue =
                 sample[0]->color.blue * w[0] + sample[1]->color.blue * w[1] +
-                sample[2]->color.blue * w[2] + sample[3]->color.blue * w[3] + OWF_BILINEAR_ROUNDING_VALUE;
+                sample[2]->color.blue * w[2] + sample[3]->color.blue * w[3] +
+                OWF_BILINEAR_ROUNDING_VALUE;
 
             pixel->color.alpha =
                 sample[0]->color.alpha * w[0] + sample[1]->color.alpha * w[1] +
-                sample[2]->color.alpha * w[2] + sample[3]->color.alpha * w[3] + OWF_BILINEAR_ROUNDING_VALUE;
+                sample[2]->color.alpha * w[2] + sample[3]->color.alpha * w[3] +
+                OWF_BILINEAR_ROUNDING_VALUE;
         }
     }
     return OWF_TRUE;
-
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_Stretch(OWF_IMAGE* dst,
-                  OWF_RECTANGLE* dstRect,
-                  OWF_IMAGE* src,
-                  OWFfloat* srcRect,
-                  OWF_FILTERING filter)
-{
-    OWFboolean          result = OWF_FALSE;
+OWF_API_CALL OWFboolean OWF_Image_Stretch(OWF_IMAGE *dst,
+                                          OWF_RECTANGLE *dstRect,
+                                          OWF_IMAGE *src, OWFfloat *srcRect,
+                                          OWF_FILTERING filter) {
+    OWFboolean result = OWF_FALSE;
 
-    switch (filter)
-    {
-        case OWF_FILTER_POINT_SAMPLING:
-        {
-            result = OWF_Image_PointSamplingStretchBlit(dst, dstRect, src,
-                                                        srcRect);
+    switch (filter) {
+        case OWF_FILTER_POINT_SAMPLING: {
+            result =
+                OWF_Image_PointSamplingStretchBlit(dst, dstRect, src, srcRect);
             break;
         }
-        case OWF_FILTER_BILINEAR:
-        {
+        case OWF_FILTER_BILINEAR: {
             result = OWF_Image_BilinearStretchBlit(dst, dstRect, src, srcRect);
             break;
         }
@@ -1076,76 +955,63 @@ OWF_Image_Stretch(OWF_IMAGE* dst,
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Clear(OWF_IMAGE* image,
-                OWFsubpixel red,
-                OWFsubpixel green,
-                OWFsubpixel blue,
-                OWFsubpixel alpha)
-{
-    OWFint                  i, numPixels;
-    OWFpixel*                pixels;
+OWF_API_CALL void OWF_Image_Clear(OWF_IMAGE *image, OWFsubpixel red,
+                                  OWFsubpixel green, OWFsubpixel blue,
+                                  OWFsubpixel alpha) {
+    OWFint i, numPixels;
+    OWFpixel *pixels;
 
     OWF_ASSERT(image != 0);
     OWF_ASSERT(image->data != 0);
     OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
     numPixels = image->width * image->height;
-    pixels = (OWFpixel*) image->data;
+    pixels = (OWFpixel *)image->data;
 
-    for (i = 0; i < numPixels; i++)
-    {
-        pixels[i].color.red   = (OWFsubpixel) red;
-        pixels[i].color.green = (OWFsubpixel) green;
-        pixels[i].color.blue  = (OWFsubpixel) blue;
-        pixels[i].color.alpha = (OWFsubpixel) alpha;
+    for (i = 0; i < numPixels; i++) {
+        pixels[i].color.red = (OWFsubpixel)red;
+        pixels[i].color.green = (OWFsubpixel)green;
+        pixels[i].color.blue = (OWFsubpixel)blue;
+        pixels[i].color.alpha = (OWFsubpixel)alpha;
     }
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_PremultiplyAlpha(OWF_IMAGE* image)
-{
-    OWFint       x, y;
+OWF_API_CALL void OWF_Image_PremultiplyAlpha(OWF_IMAGE *image) {
+    OWFint x, y;
 
     OWF_ASSERT(image != 0);
 
-    if (image->format.premultiplied)
-    {
+    if (image->format.premultiplied) {
         return;
     }
 
     /* only for internal format */
-    if (image->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL)
-    {
+    if (image->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL) {
         return;
     }
 
-    for (y = 0; y < image->height; y++)
-    {
-        for (x = 0; x < image->width; x++)
-        {
-            OWFpixel* pixel;
+    for (y = 0; y < image->height; y++) {
+        for (x = 0; x < image->width; x++) {
+            OWFpixel *pixel;
             OWFsubpixel alpha;
 
             pixel = OWF_Image_GetPixelPtr(image, x, y);
 
             alpha = pixel->color.alpha;
 
-            if (0 == alpha)
-            {
+            if (0 == alpha) {
+                pixel->color.red = pixel->color.green = pixel->color.blue = 0;
+            } else {
                 pixel->color.red =
+                    (pixel->color.red * alpha + OWF_PREMUL_ROUNDING_FACTOR) /
+                    OWF_ALPHA_MAX_VALUE;
                 pixel->color.green =
-                pixel->color.blue = 0;
-            }
-            else
-            {
-                pixel->color.red    = (pixel->color.red * alpha + OWF_PREMUL_ROUNDING_FACTOR) /
-                                      OWF_ALPHA_MAX_VALUE;
-                pixel->color.green  = (pixel->color.green * alpha + OWF_PREMUL_ROUNDING_FACTOR) /
-                                      OWF_ALPHA_MAX_VALUE;
-                pixel->color.blue   = (pixel->color.blue * alpha + OWF_PREMUL_ROUNDING_FACTOR) /
-                                      OWF_ALPHA_MAX_VALUE;
+                    (pixel->color.green * alpha + OWF_PREMUL_ROUNDING_FACTOR) /
+                    OWF_ALPHA_MAX_VALUE;
+                pixel->color.blue =
+                    (pixel->color.blue * alpha + OWF_PREMUL_ROUNDING_FACTOR) /
+                    OWF_ALPHA_MAX_VALUE;
             }
         }
     }
@@ -1154,46 +1020,39 @@ OWF_Image_PremultiplyAlpha(OWF_IMAGE* image)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_UnpremultiplyAlpha(OWF_IMAGE* image)
-{
-    OWFint       count;
-    OWFpixel*    pixelPtr;
+OWF_API_CALL void OWF_Image_UnpremultiplyAlpha(OWF_IMAGE *image) {
+    OWFint count;
+    OWFpixel *pixelPtr;
 
     OWF_ASSERT(image != 0);
 
-    if (!image->format.premultiplied)
-    {
+    if (!image->format.premultiplied) {
         return;
     }
 
     /* only for internal format */
-    if (image->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL)
-    {
+    if (image->format.pixelFormat != OWF_IMAGE_ARGB_INTERNAL) {
         return;
     }
 
     count = image->width * image->height;
-    pixelPtr = (OWFpixel*)image->data;
+    pixelPtr = (OWFpixel *)image->data;
 
-    while (count > 0)
-    {
-
+    while (count > 0) {
         OWFsubpixel a = pixelPtr->color.alpha;
 
-        #ifdef OWF_IMAGE_INTERNAL_PIXEL_IS_FLOAT
-	    OWF_ASSERT(a <= OWF_ALPHA_MAX_VALUE && a >= OWF_ALPHA_MIN_VALUE);
-	#endif
+#ifdef OWF_IMAGE_INTERNAL_PIXEL_IS_FLOAT
+        OWF_ASSERT(a <= OWF_ALPHA_MAX_VALUE && a >= OWF_ALPHA_MIN_VALUE);
+#endif
 
-        if (a > OWF_ALPHA_MIN_VALUE)
-        {
-            OWFsubpixel r = pixelPtr->color.red   * OWF_RED_MAX_VALUE / a;
+        if (a > OWF_ALPHA_MIN_VALUE) {
+            OWFsubpixel r = pixelPtr->color.red * OWF_RED_MAX_VALUE / a;
             OWFsubpixel g = pixelPtr->color.green * OWF_GREEN_MAX_VALUE / a;
-            OWFsubpixel b = pixelPtr->color.blue  * OWF_BLUE_MAX_VALUE / a;
+            OWFsubpixel b = pixelPtr->color.blue * OWF_BLUE_MAX_VALUE / a;
 
-            pixelPtr->color.red   = r;
+            pixelPtr->color.red = r;
             pixelPtr->color.green = g;
-            pixelPtr->color.blue  = b;
+            pixelPtr->color.blue = b;
 
             --count;
             pixelPtr++;
@@ -1204,29 +1063,21 @@ OWF_Image_UnpremultiplyAlpha(OWF_IMAGE* image)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Rotate(OWF_IMAGE* dst,
-                 OWF_IMAGE* src,
-                 OWF_ROTATION rotation)
-{
-    OWFint                  ox = 0, oy = 0,
-                            w = 0, h = 0,
-                            x = 0, y = 0;
-    OWFint                  xx = 0, xy = 0,
-                            yx = 0, yy = 0;
+OWF_API_CALL void OWF_Image_Rotate(OWF_IMAGE *dst, OWF_IMAGE *src,
+                                   OWF_ROTATION rotation) {
+    OWFint ox = 0, oy = 0, w = 0, h = 0, x = 0, y = 0;
+    OWFint xx = 0, xy = 0, yx = 0, yy = 0;
 
     OWF_ASSERT(src && src->data);
     OWF_ASSERT(dst && dst->data);
-    OWF_ASSERT(src->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
-    OWF_ASSERT(dst->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(src->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(dst->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
     w = src->width;
     h = src->height;
 
-    switch (rotation)
-    {
-        case OWF_ROTATION_0:
-        {
+    switch (rotation) {
+        case OWF_ROTATION_0: {
             /*
              * origin: (0, 0)
              * x-axis: (1, 0)
@@ -1240,8 +1091,7 @@ OWF_Image_Rotate(OWF_IMAGE* dst,
             yy = 1;
             break;
         }
-        case OWF_ROTATION_90:
-        {
+        case OWF_ROTATION_90: {
             /*
              * origin: (height-1, 0)
              * x-axis: (0, 1)
@@ -1255,8 +1105,7 @@ OWF_Image_Rotate(OWF_IMAGE* dst,
             yy = 0;
             break;
         }
-        case OWF_ROTATION_180:
-        {
+        case OWF_ROTATION_180: {
             /*
              * origin: (width-1, height-1)
              * x-axis: (-1, 0)
@@ -1270,8 +1119,7 @@ OWF_Image_Rotate(OWF_IMAGE* dst,
             yy = -1;
             break;
         }
-        case OWF_ROTATION_270:
-        {
+        case OWF_ROTATION_270: {
             /*
              * origin: (0, height-1)
              * x-axis: (0, -1)
@@ -1284,77 +1132,58 @@ OWF_Image_Rotate(OWF_IMAGE* dst,
             yx = 1;
             yy = 0;
             break;
-
         }
     }
 
-    for (y = 0; y < h; y++)
-    {
-        for (x = 0; x < w; x++)
-        {
-        /*
-         * O = [ox oy]' X = [xx xy]' Y = [yx yy]'
-         *
-         * p_dst(x_src,y_src) = O + x_src*X + y_src*Y
-         */
-        OWF_Image_SetPixel(dst,
-                           ox + x * xx + y * yx,
-                           oy + x * xy + y * yy,
-                           OWF_Image_GetPixelPtr(src, x, y));
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++) {
+            /*
+             * O = [ox oy]' X = [xx xy]' Y = [yx yy]'
+             *
+             * p_dst(x_src,y_src) = O + x_src*X + y_src*Y
+             */
+            OWF_Image_SetPixel(dst, ox + x * xx + y * yx, oy + x * xy + y * yy,
+                               OWF_Image_GetPixelPtr(src, x, y));
         }
     }
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Flip(OWF_IMAGE* image,
-               OWF_FLIP_DIRECTION dir)
-{
-    OWFint                  x, y;
+OWF_API_CALL void OWF_Image_Flip(OWF_IMAGE *image, OWF_FLIP_DIRECTION dir) {
+    OWFint x, y;
 
-    if (!image)
-    {
+    if (!image) {
         return;
     }
-    OWF_ASSERT(image->format.pixelFormat==OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
 
-    if (dir & OWF_FLIP_VERTICALLY)
-    {
-        OWFint h = image->height/2;
+    if (dir & OWF_FLIP_VERTICALLY) {
+        OWFint h = image->height / 2;
 
-        for (y = 0; y < h; y++)
-        {
-            for (x = 0; x < image->width; x++)
-            {
-                OWFpixel        pix;
+        for (y = 0; y < h; y++) {
+            for (x = 0; x < image->width; x++) {
+                OWFpixel pix;
 
                 OWF_Image_GetPixel(image, x, y, &pix);
-                OWF_Image_SetPixel(image, x, y,
-                                   OWF_Image_GetPixelPtr(image,
-                                                         x,
-                                                         image->height - 1 - y
-                                                         ));
+                OWF_Image_SetPixel(
+                    image, x, y,
+                    OWF_Image_GetPixelPtr(image, x, image->height - 1 - y));
                 OWF_Image_SetPixel(image, x, image->height - 1 - y, &pix);
             }
         }
     }
 
-    if (dir & OWF_FLIP_HORIZONTALLY)
-    {
-        OWFint w = image->width/2;
+    if (dir & OWF_FLIP_HORIZONTALLY) {
+        OWFint w = image->width / 2;
 
-        for (y = 0; y < image->height; y++)
-        {
-            for (x = 0; x < w; x++)
-            {
-                OWFpixel        pix;
+        for (y = 0; y < image->height; y++) {
+            for (x = 0; x < w; x++) {
+                OWFpixel pix;
 
                 OWF_Image_GetPixel(image, x, y, &pix);
-                OWF_Image_SetPixel(image, x, y,
-                                   OWF_Image_GetPixelPtr(image,
-                                                         image->width - 1 - x,
-                                                         y
-                                                         ));
+                OWF_Image_SetPixel(
+                    image, x, y,
+                    OWF_Image_GetPixelPtr(image, image->width - 1 - x, y));
                 OWF_Image_SetPixel(image, image->width - 1 - x, y, &pix);
             }
         }
@@ -1362,26 +1191,24 @@ OWF_Image_Flip(OWF_IMAGE* image,
 }
 
 /*----------------------------------------------------------------------------*/
-#define BLENDER_INNER_LOOP_BEGIN \
-    OWFint rowCount = drect.height; \
-    while (rowCount > 0) { \
+#define BLENDER_INNER_LOOP_BEGIN       \
+    OWFint rowCount = drect.height;    \
+    while (rowCount > 0) {             \
         OWFint colCount = drect.width; \
-        while (colCount > 0) { \
-            if (!(blend->tsColor && COLOR_MATCH(SC, TSC))) \
-            { \
-
-#define BLENDER_INNER_LOOP_END \
-                DA = blend->destinationFullyOpaque ? OWF_FULLY_OPAQUE : DA; \
-            } /* end tsColor check */ \
-            srcPtr ++; \
-            dstPtr ++; \
-            maskPtr++; \
-            --colCount; \
-        } \
-        srcPtr += srcLineDelta; \
-        dstPtr += dstLineDelta; \
-        maskPtr += maskLineDelta; \
-        --rowCount; \
+        while (colCount > 0) {         \
+            if (!(blend->tsColor && COLOR_MATCH(SC, TSC))) {
+#define BLENDER_INNER_LOOP_END                                  \
+    DA = blend->destinationFullyOpaque ? OWF_FULLY_OPAQUE : DA; \
+    } /* end tsColor check */                                   \
+    srcPtr++;                                                   \
+    dstPtr++;                                                   \
+    maskPtr++;                                                  \
+    --colCount;                                                 \
+    }                                                           \
+    srcPtr += srcLineDelta;                                     \
+    dstPtr += dstLineDelta;                                     \
+    maskPtr += maskLineDelta;                                   \
+    --rowCount;                                                 \
     }
 
 #define TSC blend->tsColor->color
@@ -1390,7 +1217,8 @@ OWF_Image_Flip(OWF_IMAGE* image,
 /* Note: actually would be better to compare integer values
  * for TSC match -> eliminate float arithmetic pitfalls
  */
-#define COLOR_MATCH(x, y) (x.red==y.red && x.green==y.green && x.blue==y.blue)
+#define COLOR_MATCH(x, y) \
+    (x.red == y.red && x.green == y.green && x.blue == y.blue)
 
 #define SA srcPtr->color.alpha
 #define SR srcPtr->color.red
@@ -1405,102 +1233,89 @@ OWF_Image_Flip(OWF_IMAGE* image,
 #define MA *maskPtr
 #define GA blend->globalAlpha
 
-OWF_API_CALL void
-OWF_Image_Blend(OWF_BLEND_INFO* blend,
-                OWF_TRANSPARENCY transparency)
-{
-    OWF_IMAGE*              dst;
-    OWF_IMAGE*              src;
-    OWF_IMAGE*              mask;
-    OWF_RECTANGLE*          srcRect;
-    OWF_RECTANGLE*          dstRect;
-    OWF_RECTANGLE           bounds, srect, drect, rect;
-    OWFint                  srcLineDelta, dstLineDelta, maskLineDelta;
-    OWFpixel*               srcPtr;
-    OWFpixel*               dstPtr;
-    OWFsubpixel*            maskPtr;
+OWF_API_CALL void OWF_Image_Blend(OWF_BLEND_INFO *blend,
+                                  OWF_TRANSPARENCY transparency) {
+    OWF_IMAGE *dst;
+    OWF_IMAGE *src;
+    OWF_IMAGE *mask;
+    OWF_RECTANGLE *srcRect;
+    OWF_RECTANGLE *dstRect;
+    OWF_RECTANGLE bounds, srect, drect, rect;
+    OWFint srcLineDelta, dstLineDelta, maskLineDelta;
+    OWFpixel *srcPtr;
+    OWFpixel *dstPtr;
+    OWFsubpixel *maskPtr;
 
     /* preparation */
     OWF_ASSERT(blend);
     DPRINT(("OWF_Image_Blend: transparency = %d", transparency));
     /* Mask must be set if mask-transparency is used */
     OWF_ASSERT(((transparency & OWF_TRANSPARENCY_MASK) && blend->mask) ||
-           !(transparency & OWF_TRANSPARENCY_MASK));
+               !(transparency & OWF_TRANSPARENCY_MASK));
 
-    OWF_ASSERT(blend->source.image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
-    OWF_ASSERT(blend->destination.image->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
-    if (blend->mask)
-    {
+    OWF_ASSERT(blend->source.image->format.pixelFormat ==
+               OWF_IMAGE_ARGB_INTERNAL);
+    OWF_ASSERT(blend->destination.image->format.pixelFormat ==
+               OWF_IMAGE_ARGB_INTERNAL);
+    if (blend->mask) {
         OWF_ASSERT(blend->mask->format.pixelFormat == OWF_IMAGE_L32 ||
-        blend->mask->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
+                   blend->mask->format.pixelFormat == OWF_IMAGE_ARGB_INTERNAL);
     }
-    
-    dst     = blend->destination.image;
-    src     = blend->source.image;
-    mask    = blend->mask;
+
+    dst = blend->destination.image;
+    src = blend->source.image;
+    mask = blend->mask;
     dstRect = blend->destination.rectangle;
     srcRect = blend->source.rectangle;
 
     /* this is actually asserted above */
     if (OWF_TRANSPARENCY_MASK == (transparency & OWF_TRANSPARENCY_MASK) &&
-        NULL == mask)
-    {
+        NULL == mask) {
         return;
     }
 
     OWF_Rect_Set(&bounds, 0, 0, dst->width, dst->height);
     /* NOTE: src and dst rects should be of same size!!! */
-    OWF_Rect_Set(&rect,
-                 dstRect->x, dstRect->y,
-                 dstRect->width, dstRect->height);
-    OWF_Rect_Set(&srect,
-                 srcRect->x, srcRect->y,
-                 srcRect->width, srcRect->height);
+    OWF_Rect_Set(&rect, dstRect->x, dstRect->y, dstRect->width,
+                 dstRect->height);
+    OWF_Rect_Set(&srect, srcRect->x, srcRect->y, srcRect->width,
+                 srcRect->height);
 
     /* clip destination rectangle against bounds */
-    if (!OWF_Rect_Clip(&drect, &rect, &bounds))
-    {
+    if (!OWF_Rect_Clip(&drect, &rect, &bounds)) {
         return;
     }
 
     /* adjust source rectangle if needed */
-    if (drect.x > rect.x)
-    {
+    if (drect.x > rect.x) {
         OWFint dx = drect.x - rect.x;
         srect.x += dx;
         srect.width -= dx;
     }
 
-    if (drect.y > rect.y)
-    {
+    if (drect.y > rect.y) {
         OWFint dy = drect.y - rect.y;
         srect.y += dy;
         srect.height -= dy;
     }
 
-    if (drect.width < srect.width)
-    {
+    if (drect.width < srect.width) {
         srect.width = drect.width;
     }
 
-    if (drect.height < srect.height)
-    {
+    if (drect.height < srect.height) {
         srect.height = drect.height;
     }
 
+    srcPtr = (OWFpixel *)src->data;
+    srcPtr += srect.y * src->width + srect.x;
+    dstPtr = (OWFpixel *)dst->data;
+    dstPtr += drect.y * dst->width + drect.x;
 
-    srcPtr  = (OWFpixel*) src->data;
-    srcPtr  += srect.y * src->width + srect.x;
-    dstPtr  = (OWFpixel*) dst->data;
-    dstPtr  += drect.y * dst->width + drect.x;
-
-    if (mask)
-    {
-        maskPtr = (OWFsubpixel*) mask->data + srect.y * mask->width + srect.x;
+    if (mask) {
+        maskPtr = (OWFsubpixel *)mask->data + srect.y * mask->width + srect.x;
         maskLineDelta = mask->width - drect.width;
-    }
-    else
-    {
+    } else {
         maskPtr = 0;
         maskLineDelta = 0;
     }
@@ -1508,121 +1323,139 @@ OWF_Image_Blend(OWF_BLEND_INFO* blend,
     dstLineDelta = dst->width - drect.width;
 
     /* inner loops */
-    switch (transparency)
-    {
-        case OWF_TRANSPARENCY_NONE:
-        {
+    switch (transparency) {
+        case OWF_TRANSPARENCY_NONE: {
             /*
             rgb     = src.rgb
             alpha    = 1
             */
             BLENDER_INNER_LOOP_BEGIN;
-                DR = SR;
-                DG = SG;
-                DB = SB;
-                DA = OWF_FULLY_OPAQUE;
+            DR = SR;
+            DG = SG;
+            DB = SB;
+            DA = OWF_FULLY_OPAQUE;
             BLENDER_INNER_LOOP_END;
             break;
         }
 
-        case OWF_TRANSPARENCY_GLOBAL_ALPHA:
-        {
+        case OWF_TRANSPARENCY_GLOBAL_ALPHA: {
             /*
             rgb        = src.rgb * elem.alpha + dst.rgb * (1 - elem.alpha)
             alpha   = elem.alpha + dst.alpha * (1 - elem.alpha)
             */
             BLENDER_INNER_LOOP_BEGIN;
-                DR = (SR * GA + DR * (OWF_FULLY_OPAQUE - GA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DG = (SG * GA + DG * (OWF_FULLY_OPAQUE - GA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DB = (SB * GA + DB * (OWF_FULLY_OPAQUE - GA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DA = GA + (DA * (OWF_FULLY_OPAQUE - GA) + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
+            DR = (SR * GA + DR * (OWF_FULLY_OPAQUE - GA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DG = (SG * GA + DG * (OWF_FULLY_OPAQUE - GA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DB = (SB * GA + DB * (OWF_FULLY_OPAQUE - GA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DA =
+                GA + (DA * (OWF_FULLY_OPAQUE - GA) + OWF_BLEND_ROUNDING_VALUE) /
+                         OWF_ALPHA_MAX_VALUE;
             BLENDER_INNER_LOOP_END;
             break;
         }
 
-        case OWF_TRANSPARENCY_SOURCE_ALPHA:
-        {
+        case OWF_TRANSPARENCY_SOURCE_ALPHA: {
             /*
             rgb     = src.rgb + dst.rgb * (1 - src.alpha)
             alpha    = src.alpha + dst.alpha * (1 - src.alpha)
             */
             BLENDER_INNER_LOOP_BEGIN;
-                DR = SR + (DR * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
-                DG = SG + (DG * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
-                DB = SB + (DB * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
-                DA = SA + (DA * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
+            DR =
+                SR + (DR * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) /
+                         OWF_ALPHA_MAX_VALUE;
+            DG =
+                SG + (DG * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) /
+                         OWF_ALPHA_MAX_VALUE;
+            DB =
+                SB + (DB * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) /
+                         OWF_ALPHA_MAX_VALUE;
+            DA =
+                SA + (DA * (OWF_FULLY_OPAQUE - SA) + OWF_BLEND_ROUNDING_VALUE) /
+                         OWF_ALPHA_MAX_VALUE;
             BLENDER_INNER_LOOP_END;
             break;
         }
 
-        case OWF_TRANSPARENCY_MASK:
-        {
+        case OWF_TRANSPARENCY_MASK: {
             /*
             rgb     = src.rgb * mask.alpha + dst.rgb * (1 - mask.alpha)
             alpha    = mask.alpha + dst.alpha * (1 - mask.alpha)
             */
             BLENDER_INNER_LOOP_BEGIN;
-                DR = (SR * MA + DR * (OWF_FULLY_OPAQUE - MA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DG = (SG * MA + DG * (OWF_FULLY_OPAQUE - MA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DB = (SB * MA + DB * (OWF_FULLY_OPAQUE - MA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DA = MA + (DA * (OWF_FULLY_OPAQUE - MA) + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
+            DR = (SR * MA + DR * (OWF_FULLY_OPAQUE - MA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DG = (SG * MA + DG * (OWF_FULLY_OPAQUE - MA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DB = (SB * MA + DB * (OWF_FULLY_OPAQUE - MA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DA =
+                MA + (DA * (OWF_FULLY_OPAQUE - MA) + OWF_BLEND_ROUNDING_VALUE) /
+                         OWF_ALPHA_MAX_VALUE;
             BLENDER_INNER_LOOP_END;
             break;
         }
 
-        case OWF_TRANSPARENCY_GLOBAL_ALPHA | OWF_TRANSPARENCY_SOURCE_ALPHA:
-        {
+        case OWF_TRANSPARENCY_GLOBAL_ALPHA | OWF_TRANSPARENCY_SOURCE_ALPHA: {
             /*
             rgb = src.rgb * elem.a + dst.rgb * (1 - src.a * elem.a)
             a = src.a * elem.a + dst.a * (1 - src.a * elem.a)
             */
-            OWFsubpixel			SAEA;
+            OWFsubpixel SAEA;
 
             BLENDER_INNER_LOOP_BEGIN;
-                SAEA = (SA * GA + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
-                DR = (SR * GA + DR * (OWF_FULLY_OPAQUE - SAEA) + OWF_BLEND_ROUNDING_VALUE) /
+            SAEA = (SA * GA + OWF_BLEND_ROUNDING_VALUE) / OWF_ALPHA_MAX_VALUE;
+            DR = (SR * GA + DR * (OWF_FULLY_OPAQUE - SAEA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DG = (SG * GA + DG * (OWF_FULLY_OPAQUE - SAEA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DB = (SB * GA + DB * (OWF_FULLY_OPAQUE - SAEA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DA = SAEA +
+                 (DA * (OWF_FULLY_OPAQUE - SAEA) + OWF_BLEND_ROUNDING_VALUE) /
                      OWF_ALPHA_MAX_VALUE;
-                DG = (SG * GA + DG * (OWF_FULLY_OPAQUE - SAEA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DB = (SB * GA + DB * (OWF_FULLY_OPAQUE - SAEA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DA = SAEA + (DA * (OWF_FULLY_OPAQUE - SAEA) + OWF_BLEND_ROUNDING_VALUE) /
-                	     OWF_ALPHA_MAX_VALUE;
             BLENDER_INNER_LOOP_END;
             break;
         }
 
-        case OWF_TRANSPARENCY_GLOBAL_ALPHA | OWF_TRANSPARENCY_MASK:
-        {
+        case OWF_TRANSPARENCY_GLOBAL_ALPHA | OWF_TRANSPARENCY_MASK: {
             /*
             rgb    = src.rgb * mask.a * elem.a + dst.rgb * (1 - mask.a * elem.a)
             a     = mask.a * elem.a + dest.a * (1 - mask.a * elem.a)
             */
-            OWFsubpixel				MAEA;
+            OWFsubpixel MAEA;
 
             BLENDER_INNER_LOOP_BEGIN;
-                MAEA = MA * GA / OWF_ALPHA_MAX_VALUE;
-                DR = (SR * MAEA + DR * (OWF_FULLY_OPAQUE - MAEA) + OWF_BLEND_ROUNDING_VALUE) /
+            MAEA = MA * GA / OWF_ALPHA_MAX_VALUE;
+            DR = (SR * MAEA + DR * (OWF_FULLY_OPAQUE - MAEA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DG = (SG * MAEA + DG * (OWF_FULLY_OPAQUE - MAEA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DB = (SB * MAEA + DB * (OWF_FULLY_OPAQUE - MAEA) +
+                  OWF_BLEND_ROUNDING_VALUE) /
+                 OWF_ALPHA_MAX_VALUE;
+            DA = MAEA +
+                 (DA * (OWF_FULLY_OPAQUE - MAEA) + OWF_BLEND_ROUNDING_VALUE) /
                      OWF_ALPHA_MAX_VALUE;
-                DG = (SG * MAEA + DG * (OWF_FULLY_OPAQUE - MAEA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DB = (SB * MAEA + DB * (OWF_FULLY_OPAQUE - MAEA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                DA = MAEA + (DA * (OWF_FULLY_OPAQUE - MAEA) + OWF_BLEND_ROUNDING_VALUE) /
-                     OWF_ALPHA_MAX_VALUE;
-                OWF_ASSERT(GA >= OWF_ALPHA_MIN_VALUE && GA <= OWF_ALPHA_MAX_VALUE);
+            OWF_ASSERT(GA >= OWF_ALPHA_MIN_VALUE && GA <= OWF_ALPHA_MAX_VALUE);
             BLENDER_INNER_LOOP_END;
             break;
         }
 
-        default:
-        {
+        default: {
             DPRINT(("OWF_Image_Blend: whooops. invalid blending mode\n"));
             abort();
             break;
@@ -1631,21 +1464,19 @@ OWF_Image_Blend(OWF_BLEND_INFO* blend,
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void*
-OWF_Image_AllocData(OWFint width, OWFint height, OWF_PIXEL_FORMAT pixelFormat)
-{
-    OWF_IMAGE_FORMAT        imgf;
-    OWFint                  stride;
+OWF_API_CALL void *OWF_Image_AllocData(OWFint width, OWFint height,
+                                       OWF_PIXEL_FORMAT pixelFormat) {
+    OWF_IMAGE_FORMAT imgf;
+    OWFint stride;
 
     /* kludge. GetStride need pixelFormat. */
     imgf.pixelFormat = pixelFormat;
     imgf.rowPadding = OWF_Image_GetFormatPadding(pixelFormat);
     stride = OWF_Image_GetStride(width, &imgf, 0);
 
-    OWF_ASSERT (width > 0 && height > 0);
+    OWF_ASSERT(width > 0 && height > 0);
 
-    if (stride == 0)
-    {
+    if (stride == 0) {
         return NULL;
     }
 
@@ -1653,59 +1484,46 @@ OWF_Image_AllocData(OWFint width, OWFint height, OWF_PIXEL_FORMAT pixelFormat)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_FreeData(void** data)
-{
-    if (*data)
-    {
+OWF_API_CALL void OWF_Image_FreeData(void **data) {
+    if (*data) {
         xfree(*data);
     }
     *data = NULL;
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFint
-OWF_Image_GetFormatPixelSize(OWF_PIXEL_FORMAT format)
-{
-    switch (format)
-    {
-        case OWF_IMAGE_ARGB_INTERNAL:
-        {
+OWF_API_CALL OWFint OWF_Image_GetFormatPixelSize(OWF_PIXEL_FORMAT format) {
+    switch (format) {
+        case OWF_IMAGE_ARGB_INTERNAL: {
             return sizeof(OWFpixel);
         }
 
         case OWF_IMAGE_ARGB8888:
         case OWF_IMAGE_XRGB8888:
-        case OWF_IMAGE_L32:
-        {
+        case OWF_IMAGE_L32: {
             return 4;
         }
 
-        case OWF_IMAGE_RGB888:
-        {
+        case OWF_IMAGE_RGB888: {
             return 3;
         }
 
         case OWF_IMAGE_RGB565:
-        case OWF_IMAGE_L16:
-        {
+        case OWF_IMAGE_L16: {
             return 2;
         }
 
-        case OWF_IMAGE_L8:
-        {
+        case OWF_IMAGE_L8: {
             return 1;
         }
 
-        case OWF_IMAGE_L1:
-        {
+        case OWF_IMAGE_L1: {
             /* Use negative numbers for divisor, e.g., -8 = 1/8. */
             /* L1 is 1 bit alpha, LSB->MSB, each row padded to 32-bit
              * boundary. */
             return -8;
         }
-        default:
-        {
+        default: {
             return 0;
         }
     }
@@ -1714,57 +1532,48 @@ OWF_Image_GetFormatPixelSize(OWF_PIXEL_FORMAT format)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFint
-OWF_Image_GetFormatPadding(OWF_PIXEL_FORMAT format)
-{
-    OWFint                  padding = 1;
+OWF_API_CALL OWFint OWF_Image_GetFormatPadding(OWF_PIXEL_FORMAT format) {
+    OWFint padding = 1;
 
-    switch (format)
-    {
-        case OWF_IMAGE_ARGB_INTERNAL:
-        {
+    switch (format) {
+        case OWF_IMAGE_ARGB_INTERNAL: {
             padding = sizeof(OWFpixel);
             break;
         }
 
         case OWF_IMAGE_ARGB8888:
         case OWF_IMAGE_XRGB8888:
-        case OWF_IMAGE_L32:
-        {
+        case OWF_IMAGE_L32: {
             padding = 4;
             break;
         }
 
-        /*
-        case OWF_IMAGE_RGB888:
-        {
-            return 3;
-        }
-        */
+            /*
+            case OWF_IMAGE_RGB888:
+            {
+                return 3;
+            }
+            */
 
         case OWF_IMAGE_RGB565:
-        case OWF_IMAGE_L16:
-        {
+        case OWF_IMAGE_L16: {
             padding = 2;
             break;
         }
 
-        case OWF_IMAGE_L8:
-        {
+        case OWF_IMAGE_L8: {
             padding = 1;
             break;
         }
 
-        case OWF_IMAGE_L1:
-        {
+        case OWF_IMAGE_L1: {
             /* Use negative numbers for divisor, e.g., -8 = 1/8. */
             /* L1 is 1 bit alpha, LSB->MSB, each row padded to 32-bit
              * boundary. */
             padding = 4;
             break;
         }
-        default:
-        {
+        default: {
             break;
         }
     }
@@ -1775,9 +1584,7 @@ OWF_Image_GetFormatPadding(OWF_PIXEL_FORMAT format)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SwapWidthAndHeight(OWF_IMAGE* image)
-{
+OWF_API_CALL void OWF_Image_SwapWidthAndHeight(OWF_IMAGE *image) {
     /* swap w & h */
     image->width ^= image->height;
     image->height ^= image->width;
@@ -1787,39 +1594,34 @@ OWF_Image_SwapWidthAndHeight(OWF_IMAGE* image)
 }
 
 /*----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_ConvertMask(OWF_IMAGE* output, OWF_IMAGE* input)
-{
-    OWFboolean              result = OWF_TRUE;
-    void*                   srcLinePtr;
-    OWFsubpixel*            dstLinePtr;
-    OWFint                  countY;
+OWF_API_CALL OWFboolean OWF_Image_ConvertMask(OWF_IMAGE *output,
+                                              OWF_IMAGE *input) {
+    OWFboolean result = OWF_TRUE;
+    void *srcLinePtr;
+    OWFsubpixel *dstLinePtr;
+    OWFint countY;
 
     DPRINT(("OWF_Image_ConvertMask:"));
     DPRINT(("  Converting mask from stream format to internal 8-bit"));
 
     OWF_ASSERT(input);
     OWF_ASSERT(output);
-    
-    srcLinePtr = input->data;
-    dstLinePtr = (OWFsubpixel*) output->data;    
 
-    for (countY = input->height; countY; countY--)
-    {
-        OWFsubpixel* dstData = dstLinePtr;    
-    
-        switch (input->format.pixelFormat)
-        {
-            case OWF_IMAGE_L1:
-            {
-                OWFint          countX;
-                OWFuint8*       srcData = (OWFuint8*) srcLinePtr;
-    
-                DPRINT(("1-bit alpha, width = %d, height = %d",
-                       input->width, input->height));
-                
-                for (countX = 0; countX < input->width; countX++)
-                {
+    srcLinePtr = input->data;
+    dstLinePtr = (OWFsubpixel *)output->data;
+
+    for (countY = input->height; countY; countY--) {
+        OWFsubpixel *dstData = dstLinePtr;
+
+        switch (input->format.pixelFormat) {
+            case OWF_IMAGE_L1: {
+                OWFint countX;
+                OWFuint8 *srcData = (OWFuint8 *)srcLinePtr;
+
+                DPRINT(("1-bit alpha, width = %d, height = %d", input->width,
+                        input->height));
+
+                for (countX = 0; countX < input->width; countX++) {
                     /*
                      * alpha pixel ordering is LSB -> MSB
                      *
@@ -1827,66 +1629,58 @@ OWF_Image_ConvertMask(OWF_IMAGE* output, OWF_IMAGE* input)
                      * bit#  | 7 6 5 4 3 2 1 0 | 7 6 5 4 3 2 1 0 |
                      * pix#  | 7 6 5 4 3 2 1 0 | f e d c b a 9 8 | ...
                      */
-                    if (srcData[countX >> 3] & (1 << (countX & 7)))
-                    {
+                    if (srcData[countX >> 3] & (1 << (countX & 7))) {
                         dstData[countX] = OWF_FULLY_OPAQUE;
-                    }
-                    else
-                    {
+                    } else {
                         dstData[countX] = OWF_FULLY_TRANSPARENT;
                     }
-                }           
-                break;
-            }
-            case OWF_IMAGE_L8:
-            {
-                OWFint          countX;
-                OWFuint8*       srcData = (OWFuint8*) srcLinePtr;
-    
-                DPRINT(("8-bit alpha, width = %d, height = %d",
-                       input->width, input->height));
-                
-                for (countX = 0; countX < input->width; countX++)
-                {
-                    dstData[countX] = srcData[countX] * OWF_FULLY_OPAQUE /
-                                 (OWFfloat) OWF_BYTE_MAX_VALUE;                
                 }
                 break;
             }
-            case OWF_IMAGE_ARGB8888:
-            {
+            case OWF_IMAGE_L8: {
+                OWFint countX;
+                OWFuint8 *srcData = (OWFuint8 *)srcLinePtr;
+
+                DPRINT(("8-bit alpha, width = %d, height = %d", input->width,
+                        input->height));
+
+                for (countX = 0; countX < input->width; countX++) {
+                    dstData[countX] = srcData[countX] * OWF_FULLY_OPAQUE /
+                                      (OWFfloat)OWF_BYTE_MAX_VALUE;
+                }
+                break;
+            }
+            case OWF_IMAGE_ARGB8888: {
                 /* ARGB image - take the alpha channel and discard
                  * everything else */
-                OWFint          countX;
-                OWFuint32*      srcData = (OWFuint32*) srcLinePtr;
-    
-                DPRINT(("32-bit ARGB, width = %d, height = %d",
-                       input->width, input->height));
-                
-                for (countX = 0; countX < input->width; countX++)
-                {
-                    dstData[countX] = (srcData[countX] >> 24) * OWF_FULLY_OPAQUE /
-                                 (OWFfloat) OWF_BYTE_MAX_VALUE;          
+                OWFint countX;
+                OWFuint32 *srcData = (OWFuint32 *)srcLinePtr;
+
+                DPRINT(("32-bit ARGB, width = %d, height = %d", input->width,
+                        input->height));
+
+                for (countX = 0; countX < input->width; countX++) {
+                    dstData[countX] = (srcData[countX] >> 24) *
+                                      OWF_FULLY_OPAQUE /
+                                      (OWFfloat)OWF_BYTE_MAX_VALUE;
                 }
                 break;
             }
-            default:
-            {
+            default: {
                 DPRINT(("Unsupported alpha format, ignoring mask"));
-    
+
                 result = OWF_FALSE;
                 break;
             }
         }
-        
-        dstLinePtr+=output->width;
-        /* Presumes that the stride is always whole bytes - eg. a 2x2-pixel mono 
+
+        dstLinePtr += output->width;
+        /* Presumes that the stride is always whole bytes - eg. a 2x2-pixel mono
          * image takes at least 2 bytes */
-        srcLinePtr=(OWFuint8*)srcLinePtr+input->stride;        
+        srcLinePtr = (OWFuint8 *)srcLinePtr + input->stride;
     }
     return result;
 }
-
 
 #ifdef __cplusplus
 }

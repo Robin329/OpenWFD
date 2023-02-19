@@ -36,37 +36,32 @@
 #include "wfc_logo.h"
 
 #define FAIL_IF(c, m) \
-    if (c) { \
-        printf(m); \
+    if (c) {          \
+        printf(m);    \
         goto CLEANUP; \
     }
-#define CHECK_ERROR(c, m) \
+#define CHECK_ERROR(c, m)   \
     err = wfcGetError(dev); \
-    if (err != c) { \
-        printf(m); \
-        goto CLEANUP; \
+    if (err != c) {         \
+        printf(m);          \
+        goto CLEANUP;       \
     }
 
 /*!
  * Creates a native image stream.
  * This function is WFC implementation specific.
  */
-WFCNativeStreamType createNativeStream(WFCint width,
-                                       WFCint height,
-                                       WFCint numBuffers)
-{
+WFCNativeStreamType createNativeStream(WFCint width, WFCint height,
+                                       WFCint numBuffers) {
     WFCNativeStreamType stream;
     OWF_IMAGE_FORMAT imgf;
 
-    imgf.pixelFormat   = OWF_IMAGE_ARGB8888;
-    imgf.linear        = OWF_FALSE;
+    imgf.pixelFormat = OWF_IMAGE_ARGB8888;
+    imgf.linear = OWF_FALSE;
     imgf.premultiplied = OWF_TRUE;
-    imgf.rowPadding    = OWF_Image_GetFormatPadding(imgf.pixelFormat);
+    imgf.rowPadding = OWF_Image_GetFormatPadding(imgf.pixelFormat);
 
-    stream = owfNativeStreamCreateImageStream(width,
-                                              height,
-                                              &imgf,
-                                              numBuffers);
+    stream = owfNativeStreamCreateImageStream(width, height, &imgf, numBuffers);
 
     return stream;
 }
@@ -75,8 +70,8 @@ WFCNativeStreamType createNativeStream(WFCint width,
  * Write raw image data to native stream.
  * Note that this function is WFC implementation specific.
  */
-void writeImageToStream(WFCNativeStreamType stream, void* data, WFCint numPixels)
-{
+void writeImageToStream(WFCNativeStreamType stream, void* data,
+                        WFCint numPixels) {
     OWFNativeStreamBuffer buffer;
     void* dataPtr;
 
@@ -85,21 +80,19 @@ void writeImageToStream(WFCNativeStreamType stream, void* data, WFCint numPixels
 
     memcpy(dataPtr, data, numPixels * 4);
 
-    owfNativeStreamReleaseWriteBuffer(stream, buffer, EGL_DEFAULT_DISPLAY, EGL_NO_SYNC_KHR);
+    owfNativeStreamReleaseWriteBuffer(stream, buffer, EGL_DEFAULT_DISPLAY,
+                                      EGL_NO_SYNC_KHR);
 }
 
 /*!
  * Destroys native stream.
  * Note that this function is WFC implementation specific.
  */
-void destroyNativeStream(WFCNativeStreamType stream)
-{
+void destroyNativeStream(WFCNativeStreamType stream) {
     owfNativeStreamDestroy(stream);
 }
 
-
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv) {
     WFCint numDevs = 0;
     WFCint* devIds = NULL;
     WFCint size = 0;
@@ -111,8 +104,8 @@ int main(int argc, char **argv)
     WFCNativeStreamType sourceStream = WFC_INVALID_HANDLE;
     WFCElement element1 = WFC_INVALID_HANDLE;
     WFCElement element2 = WFC_INVALID_HANDLE;
-    WFCint rect[4] = { 0, 0, 0, 0 };
-    WFCfloat bgColor[4] = { 0.7f, 0.7f, 1.0f, 1.0f };
+    WFCint rect[4] = {0, 0, 0, 0};
+    WFCfloat bgColor[4] = {0.7f, 0.7f, 1.0f, 1.0f};
     WFCint i = 0;
     WFCint ctxHeight = 0;
     WFCint ctxWidth = 0;
@@ -128,19 +121,18 @@ int main(int argc, char **argv)
         size = wfcEnumerateDevices(devIds, numDevs, NULL);
 
         /* select correct device */
-        for (i=0; i<numDevs; ++i)
-        {
+        for (i = 0; i < numDevs; ++i) {
             dev = wfcCreateDevice(devIds[i], NULL);
             attribValue = wfcGetDeviceAttribi(dev, WFC_DEVICE_CLASS);
-            if (attribValue == WFC_DEVICE_CLASS_FULLY_CAPABLE)
-            {
+            if (attribValue == WFC_DEVICE_CLASS_FULLY_CAPABLE) {
                 break;
             }
             err = wfcDestroyDevice(dev);
         }
         free(devIds);
 
-        FAIL_IF(dev == WFC_INVALID_HANDLE, "No on-screen capable device found.");
+        FAIL_IF(dev == WFC_INVALID_HANDLE,
+                "No on-screen capable device found.");
     }
 
     /* Read a device attribute */
@@ -149,7 +141,8 @@ int main(int argc, char **argv)
     printf("Device id [%d]\r\n", attribValue);
 
     ctx = wfcCreateOnScreenContext(dev, WFC_DEFAULT_SCREEN_NUMBER, NULL);
-    CHECK_ERROR(WFC_ERROR_NONE, "Failed to get create context for default screen.");
+    CHECK_ERROR(WFC_ERROR_NONE,
+                "Failed to get create context for default screen.");
 
     /* set a context attribute */
     wfcSetContextAttribfv(dev, ctx, WFC_CONTEXT_BG_COLOR, 4, bgColor);
@@ -160,7 +153,8 @@ int main(int argc, char **argv)
     source = wfcCreateSourceFromStream(dev, ctx, sourceStream, NULL);
     CHECK_ERROR(WFC_ERROR_NONE, "Failed to create source stream.");
 
-    writeImageToStream(sourceStream, &wfc_logo_data, wfc_logo_width * wfc_logo_height);
+    writeImageToStream(sourceStream, &wfc_logo_data,
+                       wfc_logo_width * wfc_logo_height);
 
     /*
      * Create first element and insert it at the bottom of the element stack.
@@ -185,12 +179,15 @@ int main(int argc, char **argv)
     ctxHeight = wfcGetContextAttribi(dev, ctx, WFC_CONTEXT_TARGET_HEIGHT);
     rect[2] = ctxWidth;
     rect[3] = (WFCint)(wfc_logo_height * (wfc_logo_width / ctxWidth));
-    wfcSetElementAttribiv(dev, element1, WFC_ELEMENT_DESTINATION_RECTANGLE, 4, rect);
+    wfcSetElementAttribiv(dev, element1, WFC_ELEMENT_DESTINATION_RECTANGLE, 4,
+                          rect);
 
-    wfcSetElementAttribi(dev, element1, WFC_ELEMENT_TRANSPARENCY_TYPES, WFC_TRANSPARENCY_SOURCE);
+    wfcSetElementAttribi(dev, element1, WFC_ELEMENT_TRANSPARENCY_TYPES,
+                         WFC_TRANSPARENCY_SOURCE);
     CHECK_ERROR(WFC_ERROR_NONE, "Failed to set element transparency.");
 
-    wfcSetElementAttribi(dev, element1, WFC_ELEMENT_SOURCE_SCALE_FILTER, WFC_SCALE_FILTER_BETTER);
+    wfcSetElementAttribi(dev, element1, WFC_ELEMENT_SOURCE_SCALE_FILTER,
+                         WFC_SCALE_FILTER_BETTER);
     CHECK_ERROR(WFC_ERROR_NONE, "Failed to set element transparency.");
 
     /*
@@ -216,15 +213,18 @@ int main(int argc, char **argv)
     ctxHeight = wfcGetContextAttribi(dev, ctx, WFC_CONTEXT_TARGET_HEIGHT);
     rect[2] = ctxWidth;
     rect[3] = (WFCint)((wfc_logo_height * (wfc_logo_width / ctxWidth)) / 2);
-    wfcSetElementAttribiv(dev, element2, WFC_ELEMENT_DESTINATION_RECTANGLE, 4, rect);
+    wfcSetElementAttribiv(dev, element2, WFC_ELEMENT_DESTINATION_RECTANGLE, 4,
+                          rect);
 
-    wfcSetElementAttribi(dev, element2, WFC_ELEMENT_TRANSPARENCY_TYPES, WFC_TRANSPARENCY_SOURCE);
+    wfcSetElementAttribi(dev, element2, WFC_ELEMENT_TRANSPARENCY_TYPES,
+                         WFC_TRANSPARENCY_SOURCE);
     CHECK_ERROR(WFC_ERROR_NONE, "Failed to set element transparency.");
 
     wfcSetElementAttribi(dev, element2, WFC_ELEMENT_SOURCE_FLIP, WFC_TRUE);
     CHECK_ERROR(WFC_ERROR_NONE, "Failed to set element transparency.");
 
-    wfcSetElementAttribi(dev, element2, WFC_ELEMENT_SOURCE_SCALE_FILTER, WFC_SCALE_FILTER_BETTER);
+    wfcSetElementAttribi(dev, element2, WFC_ELEMENT_SOURCE_SCALE_FILTER,
+                         WFC_SCALE_FILTER_BETTER);
     CHECK_ERROR(WFC_ERROR_NONE, "Failed to set element transparency.");
 
     wfcCommit(dev, ctx, WFC_TRUE);
@@ -243,30 +243,30 @@ int main(int argc, char **argv)
     sleep(5);
 
 CLEANUP:
-    if (dev != WFC_INVALID_HANDLE)
-    {
-        if (element1 != WFC_INVALID_HANDLE)
-        {
+    if (dev != WFC_INVALID_HANDLE) {
+        if (element1 != WFC_INVALID_HANDLE) {
             /* example how to reset element source and mask */
-            wfcSetElementAttribi(dev, element1, WFC_ELEMENT_SOURCE, WFC_INVALID_HANDLE);
-            wfcSetElementAttribi(dev, element1, WFC_ELEMENT_MASK, WFC_INVALID_HANDLE);
+            wfcSetElementAttribi(dev, element1, WFC_ELEMENT_SOURCE,
+                                 WFC_INVALID_HANDLE);
+            wfcSetElementAttribi(dev, element1, WFC_ELEMENT_MASK,
+                                 WFC_INVALID_HANDLE);
             wfcCommit(dev, ctx, WFC_TRUE);
 
             wfcDestroyElement(dev, element1);
         }
 
-        if (element2 != WFC_INVALID_HANDLE)
-        {
+        if (element2 != WFC_INVALID_HANDLE) {
             /* example how to reset element source and mask */
-            wfcSetElementAttribi(dev, element2, WFC_ELEMENT_SOURCE, WFC_INVALID_HANDLE);
-            wfcSetElementAttribi(dev, element2, WFC_ELEMENT_MASK, WFC_INVALID_HANDLE);
+            wfcSetElementAttribi(dev, element2, WFC_ELEMENT_SOURCE,
+                                 WFC_INVALID_HANDLE);
+            wfcSetElementAttribi(dev, element2, WFC_ELEMENT_MASK,
+                                 WFC_INVALID_HANDLE);
             wfcCommit(dev, ctx, WFC_TRUE);
 
             wfcDestroyElement(dev, element2);
         }
 
-        if (ctx != WFC_INVALID_HANDLE)
-        {
+        if (ctx != WFC_INVALID_HANDLE) {
             wfcDestroyContext(dev, ctx);
         }
 
@@ -274,8 +274,7 @@ CLEANUP:
         dev = WFC_INVALID_HANDLE;
     }
 
-    if (sourceStream != WFC_INVALID_HANDLE)
-    {
+    if (sourceStream != WFC_INVALID_HANDLE) {
         destroyNativeStream(sourceStream);
     }
 

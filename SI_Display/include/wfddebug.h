@@ -34,14 +34,13 @@
  */
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #ifdef DEBUG
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #ifdef OWF_DEBUG_PREFIX
 #undef OWF_DEBUG_PREFIX
@@ -51,9 +50,7 @@ extern "C"
 
 #include "owfdebug.h"
 
-
-OWF_API_CALL void OWF_APIENTRY
-WFD_Debug_DumpConfiguration() OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Debug_DumpConfiguration() OWF_APIEXIT;
 
 #else
 
@@ -61,10 +58,8 @@ WFD_Debug_DumpConfiguration() OWF_APIEXIT;
 
 #endif
 
-
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

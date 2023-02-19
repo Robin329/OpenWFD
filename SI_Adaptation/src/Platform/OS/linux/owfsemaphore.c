@@ -24,21 +24,17 @@
 extern "C" {
 #endif
 
+#include "owfsemaphore.h"
 
 #include <errno.h>
 #include <semaphore.h>
 #include <stdlib.h>
 
-#include "owfsemaphore.h"
 #include "owfmemory.h"
 
+#define SEM(x) (sem_t *)(*x)
 
-
-#define SEM(x)          (sem_t*)(*x)
-
-OWF_API_CALL OWFint
-OWF_Semaphore_Init(OWF_SEMAPHORE* sem, OWFint val)
-{
+OWF_API_CALL OWFint OWF_Semaphore_Init(OWF_SEMAPHORE *sem, OWFint val) {
     *sem = xalloc(1, sizeof(sem_t));
     if (!*sem) {
         return ENOMEM;
@@ -46,46 +42,36 @@ OWF_Semaphore_Init(OWF_SEMAPHORE* sem, OWFint val)
     return sem_init(SEM(sem), 0, val);
 }
 
-OWF_API_CALL OWFint
-OWF_Semaphore_Wait(OWF_SEMAPHORE* sem)
-{
+OWF_API_CALL OWFint OWF_Semaphore_Wait(OWF_SEMAPHORE *sem) {
     if (!*sem) {
         return EINVAL;
     }
     return sem_wait(SEM(sem));
 }
 
-OWF_API_CALL OWFint
-OWF_Semaphore_TryWait(OWF_SEMAPHORE* sem)
-{
+OWF_API_CALL OWFint OWF_Semaphore_TryWait(OWF_SEMAPHORE *sem) {
     if (!*sem) {
         return EINVAL;
     }
     return sem_trywait(SEM(sem));
 }
 
-OWF_API_CALL void
-OWF_Semaphore_Post(OWF_SEMAPHORE* sem)
-{
+OWF_API_CALL void OWF_Semaphore_Post(OWF_SEMAPHORE *sem) {
     if (!*sem) {
         return;
     }
     sem_post(SEM(sem));
 }
 
-OWF_API_CALL OWFint
-OWF_Semaphore_GetValue(OWF_SEMAPHORE* sem, OWFint* val)
-{
+OWF_API_CALL OWFint OWF_Semaphore_GetValue(OWF_SEMAPHORE *sem, OWFint *val) {
     if (!*sem) {
         return EINVAL;
     }
     return sem_getvalue(SEM(sem), val);
 }
 
-OWF_API_CALL OWFint
-OWF_Semaphore_Destroy(OWF_SEMAPHORE* sem)
-{
-    OWFint             err = EINVAL;
+OWF_API_CALL OWFint OWF_Semaphore_Destroy(OWF_SEMAPHORE *sem) {
+    OWFint err = EINVAL;
 
     if (*sem) {
         err = sem_destroy(SEM(sem));
@@ -95,8 +81,6 @@ OWF_Semaphore_Destroy(OWF_SEMAPHORE* sem)
     return err;
 }
 
-
 #ifdef __cplusplus
 }
 #endif
-

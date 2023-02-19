@@ -20,29 +20,25 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <pthread.h>
 #include "owfbarrier.h"
-#include "owfmutex.h"
+
+#include <pthread.h>
+
 #include "owfmemory.h"
-
-
+#include "owfmutex.h"
 
 typedef struct {
-    pthread_mutex_t         mutex;
-    pthread_cond_t          condition;
+    pthread_mutex_t mutex;
+    pthread_cond_t condition;
 } OWF_BARRIER_DATA;
 
-#define BARRIER(x)          ((OWF_BARRIER_DATA*) *x)
+#define BARRIER(x) ((OWF_BARRIER_DATA *)*x)
 
-OWF_API_CALL void
-OWF_Barrier_Init(OWF_BARRIER* barrier)
-{
+OWF_API_CALL void OWF_Barrier_Init(OWF_BARRIER *barrier) {
     if (!barrier) {
         return;
     }
@@ -52,17 +48,13 @@ OWF_Barrier_Init(OWF_BARRIER* barrier)
     }
 
     *barrier = xalloc(1, sizeof(OWF_BARRIER_DATA));
-    if (*barrier)
-    {
+    if (*barrier) {
         pthread_mutex_init(&BARRIER(barrier)->mutex, NULL);
         pthread_cond_init(&BARRIER(barrier)->condition, NULL);
     }
 }
 
-
-OWF_API_CALL void
-OWF_Barrier_Wait(OWF_BARRIER* barrier)
-{
+OWF_API_CALL void OWF_Barrier_Wait(OWF_BARRIER *barrier) {
     if (!barrier) {
         return;
     }
@@ -71,19 +63,14 @@ OWF_Barrier_Wait(OWF_BARRIER* barrier)
     pthread_mutex_unlock(&BARRIER(barrier)->mutex);
 }
 
-
-OWF_API_CALL void
-OWF_Barrier_Break(OWF_BARRIER* barrier)
-{
+OWF_API_CALL void OWF_Barrier_Break(OWF_BARRIER *barrier) {
     if (!barrier) {
         return;
     }
     pthread_cond_broadcast(&BARRIER(barrier)->condition);
 }
 
-OWF_API_CALL void
-OWF_Barrier_Destroy(OWF_BARRIER* barrier)
-{
+OWF_API_CALL void OWF_Barrier_Destroy(OWF_BARRIER *barrier) {
     if (!barrier) {
         return;
     }
@@ -93,9 +80,6 @@ OWF_Barrier_Destroy(OWF_BARRIER* barrier)
     *barrier = NULL;
 }
 
-
-
 #ifdef __cplusplus
 }
 #endif
-

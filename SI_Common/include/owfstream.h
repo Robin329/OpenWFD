@@ -20,54 +20,45 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
 #ifndef OWFSTREAM_H_
 #define OWFSTREAM_H_
 
-#include "owftypes.h"
+#include "owfcond.h"
 #include "owfimage.h"
 #include "owfnativestream.h"
-#include "owfcond.h"
+#include "owftypes.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-typedef struct OWF_STREAM_  OWF_STREAM;
+typedef struct OWF_STREAM_ OWF_STREAM;
 
 struct OWF_STREAM_ {
-    OWFNativeStreamType     handle;
-    OWFNativeStreamBuffer   buffer;
-    OWFint                  useCount;
-    OWFint                  lockCount;
-    OWFboolean              write;
-    OWF_IMAGE*              image;
-    OWF_MUTEX               mutex;
+    OWFNativeStreamType handle;
+    OWFNativeStreamBuffer buffer;
+    OWFint useCount;
+    OWFint lockCount;
+    OWFboolean write;
+    OWF_IMAGE *image;
+    OWF_MUTEX mutex;
 };
 
-OWF_API_CALL OWFboolean
-OWF_Stream_Destroy(OWF_STREAM* stream);
+OWF_API_CALL OWFboolean OWF_Stream_Destroy(OWF_STREAM *stream);
 
-OWF_API_CALL OWF_STREAM*
-OWF_Stream_AddReference(OWF_STREAM* stream);
+OWF_API_CALL OWF_STREAM *OWF_Stream_AddReference(OWF_STREAM *stream);
 
-OWF_API_CALL void
-OWF_Stream_RemoveReference(OWF_STREAM* stream);
+OWF_API_CALL void OWF_Stream_RemoveReference(OWF_STREAM *stream);
 
-OWF_API_CALL OWF_STREAM*
-OWF_Stream_Create(OWFNativeStreamType stream,
-                  OWFboolean write);
+OWF_API_CALL OWF_STREAM *OWF_Stream_Create(OWFNativeStreamType stream,
+                                           OWFboolean write);
 
-OWF_API_CALL OWF_IMAGE*
-OWF_Stream_LockForReading(OWF_STREAM* stream);
+OWF_API_CALL OWF_IMAGE *OWF_Stream_LockForReading(OWF_STREAM *stream);
 
-OWF_API_CALL void
-OWF_Stream_Unlock(OWF_STREAM* stream);
+OWF_API_CALL void OWF_Stream_Unlock(OWF_STREAM *stream);
 
-OWF_API_CALL void
-OWF_Stream_GetSize(OWF_STREAM* stream, OWFint* width, OWFint* height);
-
+OWF_API_CALL void OWF_Stream_GetSize(OWF_STREAM *stream, OWFint *width,
+                                     OWFint *height);
 
 #ifdef __cplusplus
 }

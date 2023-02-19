@@ -25,30 +25,22 @@
 
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void*               OWF_BARRIER;
+typedef void *OWF_BARRIER;
 
-OWF_API_CALL void
-OWF_Barrier_Init(OWF_BARRIER* barrier);
+OWF_API_CALL void OWF_Barrier_Init(OWF_BARRIER *barrier);
 
-OWF_API_CALL void
-OWF_Barrier_Wait(OWF_BARRIER* barrier);
+OWF_API_CALL void OWF_Barrier_Wait(OWF_BARRIER *barrier);
 
-OWF_API_CALL void
-OWF_Barrier_Break(OWF_BARRIER* barrier);
+OWF_API_CALL void OWF_Barrier_Break(OWF_BARRIER *barrier);
 
-OWF_API_CALL void
-OWF_Barrier_Destroy(OWF_BARRIER* barrier);
-
-
+OWF_API_CALL void OWF_Barrier_Destroy(OWF_BARRIER *barrier);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

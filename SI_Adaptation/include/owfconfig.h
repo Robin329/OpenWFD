@@ -30,73 +30,59 @@
 
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef void *OWF_CONF_DOCUMENT;
+typedef void *OWF_CONF_GROUP;
+typedef void *OWF_CONF_ELEMENT;
 
-typedef void* OWF_CONF_DOCUMENT;
-typedef void* OWF_CONF_GROUP;
-typedef void* OWF_CONF_ELEMENT;
+OWF_API_CALL OWF_CONF_DOCUMENT OWF_Conf_GetGetDocument(const char *str);
 
-OWF_API_CALL OWF_CONF_DOCUMENT
-OWF_Conf_GetGetDocument(const char* str);
+OWF_API_CALL OWF_CONF_GROUP OWF_Conf_GetRoot(OWF_CONF_DOCUMENT doc,
+                                             const char *name);
 
-OWF_API_CALL OWF_CONF_GROUP
-OWF_Conf_GetRoot(OWF_CONF_DOCUMENT doc, const char* name);
+OWF_API_CALL OWF_CONF_ELEMENT OWF_Conf_GetElement(const OWF_CONF_GROUP cur,
+                                                  const char *elementName);
 
-OWF_API_CALL OWF_CONF_ELEMENT
-OWF_Conf_GetElement(const OWF_CONF_GROUP cur,
-                    const char* elementName);
-
-OWF_API_CALL OWFint
-OWF_Conf_GetNbrElements(const OWF_CONF_GROUP cur,
-                        const char* elementName);
+OWF_API_CALL OWFint OWF_Conf_GetNbrElements(const OWF_CONF_GROUP cur,
+                                            const char *elementName);
 
 OWF_API_CALL OWF_CONF_ELEMENT
-OWF_Conf_GetNextElement(const OWF_CONF_ELEMENT cur,
-                        const char* elementName);
+OWF_Conf_GetNextElement(const OWF_CONF_ELEMENT cur, const char *elementName);
 
-OWF_API_CALL OWFint
-OWF_Conf_GetContenti(const OWF_CONF_ELEMENT cur, OWFint deflt);
+OWF_API_CALL OWFint OWF_Conf_GetContenti(const OWF_CONF_ELEMENT cur,
+                                         OWFint deflt);
 
-OWF_API_CALL OWFfloat
-OWF_Conf_GetContentf(const OWF_CONF_ELEMENT cur, OWFfloat deflt);
+OWF_API_CALL OWFfloat OWF_Conf_GetContentf(const OWF_CONF_ELEMENT cur,
+                                           OWFfloat deflt);
 
-OWF_API_CALL char*
-OWF_Conf_GetContentStr(const OWF_CONF_ELEMENT cur,
-                       char* deflt);
+OWF_API_CALL char *OWF_Conf_GetContentStr(const OWF_CONF_ELEMENT cur,
+                                          char *deflt);
 
-OWF_API_CALL OWFint
-OWF_Conf_GetElementContenti(const OWF_CONF_GROUP cur,
-                            const char* elementName,
-                            OWFint deflt);
+OWF_API_CALL OWFint OWF_Conf_GetElementContenti(const OWF_CONF_GROUP cur,
+                                                const char *elementName,
+                                                OWFint deflt);
 
-OWF_API_CALL OWFfloat
-OWF_Conf_GetElementContentf(const OWF_CONF_GROUP cur,
-                            const char* elementName,
-                            OWFfloat deflt);
+OWF_API_CALL OWFfloat OWF_Conf_GetElementContentf(const OWF_CONF_GROUP cur,
+                                                  const char *elementName,
+                                                  OWFfloat deflt);
 
 /* \brief Get string element content
  *
  * String must be free by  OWF_Conf_FreeContent() call;
  */
-OWF_API_CALL char*
-OWF_Conf_GetElementContentStr(const OWF_CONF_GROUP cur,
-                              const char* elementName,
-                              char* deflt);
+OWF_API_CALL char *OWF_Conf_GetElementContentStr(const OWF_CONF_GROUP cur,
+                                                 const char *elementName,
+                                                 char *deflt);
 
-OWF_API_CALL void
-OWF_Conf_Cleanup(OWF_CONF_DOCUMENT doc);
+OWF_API_CALL void OWF_Conf_Cleanup(OWF_CONF_DOCUMENT doc);
 
-OWF_API_CALL void
-OWF_Conf_FreeContent(char* str);
+OWF_API_CALL void OWF_Conf_FreeContent(char *str);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* OWFCONFIG_H_ */

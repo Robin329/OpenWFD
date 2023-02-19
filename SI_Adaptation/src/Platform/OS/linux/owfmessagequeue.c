@@ -20,40 +20,33 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "owfmessagequeue.h"
 
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <poll.h>
-
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "owfmessagequeue.h"
+#include "owfdebug.h"
+#include "owfmemory.h"
 #include "owfmutex.h"
 #include "owfsemaphore.h"
 #include "owftypes.h"
-#include "owfmemory.h"
-#include "owfdebug.h"
 
+#define LOCK_QUEUE(x) OWF_Mutex_Lock(&(x->mutex))
+#define UNLOCK_QUEUE(x) OWF_Mutex_Unlock(&(x->mutex))
 
-#define LOCK_QUEUE(x)       OWF_Mutex_Lock(&(x->mutex))
-#define UNLOCK_QUEUE(x)     OWF_Mutex_Unlock(&(x->mutex))
+#define WAIT_TIL_THE_END_OF_TIME -1
 
-#define WAIT_TIL_THE_END_OF_TIME    -1
-
-OWF_API_CALL void
-OWF_MessageQueue_Destroy(OWF_MESSAGE_QUEUE* queue)
-{
+OWF_API_CALL void OWF_MessageQueue_Destroy(OWF_MESSAGE_QUEUE *queue) {
     if (!queue) {
         return;
     }
@@ -62,10 +55,8 @@ OWF_MessageQueue_Destroy(OWF_MESSAGE_QUEUE* queue)
     close(queue->write);
 }
 
-OWF_API_CALL OWFint
-OWF_MessageQueue_Init(OWF_MESSAGE_QUEUE* queue)
-{
-    OWFint                     err, handles[2];
+OWF_API_CALL OWFint OWF_MessageQueue_Init(OWF_MESSAGE_QUEUE *queue) {
+    OWFint err, handles[2];
 
     OWF_ASSERT(queue);
 
@@ -76,31 +67,26 @@ OWF_MessageQueue_Init(OWF_MESSAGE_QUEUE* queue)
         return err;
     }
 
-    queue->read     = handles[0];
-    queue->write    = handles[1];
+    queue->read = handles[0];
+    queue->write = handles[1];
     return 0;
 }
 
-OWF_API_CALL OWFboolean
-OWF_MessageQueue_Empty(OWF_MESSAGE_QUEUE* queue)
-{
-    OWFint                  r = 0;
-    struct pollfd           s;
+OWF_API_CALL OWFboolean OWF_MessageQueue_Empty(OWF_MESSAGE_QUEUE *queue) {
+    OWFint r = 0;
+    struct pollfd s;
 
     OWF_ASSERT(queue);
 
     s.fd = queue->read;
     s.events = POLLIN;
     r = poll(&s, 1, 0);
-    return (OWFboolean) r > 0;
+    return (OWFboolean)r > 0;
 }
 
-OWF_API_CALL void
-OWF_Message_Send(OWF_MESSAGE_QUEUE* queue,
-                 OWFuint msg,
-                 void* data)
-{
-    OWF_MESSAGE             m;
+OWF_API_CALL void OWF_Message_Send(OWF_MESSAGE_QUEUE *queue, OWFuint msg,
+                                   void *data) {
+    OWF_MESSAGE m;
 
     OWF_ASSERT(queue);
 
@@ -110,11 +96,8 @@ OWF_Message_Send(OWF_MESSAGE_QUEUE* queue,
     write(queue->write, &m, sizeof(OWF_MESSAGE));
 }
 
-static OWFint
-OWF_Message_DoFetch(OWF_MESSAGE_QUEUE* queue,
-                    OWF_MESSAGE* msg,
-                    OWFint timeout)
-{
+static OWFint OWF_Message_DoFetch(OWF_MESSAGE_QUEUE *queue, OWF_MESSAGE *msg,
+                                  OWFint timeout) {
     /*
     MUST BE CALLED FROM MUTEX
     */
@@ -122,22 +105,19 @@ OWF_Message_DoFetch(OWF_MESSAGE_QUEUE* queue,
     OWF_ASSERT(queue);
     OWF_ASSERT(msg);
 
-    if (timeout > -1)
-    {
-        OWFint                  r = 0;
-        fd_set                  s;
-        struct timeval          to;
-
+    if (timeout > -1) {
+        OWFint r = 0;
+        fd_set s;
+        struct timeval to;
 
         to.tv_sec = 0;
-        to.tv_usec = (suseconds_t) timeout;
+        to.tv_usec = (suseconds_t)timeout;
 
         FD_ZERO(&s);
         FD_SET(queue->read, &s);
         r = select(FD_SETSIZE, &s, NULL, NULL, &to);
 
-        if (r <  1)
-        {
+        if (r < 1) {
             return -1;
         }
     }
@@ -145,12 +125,10 @@ OWF_Message_DoFetch(OWF_MESSAGE_QUEUE* queue,
     return 0;
 }
 
-OWF_API_CALL OWFint
-OWF_Message_Poll(OWF_MESSAGE_QUEUE* queue,
-                 OWF_MESSAGE* msg)
-{
-    OWFint                  r = 0;
-    struct pollfd           s;
+OWF_API_CALL OWFint OWF_Message_Poll(OWF_MESSAGE_QUEUE *queue,
+                                     OWF_MESSAGE *msg) {
+    OWFint r = 0;
+    struct pollfd s;
 
     OWF_ASSERT(queue);
     OWF_ASSERT(msg);
@@ -160,26 +138,20 @@ OWF_Message_Poll(OWF_MESSAGE_QUEUE* queue,
     r = poll(&s, 1, 0);
 
     if (r > 0) {
-        (void) OWF_Message_DoFetch(queue, msg, -1);
+        (void)OWF_Message_DoFetch(queue, msg, -1);
     }
 
     return r;
 }
 
-OWF_API_CALL OWFint
-OWF_Message_Wait(OWF_MESSAGE_QUEUE* queue,
-                 OWF_MESSAGE* msg,
-                 OWFint timeout)
-{
+OWF_API_CALL OWFint OWF_Message_Wait(OWF_MESSAGE_QUEUE *queue, OWF_MESSAGE *msg,
+                                     OWFint timeout) {
     OWF_ASSERT(queue);
     OWF_ASSERT(msg);
 
     return OWF_Message_DoFetch(queue, msg, timeout);
 }
 
-
-
 #ifdef __cplusplus
 }
 #endif
-

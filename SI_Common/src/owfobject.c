@@ -21,32 +21,23 @@
  */
 
 #include "owfobject.h"
-#include "owftypes.h"
-#include "owfmemory.h"
 
+#include "owfmemory.h"
+#include "owftypes.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
+OWF_API_CALL void *OWF_Object_Construct(size_t size, const char *type,
+                                        CONSTRUCTOR ctor, DESTRUCTOR dtor) {
+    OWF_OBJECT *obu = (OWF_OBJECT *)xalloc(sizeof(OWF_OBJECT) + size, 1);
 
-
-OWF_API_CALL void*
-OWF_Object_Construct(size_t size,
-                     const char* type,
-                     CONSTRUCTOR ctor,
-                     DESTRUCTOR dtor)
-{
-    OWF_OBJECT* obu = (OWF_OBJECT*) xalloc(sizeof(OWF_OBJECT) + size, 1);
-
-    if (obu)
-    {
+    if (obu) {
         obu->type = type;
         obu->destructor = dtor;
         obu->referenceCount = 1;
-        if (ctor)
-        {
+        if (ctor) {
             ctor(&obu->payload);
         }
         DPRINT(("CREATE: created %s object (%p)\n", type, &obu->payload));
@@ -55,8 +46,6 @@ OWF_Object_Construct(size_t size,
 
     return NULL;
 }
-
-
 
 #ifdef __cplusplus
 }

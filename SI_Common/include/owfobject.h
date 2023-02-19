@@ -25,84 +25,76 @@
 
 #include <stdlib.h>
 
-#include "owftypes.h"
 #include "owfdebug.h"
-
+#include "owftypes.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-
-typedef void (*DESTRUCTOR)(void*);
-typedef void (*CONSTRUCTOR)(void*);
+typedef void (*DESTRUCTOR)(void *);
+typedef void (*CONSTRUCTOR)(void *);
 
 typedef struct {
-    const char*             type;
-    DESTRUCTOR              destructor;
-    OWFuint32               referenceCount;
-    void*                   payload;
+    const char *type;
+    DESTRUCTOR destructor;
+    OWFuint32 referenceCount;
+    void *payload;
 } OWF_OBJECT;
 
-#define TYPE(x)             "" # x "_type"
+#define TYPE(x) "" #x "_type"
 
 /*! returns field offset within structure */
-#define FOFF(x,y)           ((OWFuint32) &(((x*) 0x1000)->y) - 0x1000)
+#define FOFF(x, y) ((OWFuint32) & (((x *)0x1000)->y) - 0x1000)
 
 /*! returns pointer to wrapper object which holds object x */
 #define _O(x) ((OWF_OBJECT *)((OWFuint64)(x)-FOFF(OWF_OBJECT, payload)))
 
 /*! create new object instance */
-#define CREATE(x)           (x*) OWF_Object_Construct(sizeof(x), TYPE(x), \
-                                                      & x##_Ctor, & x##_Dtor)
+#define CREATE(x) \
+    (x *)OWF_Object_Construct(sizeof(x), TYPE(x), &x##_Ctor, &x##_Dtor)
 
-#define REFCOUNT(x)         ((x) ? _O(x)->referenceCount : 0xFFFFFFFF)
+#define REFCOUNT(x) ((x) ? _O(x)->referenceCount : 0xFFFFFFFF)
 
 /*! get the type of the contained object  */
-#define TYPEOF(x)           (_O(x)->type)
+#define TYPEOF(x) (_O(x)->type)
 
 /*! increment object reference count  */
-#define ADDREF(x, y)                                                           \
-  if (y) {                                                                     \
-    printf("333 x:%#x %p _0(y):%#x\n", y, y, _O(y));                           \
-    _O(y)->referenceCount++;                                                   \
-    printf("444\n");                                                           \
-    DPRINT(("ADDREF: ref count of %s(%p) is now %d\n", TYPEOF(y), y,           \
-            REFCOUNT(y)));                                                     \
-  }                                                                            \
-  printf("555\n");                                                             \
-  x = y;
+#define ADDREF(x, y)                                                     \
+    if (y) {                                                             \
+        printf("333 x:%#x %p _0(y):%#x\n", y, y, _O(y));                 \
+        _O(y)->referenceCount++;                                         \
+        printf("444\n");                                                 \
+        DPRINT(("ADDREF: ref count of %s(%p) is now %d\n", TYPEOF(y), y, \
+                REFCOUNT(y)));                                           \
+    }                                                                    \
+    printf("555\n");                                                     \
+    x = y;
 
 /*! decrement object reference count, call destructor if count reaches zero  */
-#define REMREF(x) \
-    if (x) {\
-        --_O(x)->referenceCount; \
+#define REMREF(x)                                                        \
+    if (x) {                                                             \
+        --_O(x)->referenceCount;                                         \
         DPRINT(("REMREF: ref count of %s(%p) is now %d\n", TYPEOF(x), x, \
-                REFCOUNT(x))); \
-        if (0 == _O(x)->referenceCount) {\
-            if (_O(x)->destructor) {\
-                _O(x)->destructor(x);\
-            }\
-            xfree(_O(x));\
-        }\
-        x = NULL;\
+                REFCOUNT(x)));                                           \
+        if (0 == _O(x)->referenceCount) {                                \
+            if (_O(x)->destructor) {                                     \
+                _O(x)->destructor(x);                                    \
+            }                                                            \
+            xfree(_O(x));                                                \
+        }                                                                \
+        x = NULL;                                                        \
     }
 
 #define DESTROY(x) \
-    REMREF(x); \
+    REMREF(x);     \
     x = NULL;
 
-OWF_API_CALL void*
-OWF_Object_Construct(size_t size,
-                     const char* type,
-                     CONSTRUCTOR ctor,
-                     DESTRUCTOR dtor);
-
+OWF_API_CALL void *OWF_Object_Construct(size_t size, const char *type,
+                                        CONSTRUCTOR ctor, DESTRUCTOR dtor);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* OWFOBJECT_H_ */

@@ -29,36 +29,34 @@
 #define OWFDEBUG_H_
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
 
 #ifdef DEBUG
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
 #include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "owftypes.h"
 
-#define DPRINT(x)        OWF_Debug_Print x
-#define ENTER(x)         DPRINT(("%s:", #x))
+#define DPRINT(x) OWF_Debug_Print x
+#define ENTER(x) DPRINT(("%s:", #x))
 #define LEAVE(x)
-#define TRACE(x)         OWF_Debug_Trace x
-#define INDENT           OWF_Debug_TraceIndent()
-#define UNDENT           OWF_Debug_TraceUndent()
-#define OWF_ASSERT(c)    assert(c);
+#define TRACE(x) OWF_Debug_Trace x
+#define INDENT OWF_Debug_TraceIndent()
+#define UNDENT OWF_Debug_TraceUndent()
+#define OWF_ASSERT(c) assert(c);
 
-OWF_API_CALL void OWF_Debug_Print(const char* format, ...);
-OWF_API_CALL void OWF_Debug_Trace(const char* fmt, ...);
+OWF_API_CALL void OWF_Debug_Print(const char *format, ...);
+OWF_API_CALL void OWF_Debug_Trace(const char *fmt, ...);
 OWF_API_CALL void OWF_Debug_TraceIndent();
 OWF_API_CALL void OWF_Debug_TraceUndent();
 
 #else /* NOT DEBUG */
 
-#define DPRINT(x)     /* do nothing */
+#define DPRINT(x) /* do nothing */
 #define ENTER(x)
 #define LEAVE(x)
 #define TRACE(x)
@@ -68,10 +66,8 @@ OWF_API_CALL void OWF_Debug_TraceUndent();
 
 #endif /* DEBUG */
 
-
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* OWFDEBUG_H_ */

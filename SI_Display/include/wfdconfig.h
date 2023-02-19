@@ -26,7 +26,6 @@
  *
  */
 
-
 #ifndef WFDCONFIG_H_
 #define WFDCONFIG_H_
 
@@ -34,10 +33,8 @@
 #include "wfdstructs.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
 
 /*! \brief Retrieve static hardware configuration
  *
@@ -45,17 +42,16 @@ extern "C"
  *  returns number of devices in the array. A pointer to configuration
  *  memory can be passed back to caller in a reference parameter.
  *
- *  \param configs Optional. Pointer to a pointer that upon return of the routine
- *  will store the address of  the static configuration area.
+ *  \param configs Optional. Pointer to a pointer that upon return of the
+ * routine will store the address of  the static configuration area.
  *
  *  \return Number of display devices in the system
  */
 OWF_API_CALL WFDint OWF_APIENTRY
-WFD_Config_GetDevices(WFD_DEVICE_CONFIG** configs) OWF_APIEXIT;
+WFD_Config_GetDevices(WFD_DEVICE_CONFIG **configs) OWF_APIEXIT;
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* WFDCONFIG_H_ */

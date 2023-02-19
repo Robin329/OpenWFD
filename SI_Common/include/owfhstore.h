@@ -20,31 +20,25 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-#include "owftypes.h"
 #include "owfhandle.h"
 #include "owfmemory.h"
+#include "owftypes.h"
 
 #ifndef OWFHSTORE_H_
 #define OWFHSTORE_H_
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-OWF_API_CALL OWFHandle
-OWF_HStore_HandleCreate(OWFuint8 objType, void* obj);
+OWF_API_CALL OWFHandle OWF_HStore_HandleCreate(OWFuint8 objType, void *obj);
 
-OWF_API_CALL void*
-OWF_HStore_GetObj(OWFHandle handle, OWFuint8 objType);
+OWF_API_CALL void *OWF_HStore_GetObj(OWFHandle handle, OWFuint8 objType);
 
-OWF_API_CALL void
-OWF_HStore_HandleDelete(OWFHandle handle);
+OWF_API_CALL void OWF_HStore_HandleDelete(OWFHandle handle);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* OWFHSTORE_H_ */

@@ -21,48 +21,38 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
-
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define ONE_SEC 1000000000
 
-
-#include <pthread.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#include "owfmemory.h"
 #include "owfcond.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <sys/time.h>
+
 #include "owfdebug.h"
-
-
+#include "owfmemory.h"
 
 typedef struct OWF_COND_ {
-    pthread_cond_t  cond;
-    OWF_MUTEX      mutex;
+    pthread_cond_t cond;
+    OWF_MUTEX mutex;
 } _OWF_COND_;
 
-
-OWF_API_CALL OWFboolean
-OWF_Cond_Init(OWF_COND* pCond, OWF_MUTEX mutex)
-{
-    _OWF_COND_* tmp;
+OWF_API_CALL OWFboolean OWF_Cond_Init(OWF_COND *pCond, OWF_MUTEX mutex) {
+    _OWF_COND_ *tmp;
     OWFint res;
 
-    if (!pCond)
-    {
+    if (!pCond) {
         return EINVAL;
     }
 
     tmp = xalloc(1, sizeof(*tmp));
-    if (!tmp)
-    {
+    if (!tmp) {
         return ENOMEM;
     }
 
@@ -73,19 +63,15 @@ OWF_Cond_Init(OWF_COND* pCond, OWF_MUTEX mutex)
     return res;
 }
 
-OWF_API_CALL void
-OWF_Cond_Destroy(OWF_COND* pCond)
-{
-    OWFint             err = EINVAL;
+OWF_API_CALL void OWF_Cond_Destroy(OWF_COND *pCond) {
+    OWFint err = EINVAL;
 
-    if (!pCond)
-    {
+    if (!pCond) {
         return;
     }
 
-    if (*pCond)
-    {
-        _OWF_COND_* tmp = *((_OWF_COND_**) pCond);
+    if (*pCond) {
+        _OWF_COND_ *tmp = *((_OWF_COND_ **)pCond);
         err = pthread_cond_destroy(&tmp->cond);
         xfree(tmp);
         *pCond = NULL;
@@ -93,80 +79,61 @@ OWF_Cond_Destroy(OWF_COND* pCond)
     return;
 }
 
-OWF_API_CALL OWFboolean
-OWF_Cond_Wait(OWF_COND cond, OWFtime timeout)
-{
+OWF_API_CALL OWFboolean OWF_Cond_Wait(OWF_COND cond, OWFtime timeout) {
     OWFint ret;
-    _OWF_COND_* tmp = (_OWF_COND_*)cond;
+    _OWF_COND_ *tmp = (_OWF_COND_ *)cond;
 
-    if (!tmp && tmp->mutex)
-    {
+    if (!tmp && tmp->mutex) {
         DPRINT(("COND WAIT FAILED!"));
         return OWF_FALSE;
-    }
-    else if (timeout == 0)
-    {
+    } else if (timeout == 0) {
         return OWF_TRUE; /* 'timeout' */
-    }
-    else if (timeout == (OWFtime) OWF_FOREVER)
-    {
-        pthread_mutex_t* mutex = (pthread_mutex_t*)tmp->mutex;
+    } else if (timeout == (OWFtime)OWF_FOREVER) {
+        pthread_mutex_t *mutex = (pthread_mutex_t *)tmp->mutex;
 
         ret = pthread_cond_wait(&tmp->cond, mutex);
         return (ret != 0);
-    }
-    else
-    {
+    } else {
         struct timespec abstime;
-        struct timeval  now;
+        struct timeval now;
 
-        pthread_mutex_t* mutex = (pthread_mutex_t*)tmp->mutex;
+        pthread_mutex_t *mutex = (pthread_mutex_t *)tmp->mutex;
 
         gettimeofday(&now, NULL);
 
-        abstime.tv_sec  = now.tv_sec + timeout / ONE_SEC;
+        abstime.tv_sec = now.tv_sec + timeout / ONE_SEC;
         abstime.tv_nsec = now.tv_usec * 1000 + timeout % ONE_SEC;
 
-        if (abstime.tv_nsec > ONE_SEC)
-        {
+        if (abstime.tv_nsec > ONE_SEC) {
             abstime.tv_nsec -= ONE_SEC;
             abstime.tv_sec++;
         }
 
-        ret =  pthread_cond_timedwait(&tmp->cond, mutex, &abstime);
+        ret = pthread_cond_timedwait(&tmp->cond, mutex, &abstime);
 
         return (ret != 0);
     }
 }
 
-OWF_API_CALL OWFboolean
-OWF_Cond_Signal(OWF_COND cond)
-{
-    _OWF_COND_* tmp = (_OWF_COND_*)cond;
+OWF_API_CALL OWFboolean OWF_Cond_Signal(OWF_COND cond) {
+    _OWF_COND_ *tmp = (_OWF_COND_ *)cond;
 
-    if (!(tmp && tmp->mutex))
-    {
+    if (!(tmp && tmp->mutex)) {
         return EINVAL;
     }
 
     return pthread_cond_signal(&tmp->cond);
 }
 
-OWF_API_CALL OWFboolean
-OWF_Cond_SignalAll(OWF_COND cond)
-{
-    _OWF_COND_* tmp = (_OWF_COND_*)cond;
+OWF_API_CALL OWFboolean OWF_Cond_SignalAll(OWF_COND cond) {
+    _OWF_COND_ *tmp = (_OWF_COND_ *)cond;
 
-    if (!(tmp && tmp->mutex))
-    {
+    if (!(tmp && tmp->mutex)) {
         return EINVAL;
     }
     return pthread_cond_broadcast(&tmp->cond);
 }
 
-
-
 #ifdef __cplusplus
 }
 #endif
-

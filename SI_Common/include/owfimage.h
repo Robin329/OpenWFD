@@ -25,68 +25,67 @@
 
 #include "owftypes.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #undef USE_FLOAT_PIXEL
 
-/* 
+/*
  * This is and always should be the only place where USE_FLOAT_PIXEL is
  * defined so if #define USE_FLOAT_PIXEL is absent in owfimage.h then it
  * can be assumed it is not defined elsewhere.
- */ 
+ */
 #define USE_FLOAT_PIXEL
 
 /* --
-* internal pixel format
-*/
+ * internal pixel format
+ */
 #ifdef USE_FLOAT_PIXEL
 #define OWF_IMAGE_INTERNAL_PIXEL_IS_FLOAT
 
-typedef OWFfloat            OWFsubpixel; /* subpixel representation */
+typedef OWFfloat OWFsubpixel; /* subpixel representation */
 
-#define OWF_RED_MIN_VALUE   0.0f
-#define OWF_RED_MAX_VALUE   1.0f
+#define OWF_RED_MIN_VALUE 0.0f
+#define OWF_RED_MAX_VALUE 1.0f
 #define OWF_GREEN_MIN_VALUE 0.0f
 #define OWF_GREEN_MAX_VALUE 1.0f
-#define OWF_BLUE_MIN_VALUE  0.0f
-#define OWF_BLUE_MAX_VALUE  1.0f
+#define OWF_BLUE_MIN_VALUE 0.0f
+#define OWF_BLUE_MAX_VALUE 1.0f
 
 #define OWF_ALPHA_MIN_VALUE 0.0f
 #define OWF_ALPHA_MAX_VALUE 1.0f
 
-#define OWF_FULLY_OPAQUE        OWF_ALPHA_MAX_VALUE
-#define OWF_FULLY_TRANSPARENT   OWF_ALPHA_MIN_VALUE
+#define OWF_FULLY_OPAQUE OWF_ALPHA_MAX_VALUE
+#define OWF_FULLY_TRANSPARENT OWF_ALPHA_MIN_VALUE
 
-#define OWF_BYTE_MAX_VALUE  255.0f
+#define OWF_BYTE_MAX_VALUE 255.0f
 
 #define OWF_BILINEAR_ROUNDING_VALUE 0.0f
 #define OWF_BLEND_ROUNDING_VALUE 0.0f
-#define OWF_PREMUL_ROUNDING_FACTOR  0.0f
+#define OWF_PREMUL_ROUNDING_FACTOR 0.0f
 
 #else
 #undef OWF_IMAGE_INTERNAL_PIXEL_IS_FLOAT
 
-typedef OWFuint8            OWFsubpixel; /* subpixel representation */
+typedef OWFuint8 OWFsubpixel; /* subpixel representation */
 
-#define OWF_RED_MIN_VALUE         0
-#define OWF_RED_MAX_VALUE       255
-#define OWF_GREEN_MIN_VALUE       0
-#define OWF_GREEN_MAX_VALUE     255
-#define OWF_BLUE_MIN_VALUE        0
-#define OWF_BLUE_MAX_VALUE      255
-#define OWF_ALPHA_MIN_VALUE       0
-#define OWF_ALPHA_MAX_VALUE     255
-#define OWF_FULLY_OPAQUE        OWF_ALPHA_MAX_VALUE
-#define OWF_FULLY_TRANSPARENT   OWF_ALPHA_MIN_VALUE
+#define OWF_RED_MIN_VALUE 0
+#define OWF_RED_MAX_VALUE 255
+#define OWF_GREEN_MIN_VALUE 0
+#define OWF_GREEN_MAX_VALUE 255
+#define OWF_BLUE_MIN_VALUE 0
+#define OWF_BLUE_MAX_VALUE 255
+#define OWF_ALPHA_MIN_VALUE 0
+#define OWF_ALPHA_MAX_VALUE 255
+#define OWF_FULLY_OPAQUE OWF_ALPHA_MAX_VALUE
+#define OWF_FULLY_TRANSPARENT OWF_ALPHA_MIN_VALUE
 
-#define OWF_BYTE_MAX_VALUE      255
+#define OWF_BYTE_MAX_VALUE 255
 
 #define OWF_BILINEAR_ROUNDING_VALUE 0.5f
-#define OWF_BLEND_ROUNDING_VALUE (OWF_ALPHA_MAX_VALUE/2)
-#define OWF_PREMUL_ROUNDING_FACTOR (OWF_ALPHA_MAX_VALUE/2)
+#define OWF_BLEND_ROUNDING_VALUE (OWF_ALPHA_MAX_VALUE / 2)
+#define OWF_PREMUL_ROUNDING_FACTOR (OWF_ALPHA_MAX_VALUE / 2)
 
 #endif
 
@@ -96,42 +95,42 @@ typedef OWFuint8            OWFsubpixel; /* subpixel representation */
  * internal format
  */
 
-#define ARGB8888_ALPHA_MASK         0xFF000000
-#define ARGB8888_RED_MASK           0x00FF0000
-#define ARGB8888_GREEN_MASK         0x0000FF00
-#define ARGB8888_BLUE_MASK          0x000000FF
-#define ARGB8888_ALPHA_SHIFT        24
-#define ARGB8888_RED_SHIFT          16
-#define ARGB8888_GREEN_SHIFT        8
-#define ARGB8888_BLUE_SHIFT         0
+#define ARGB8888_ALPHA_MASK 0xFF000000
+#define ARGB8888_RED_MASK 0x00FF0000
+#define ARGB8888_GREEN_MASK 0x0000FF00
+#define ARGB8888_BLUE_MASK 0x000000FF
+#define ARGB8888_ALPHA_SHIFT 24
+#define ARGB8888_RED_SHIFT 16
+#define ARGB8888_GREEN_SHIFT 8
+#define ARGB8888_BLUE_SHIFT 0
 
-#define RGB565_ALPHA_MASK   0xFFFF
-#define RGB565_RED_MASK     0xF800
-#define RGB565_GREEN_MASK   0x07E0
-#define RGB565_BLUE_MASK    0x001F
+#define RGB565_ALPHA_MASK 0xFFFF
+#define RGB565_RED_MASK 0xF800
+#define RGB565_GREEN_MASK 0x07E0
+#define RGB565_BLUE_MASK 0x001F
 
 /* These are used when converting from RGB565 to ARGB8888. */
-#define RGB565_ALPHA_SHIFT  16
-#define RGB565_RED_SHIFT    11
-#define RGB565_GREEN_SHIFT  5
+#define RGB565_ALPHA_SHIFT 16
+#define RGB565_RED_SHIFT 11
+#define RGB565_GREEN_SHIFT 5
 
 /* subpixels per pixel */
-#define OWF_PIXEL_SIZE      4
+#define OWF_PIXEL_SIZE 4
 
 /* subpixel in bytes */
-#define OWF_SUBPIXEL_SIZE   sizeof(OWFsubpixel)
+#define OWF_SUBPIXEL_SIZE sizeof(OWFsubpixel)
 #define OWF_BYTES_PER_PIXEL (OWF_PIXEL_SIZE * OWF_SUBPIXEL_SIZE)
 
 #pragma pack(push, 1)
 typedef union {
     struct {
-        OWFsubpixel         blue;
-        OWFsubpixel         green;
-        OWFsubpixel         red;
-        OWFsubpixel         alpha;
+        OWFsubpixel blue;
+        OWFsubpixel green;
+        OWFsubpixel red;
+        OWFsubpixel alpha;
     } color;
-    OWFsubpixel             subpixel[OWF_PIXEL_SIZE];
-    OWFuint8                pixelbytes[OWF_BYTES_PER_PIXEL];
+    OWFsubpixel subpixel[OWF_PIXEL_SIZE];
+    OWFuint8 pixelbytes[OWF_BYTES_PER_PIXEL];
 } OWFpixel;
 #pragma pack(pop)
 
@@ -139,72 +138,71 @@ typedef union {
 
 /* filters used in OWF_Image_Stretch */
 typedef enum {
-    OWF_FILTER_POINT_SAMPLING,  /* nearest pixel */
+    OWF_FILTER_POINT_SAMPLING, /* nearest pixel */
     OWF_FILTER_BILINEAR        /* nearest 4 */
 } OWF_FILTERING;
 
 typedef struct {
-    OWFint                  width;
-    OWFint                  height;
-    OWFint                  stride; /* number of bytes per line */
-    OWFint                  pixelSize; /* pixel size in bytes */
-    OWF_IMAGE_FORMAT        format;
-    OWFboolean              foreign;
-    OWFint                  dataMax; /* data buffer max size */
-    void*                   data;
+    OWFint width;
+    OWFint height;
+    OWFint stride;    /* number of bytes per line */
+    OWFint pixelSize; /* pixel size in bytes */
+    OWF_IMAGE_FORMAT format;
+    OWFboolean foreign;
+    OWFint dataMax; /* data buffer max size */
+    void *data;
 } OWF_IMAGE;
 
-/* This typedef denotes an owned OWF_IMAGE, as opposed to a temporary association.
- * Owned instances must be destroyed when the containing object is destroyed.
+/* This typedef denotes an owned OWF_IMAGE, as opposed to a temporary
+ * association. Owned instances must be destroyed when the containing object is
+ * destroyed.
  */
-typedef OWF_IMAGE* OWF_IMAGE_INST;
+typedef OWF_IMAGE *OWF_IMAGE_INST;
 
 typedef enum {
     OWF_FLIP_NONE,
-    OWF_FLIP_VERTICALLY     = 1,
-    OWF_FLIP_HORIZONTALLY   = 2
+    OWF_FLIP_VERTICALLY = 1,
+    OWF_FLIP_HORIZONTALLY = 2
 } OWF_FLIP_DIRECTION;
 
 typedef enum {
-    OWF_ROTATION_0          = 0,
-    OWF_ROTATION_90         = 90,
-    OWF_ROTATION_180        = 180,
-    OWF_ROTATION_270        = 270
+    OWF_ROTATION_0 = 0,
+    OWF_ROTATION_90 = 90,
+    OWF_ROTATION_180 = 180,
+    OWF_ROTATION_270 = 270
 } OWF_ROTATION;
 
 typedef enum {
     OWF_TRANSPARENCY_NONE,
-    OWF_TRANSPARENCY_GLOBAL_ALPHA   = (1 << 0),
-    OWF_TRANSPARENCY_SOURCE_ALPHA   = (1 << 1),
-    OWF_TRANSPARENCY_MASK           = (1 << 2),
-    OWF_TRANSPARENCY_COLOR_KEY      = (1 << 3)
+    OWF_TRANSPARENCY_GLOBAL_ALPHA = (1 << 0),
+    OWF_TRANSPARENCY_SOURCE_ALPHA = (1 << 1),
+    OWF_TRANSPARENCY_MASK = (1 << 2),
+    OWF_TRANSPARENCY_COLOR_KEY = (1 << 3)
 } OWF_TRANSPARENCY;
 
 typedef struct _OWF_BLEND_INFO {
     struct {
-        OWF_IMAGE*          image;
-        OWF_RECTANGLE*      rectangle;
+        OWF_IMAGE *image;
+        OWF_RECTANGLE *rectangle;
     } destination;
 
     struct {
-        OWF_IMAGE*          image;
-        OWF_RECTANGLE*      rectangle;
+        OWF_IMAGE *image;
+        OWF_RECTANGLE *rectangle;
     } source;
 
-    OWF_IMAGE*              mask;
-    OWFsubpixel             globalAlpha;
-    OWFboolean              destinationFullyOpaque;
-    OWFpixel*               tsColor;
+    OWF_IMAGE *mask;
+    OWFsubpixel globalAlpha;
+    OWFboolean destinationFullyOpaque;
+    OWFpixel *tsColor;
 } OWF_BLEND_INFO;
-
 
 /*!---------------------------------------------------------------------------
  *  \brief Initialize image object
  *
  *  \param image            Image object to initialize
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Init(OWF_IMAGE* image);
+OWF_API_CALL void OWF_Image_Init(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Creates new reference counted image object
@@ -220,12 +218,9 @@ OWF_Image_Init(OWF_IMAGE* image);
  *
  *  \return New image object or NULL if error occured.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWF_IMAGE*
-OWF_Image_Create(OWFint width,
-                 OWFint height,
-                 const OWF_IMAGE_FORMAT* format,
-                 void* buffer,
-                 OWFint minimumStride);
+OWF_PUBLIC OWF_IMAGE *OWF_Image_Create(OWFint width, OWFint height,
+                                       const OWF_IMAGE_FORMAT *format,
+                                       void *buffer, OWFint minimumStride);
 
 /*!---------------------------------------------------------------------------
  *  \brief Destroy image object. Rather than actually destroying the image
@@ -234,8 +229,7 @@ OWF_Image_Create(OWFint width,
  *
  *  \param image            Image to destroy
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-OWF_Image_Destroy(OWF_IMAGE* image);
+OWF_PUBLIC void OWF_Image_Destroy(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Create a pixel-perfect copy (clone) of the image. The copy will be
@@ -246,8 +240,7 @@ OWF_Image_Destroy(OWF_IMAGE* image);
  *
  *  \param Copy of the image or NULL if error occured.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWF_IMAGE*
-OWF_Image_Copy(const OWF_IMAGE* image);
+OWF_API_CALL OWF_IMAGE *OWF_Image_Copy(const OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Set image size. This doesn't modify the pixel data in anyway,
@@ -255,7 +248,8 @@ OWF_Image_Copy(const OWF_IMAGE* image);
  *  images that point to external pixel buffers.
  *
  *  If the new pixel count (width * height) exceeds
- *  current values, the pixel buffer will NOT be resized, but the call will FAIL.
+ *  current values, the pixel buffer will NOT be resized, but the call will
+ *FAIL.
  *
  *  \param image            Image to resize
  *  \param width            New width of the image
@@ -265,15 +259,13 @@ OWF_Image_Copy(const OWF_IMAGE* image);
  *  \return Boolean value indicating success of the operation. In case of
  *  failure, no modifications are done to original image.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_SetSize(OWF_IMAGE* image,
-                  OWFint width,
-                  OWFint height);
+OWF_API_CALL OWFboolean OWF_Image_SetSize(OWF_IMAGE *image, OWFint width,
+                                          OWFint height);
 
 /*!---------------------------------------------------------------------------
- *  \brief Set internal mode flags. This doesn't modify the pixel data in anyway,
- *  merely just changes the image header. Mostly used for (recycling) foreign
- *  images that point to external pixel buffers.
+ *  \brief Set internal mode flags. This doesn't modify the pixel data in
+ *anyway, merely just changes the image header. Mostly used for (recycling)
+ *foreign images that point to external pixel buffers.
  *
  *
  *  \param image            Image to resize
@@ -284,10 +276,8 @@ OWF_Image_SetSize(OWF_IMAGE* image,
  *  \return Boolean value indicating success of the operation. In case of
  *  failure, no modifications are done to original image.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SetFlags(OWF_IMAGE* image,
-                  OWFboolean premultiply,
-                  OWFboolean linear);
+OWF_API_CALL void OWF_Image_SetFlags(OWF_IMAGE *image, OWFboolean premultiply,
+                                     OWFboolean linear);
 
 /*!---------------------------------------------------------------------------
  *  \brief Set the pixel buffer to an alternate location.
@@ -297,9 +287,7 @@ OWF_Image_SetFlags(OWF_IMAGE* image,
  *  \param buffer           Image data source to start using
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SetPixelBuffer(OWF_IMAGE* image,      void* buffer);
-
+OWF_API_CALL void OWF_Image_SetPixelBuffer(OWF_IMAGE *image, void *buffer);
 
 /*!---------------------------------------------------------------------------
  *  \brief Blit (1:1 copy) pixels from image to another w/ clipping.
@@ -313,11 +301,10 @@ OWF_Image_SetPixelBuffer(OWF_IMAGE* image,      void* buffer);
  *  it means that either of the rectangles is outside its respective image's
  *  bounds.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_Blit(OWF_IMAGE* dst,
-               OWF_RECTANGLE const* dstRect,
-               OWF_IMAGE const* src,
-               OWF_RECTANGLE const* srcRect);
+OWF_API_CALL OWFboolean OWF_Image_Blit(OWF_IMAGE *dst,
+                                       OWF_RECTANGLE const *dstRect,
+                                       OWF_IMAGE const *src,
+                                       OWF_RECTANGLE const *srcRect);
 
 /*!---------------------------------------------------------------------------
  *  \brief Stretch-blit (scaled copy) pixels from image to another w/ clipping.
@@ -331,44 +318,38 @@ OWF_Image_Blit(OWF_IMAGE* dst,
  *  it means that either of the rectangles is outside its respective image's
  *  bounds.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_Stretch(OWF_IMAGE* dst,
-                  OWF_RECTANGLE* dstRect,
-                  OWF_IMAGE* src,
-                  OWFfloat* srcRect,
-                  OWF_FILTERING filter);
+OWF_API_CALL OWFboolean OWF_Image_Stretch(OWF_IMAGE *dst,
+                                          OWF_RECTANGLE *dstRect,
+                                          OWF_IMAGE *src, OWFfloat *srcRect,
+                                          OWF_FILTERING filter);
 
 /*!---------------------------------------------------------------------------
  *  \brief Multiply pixels' alpha value into rgb-color components.
  *  Multiplies only if image source image is non-premultiplied.
  *  \param image            Image to convert to pre-multiplied domain.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_PremultiplyAlpha(OWF_IMAGE* image);
+OWF_API_CALL void OWF_Image_PremultiplyAlpha(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Divide pixels' rgb-color components by its alpha value.
  *
  *  \param image            Image to convert to nonpre-multiplied domain.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_UnpremultiplyAlpha(OWF_IMAGE* image);
+OWF_API_CALL void OWF_Image_UnpremultiplyAlpha(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Linearizes image pixel data
  *
  *  \param image            Image to convert to linear domain
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_LinearizeData(OWF_IMAGE* image);
+OWF_API_CALL void OWF_Image_LinearizeData(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Non-linearizes image pixel data
  *
  *  \param image            Image to convert to non-linear domain
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_NonLinearizeData(OWF_IMAGE* image);
+OWF_API_CALL void OWF_Image_NonLinearizeData(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Apply gamma correction to image pixel values
@@ -376,8 +357,7 @@ OWF_Image_NonLinearizeData(OWF_IMAGE* image);
  *  \param image            Image to operate on
  *  \param gamma            Gamma value
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Gamma(OWF_IMAGE* image, OWFfloat gamma);
+OWF_API_CALL void OWF_Image_Gamma(OWF_IMAGE *image, OWFfloat gamma);
 
 /*!---------------------------------------------------------------------------
  *  \brief Flip (mirror) image about one or both of its center axes.
@@ -388,9 +368,7 @@ OWF_Image_Gamma(OWF_IMAGE* image, OWFfloat gamma);
  *                          OWF_FLIP_VERTICALLY or any bitwise-or combination
  *                          of the former.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Flip(OWF_IMAGE* image,
-               OWF_FLIP_DIRECTION dir);
+OWF_API_CALL void OWF_Image_Flip(OWF_IMAGE *image, OWF_FLIP_DIRECTION dir);
 
 /*!---------------------------------------------------------------------------
  *  \brief Rotate image n*90 degrees about its center
@@ -400,10 +378,8 @@ OWF_Image_Flip(OWF_IMAGE* image,
  *  \param rotation         Rotation angle (OWF_ROTATION_0, OWF_ROTATION_90,
  *                          OWF_ROTATION_180, or OWF_ROTATION_270)
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Rotate(OWF_IMAGE* dst,
-                 OWF_IMAGE* src,
-                 OWF_ROTATION rotation);
+OWF_API_CALL void OWF_Image_Rotate(OWF_IMAGE *dst, OWF_IMAGE *src,
+                                   OWF_ROTATION rotation);
 
 /*!---------------------------------------------------------------------------
  *  \brief
@@ -412,9 +388,8 @@ OWF_Image_Rotate(OWF_IMAGE* dst,
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Blend(OWF_BLEND_INFO* blend,
-                OWF_TRANSPARENCY transparency);
+OWF_API_CALL void OWF_Image_Blend(OWF_BLEND_INFO *blend,
+                                  OWF_TRANSPARENCY transparency);
 
 /*!---------------------------------------------------------------------------
  *  \brief
@@ -423,12 +398,9 @@ OWF_Image_Blend(OWF_BLEND_INFO* blend,
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_Clear(OWF_IMAGE* image,
-                OWFsubpixel red,
-                OWFsubpixel green,
-                OWFsubpixel blue,
-                OWFsubpixel alpha);
+OWF_API_CALL void OWF_Image_Clear(OWF_IMAGE *image, OWFsubpixel red,
+                                  OWFsubpixel green, OWFsubpixel blue,
+                                  OWFsubpixel alpha);
 
 /*!---------------------------------------------------------------------------
  *  \brief Convert image data from internal color format to destination format
@@ -438,21 +410,19 @@ OWF_Image_Clear(OWF_IMAGE* image,
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_DestinationFormatConversion(OWF_IMAGE* dst,
-                                      OWF_IMAGE* src);
+OWF_API_CALL OWFboolean OWF_Image_DestinationFormatConversion(OWF_IMAGE *dst,
+                                                              OWF_IMAGE *src);
 
 /*!---------------------------------------------------------------------------
-*  \brief Convert image data from source format to internal format
+ *  \brief Convert image data from source format to internal format
  *
  *  \param src
  *  \param dst
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_SourceFormatConversion(OWF_IMAGE* dst,
-                                 OWF_IMAGE* src);
+OWF_API_CALL OWFboolean OWF_Image_SourceFormatConversion(OWF_IMAGE *dst,
+                                                         OWF_IMAGE *src);
 
 /*!---------------------------------------------------------------------------
  *  \brief
@@ -461,11 +431,8 @@ OWF_Image_SourceFormatConversion(OWF_IMAGE* dst,
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void*
-OWF_Image_AllocData(OWFint width,
-                    OWFint height,
-                    OWF_PIXEL_FORMAT format);
-
+OWF_API_CALL void *OWF_Image_AllocData(OWFint width, OWFint height,
+                                       OWF_PIXEL_FORMAT format);
 
 /*!---------------------------------------------------------------------------
  *  \brief
@@ -474,8 +441,7 @@ OWF_Image_AllocData(OWFint width,
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_FreeData(void** buffer);
+OWF_API_CALL void OWF_Image_FreeData(void **buffer);
 
 /*!---------------------------------------------------------------------------
  *  \brief
@@ -484,9 +450,7 @@ OWF_Image_FreeData(void** buffer);
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFint
-OWF_Image_GetFormatPixelSize(OWF_PIXEL_FORMAT format);
-
+OWF_API_CALL OWFint OWF_Image_GetFormatPixelSize(OWF_PIXEL_FORMAT format);
 
 /*!---------------------------------------------------------------------------
  * \brief Return stride (aligned row size in bytes) calculated from image
@@ -500,10 +464,9 @@ OWF_Image_GetFormatPixelSize(OWF_PIXEL_FORMAT format);
 
  * \return Row size in bytes.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWFint
-OWF_Image_GetStride(OWFint width,
-                    const OWF_IMAGE_FORMAT* format,
-                    OWFint minimumStride);
+OWF_PUBLIC OWFint OWF_Image_GetStride(OWFint width,
+                                      const OWF_IMAGE_FORMAT *format,
+                                      OWFint minimumStride);
 
 /*!---------------------------------------------------------------------------
  *  \brief
@@ -512,8 +475,7 @@ OWF_Image_GetStride(OWFint width,
  *
  *  \return
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFint
-OWF_Image_GetFormatPadding(OWF_PIXEL_FORMAT format);
+OWF_API_CALL OWFint OWF_Image_GetFormatPadding(OWF_PIXEL_FORMAT format);
 
 /*!---------------------------------------------------------------------------
  *  \brief Swap image width & height values in image header. Doesn't modify
@@ -521,8 +483,7 @@ OWF_Image_GetFormatPadding(OWF_PIXEL_FORMAT format);
  *
  *  \param image            Image to operate on.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SwapWidthAndHeight(OWF_IMAGE* image);
+OWF_API_CALL void OWF_Image_SwapWidthAndHeight(OWF_IMAGE *image);
 
 /*!---------------------------------------------------------------------------
  *  \brief Convert mask from external format to internal 8bpp format.
@@ -534,9 +495,8 @@ OWF_Image_SwapWidthAndHeight(OWF_IMAGE* image);
  *  input mask is either invalid or unsupported, or degenerate in some other
  *  fascinating way.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFboolean
-OWF_Image_ConvertMask(OWF_IMAGE* output,
-                      OWF_IMAGE* input);
+OWF_API_CALL OWFboolean OWF_Image_ConvertMask(OWF_IMAGE *output,
+                                              OWF_IMAGE *input);
 
 /*!---------------------------------------------------------------------------
  *  \brief Return pointer to given pixel in image.
@@ -549,10 +509,8 @@ OWF_Image_ConvertMask(OWF_IMAGE* output,
  *
  *  \return Pointer to given pixel
  *----------------------------------------------------------------------------*/
-OWF_API_CALL OWFpixel*
-OWF_Image_GetPixelPtr(OWF_IMAGE* image,
-                      OWFint x,
-                      OWFint y);
+OWF_API_CALL OWFpixel *OWF_Image_GetPixelPtr(OWF_IMAGE *image, OWFint x,
+                                             OWFint y);
 
 /*!---------------------------------------------------------------------------
  *  \brief Read single pixel from image
@@ -564,11 +522,8 @@ OWF_Image_GetPixelPtr(OWF_IMAGE* image,
  *
  *  Coordinates are clamped to region (0..width-1, 0..height-1)
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_GetPixel(OWF_IMAGE* image,
-                   OWFint x,
-                   OWFint y,
-                   OWFpixel* pixel);
+OWF_API_CALL void OWF_Image_GetPixel(OWF_IMAGE *image, OWFint x, OWFint y,
+                                     OWFpixel *pixel);
 
 /*!---------------------------------------------------------------------------
  *  \brief Write a pixel into image
@@ -580,11 +535,8 @@ OWF_Image_GetPixel(OWF_IMAGE* image,
  *
  *  Coordinates are clamped to region (0..width-1, 0..height-1)
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-OWF_Image_SetPixel(OWF_IMAGE* image,
-                   OWFint x,
-                   OWFint y,
-                   OWFpixel const* pixel);
+OWF_API_CALL void OWF_Image_SetPixel(OWF_IMAGE *image, OWFint x, OWFint y,
+                                     OWFpixel const *pixel);
 
 #ifdef __cplusplus
 }

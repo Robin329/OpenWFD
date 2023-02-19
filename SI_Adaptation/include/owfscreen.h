@@ -29,37 +29,34 @@
  * These functions connect composition/display to physical screen devices
  */
 
-
-#include "owftypes.h"
 #include "owfimage.h"
-
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define OWF_INVALID_SCREEN_NUMBER   (0)
+#define OWF_INVALID_SCREEN_NUMBER (0)
 
 /* On-screen context size and color format */
-#define OWF_SURFACE_WIDTH           (172)
-#define OWF_SURFACE_HEIGHT          (220)
-#define OWF_SURFACE_PIXEL_FORMAT    (OWF_IMAGE_ARGB8888)
-#define OWF_SURFACE_LINEAR          (OWF_FALSE)
-#define OWF_SURFACE_ROWPADDING          (4)
-#define OWF_SURFACE_PREMULTIPLIED       (OWF_TRUE)
-#define OWF_SCREEN_ROTATION_SUPPORT     (OWF_FALSE)
-#define OWF_SUPPORT_ROTATION_0	        (0x1)
-#define OWF_SUPPORT_ROTATION_90	        (0x2)
-#define OWF_SUPPORT_ROTATION_180        (0x4)
-#define OWF_SUPPORT_ROTATION_270        (0x8)
-#define OWF_SUPPORT_ROTATION_ALL        (0xF)
+#define OWF_SURFACE_WIDTH (172)
+#define OWF_SURFACE_HEIGHT (220)
+#define OWF_SURFACE_PIXEL_FORMAT (OWF_IMAGE_ARGB8888)
+#define OWF_SURFACE_LINEAR (OWF_FALSE)
+#define OWF_SURFACE_ROWPADDING (4)
+#define OWF_SURFACE_PREMULTIPLIED (OWF_TRUE)
+#define OWF_SCREEN_ROTATION_SUPPORT (OWF_FALSE)
+#define OWF_SUPPORT_ROTATION_0 (0x1)
+#define OWF_SUPPORT_ROTATION_90 (0x2)
+#define OWF_SUPPORT_ROTATION_180 (0x4)
+#define OWF_SUPPORT_ROTATION_270 (0x8)
+#define OWF_SUPPORT_ROTATION_ALL (0xF)
 
 typedef struct {
     OWFint width;
     OWFint height;
     OWFint stride;
 } OWF_ORIENTATION_INFO;
-        
 
 typedef struct {
     OWFuint supportedRotations;
@@ -68,10 +65,10 @@ typedef struct {
     OWF_PIXEL_FORMAT pixelFormat;
     OWF_ORIENTATION_INFO normal;
     OWF_ORIENTATION_INFO flipped;
-    OWFboolean      inUse;    
+    OWFboolean inUse;
 } OWF_SCREEN;
 
-typedef void (*OWF_SCREEN_CALLBACK)(void* obj, OWFint screenNumber, char event);
+typedef void (*OWF_SCREEN_CALLBACK)(void *obj, OWFint screenNumber, char event);
 
 /*!
  * \brief Module initialization
@@ -79,24 +76,21 @@ typedef void (*OWF_SCREEN_CALLBACK)(void* obj, OWFint screenNumber, char event);
  * \return OWF_TRUE if initialization ok
  * \return OWF_FALSE if initialization failed
  */
-OWF_API_CALL OWFboolean
-OWF_Screen_Initialize();
+OWF_API_CALL OWFboolean OWF_Screen_Initialize();
 
 /*!
  * \brief Module termination
  *
  * Delete screen and free resources
  */
-OWF_API_CALL void
-OWF_Screen_Terminate();
+OWF_API_CALL void OWF_Screen_Terminate();
 
 /*!
  * \brief Get systems's default screen
  *
  * \return The screen number of systems default screen
  */
-OWF_API_CALL OWFint
-OWF_Screen_GetDefaultNumber();
+OWF_API_CALL OWFint OWF_Screen_GetDefaultNumber();
 
 /*!
  * \brief Get screen's dimensions
@@ -107,8 +101,7 @@ OWF_Screen_GetDefaultNumber();
  * \return OWF_TRUE if screen exists
  * \return OWF_FALSE if screen does not exist
  */
-OWF_API_CALL OWFboolean
-OWF_Screen_GetHeader(OWFint screen, OWF_SCREEN* header);
+OWF_API_CALL OWFboolean OWF_Screen_GetHeader(OWFint screen, OWF_SCREEN *header);
 
 /*!
  * \brief Create a new screen
@@ -118,8 +111,8 @@ OWF_Screen_GetHeader(OWFint screen, OWF_SCREEN* header);
  *
  * \return screen number
  */
-OWF_API_CALL OWFint
-OWF_Screen_Create(OWFint width, OWFint height, OWF_SCREEN_CALLBACK func, void* obj);
+OWF_API_CALL OWFint OWF_Screen_Create(OWFint width, OWFint height,
+                                      OWF_SCREEN_CALLBACK func, void *obj);
 
 /*!
  * \brief Destroy a screen
@@ -129,8 +122,7 @@ OWF_Screen_Create(OWFint width, OWFint height, OWF_SCREEN_CALLBACK func, void* o
  * \return OWF_TRUE if screen exists
  * \return OWF_FALSE if screen does not exist
  */
-OWF_API_CALL void
-OWF_Screen_Destroy(OWFint screenNumber);
+OWF_API_CALL void OWF_Screen_Destroy(OWFint screenNumber);
 
 /*!
  * \brief Resize screen
@@ -141,8 +133,8 @@ OWF_Screen_Destroy(OWFint screenNumber);
  * \return OWF_TRUE if resize OK
  * \return OWF_FALSE if resize failed.
  */
-OWF_API_CALL OWFboolean
-OWF_Screen_Resize(OWFint screen, OWFint width, OWFint height);
+OWF_API_CALL OWFboolean OWF_Screen_Resize(OWFint screen, OWFint width,
+                                          OWFint height);
 
 /*!
  * \brief Blit image to screen
@@ -153,8 +145,8 @@ OWF_Screen_Resize(OWFint screen, OWFint width, OWFint height);
  * \return OWF_TRUE if screen exists and blitting is  OK
  * \return OWF_FALSE if screen does not exist or blitting is not allowed.
  */
-OWF_API_CALL OWFboolean
-OWF_Screen_Blit(OWFint screenNumber, void* buffer, OWF_ROTATION rotation);
+OWF_API_CALL OWFboolean OWF_Screen_Blit(OWFint screenNumber, void *buffer,
+                                        OWF_ROTATION rotation);
 
 /*!
  * \brief Notify objects
@@ -164,9 +156,7 @@ OWF_Screen_Blit(OWFint screenNumber, void* buffer, OWF_ROTATION rotation);
  * \param data
  *
  */
-OWF_API_CALL void
-OWF_Screen_Notify(void* data);
-
+OWF_API_CALL void OWF_Screen_Notify(void *data);
 
 /*!
  * \brief Checks if the screen number is valid
@@ -176,8 +166,7 @@ OWF_Screen_Notify(void* data);
  * \return OWF_TRUE if screen exists
  * \return OWF_FALSE if screen does not exist
  */
-OWF_API_CALL OWFboolean
-OWF_Screen_Valid(OWFint screenNumber);
+OWF_API_CALL OWFboolean OWF_Screen_Valid(OWFint screenNumber);
 
 /*!
  * \brief Checks if the screen rotation support is enabled
@@ -187,12 +176,10 @@ OWF_Screen_Valid(OWFint screenNumber);
  * \return OWF_TRUE if the screen rotation is enabled
  * \return OWF_FALSE if the screen rotation is enabled
  */
-OWF_API_CALL OWFboolean
-OWF_Screen_Rotation_Supported(OWFint screenNumber);
+OWF_API_CALL OWFboolean OWF_Screen_Rotation_Supported(OWFint screenNumber);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

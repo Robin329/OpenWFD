@@ -22,50 +22,36 @@
 
 #include <WF/wfc.h>
 
-
 #include "owfdisplaycontextgeneral.h"
 #include "owftypes.h"
 
-static OWFint sActiveScreens=0;
+static OWFint sActiveScreens = 0;
 
-OWF_DISPCTX OWF_DisplayContext_Create(OWFint32 screenNum)
-{
-    if (screenNum>=0 && screenNum<32)
-    {
-        sActiveScreens|=(1<<screenNum);
-        /* platform impl creates own storage here. Any value except NULL is good enough for SI */
-        return (OWF_DISPCTX)(screenNum|0x10000);    
-    }
-    else
-    {
-        if (screenNum==OWF_RESERVED_BAD_SCREEN_NUMBER)
-            {
+OWF_DISPCTX OWF_DisplayContext_Create(OWFint32 screenNum) {
+    if (screenNum >= 0 && screenNum < 32) {
+        sActiveScreens |= (1 << screenNum);
+        /* platform impl creates own storage here. Any value except NULL is good
+         * enough for SI */
+        return (OWF_DISPCTX)(screenNum | 0x10000);
+    } else {
+        if (screenNum == OWF_RESERVED_BAD_SCREEN_NUMBER) {
             return (OWF_DISPCTX)screenNum;
-            }
-        else
-        {
+        } else {
             return OWF_INVALID_HANDLE;
         }
     }
 }
 
-void OWF_DisplayContext_Destroy(OWFint32 screenNum, OWF_DISPCTX dc)
-{
+void OWF_DisplayContext_Destroy(OWFint32 screenNum, OWF_DISPCTX dc) {
     (void)dc;
-    if (screenNum>=0 && screenNum<32)
-    {
-        sActiveScreens&=~(1<<screenNum);
+    if (screenNum >= 0 && screenNum < 32) {
+        sActiveScreens &= ~(1 << screenNum);
     }
 }
-OWFboolean OWF_DisplayContext_IsLive(OWFint32 screenNum)
-{
-    if (screenNum>=0 && screenNum<32)
-    {
-        return ( sActiveScreens & (1<<screenNum) ) != 0;
-    }
-    else
-    {
+OWFboolean OWF_DisplayContext_IsLive(OWFint32 screenNum) {
+    if (screenNum >= 0 && screenNum < 32) {
+        return (sActiveScreens & (1 << screenNum)) != 0;
+    } else {
         return KHR_BOOLEAN_FALSE;
     }
 }
-

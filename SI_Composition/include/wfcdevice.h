@@ -28,8 +28,8 @@
 #define WFCDEVICE_H_
 
 #include "WF/wfc.h"
-#include "wfcstructs.h"
 #include "wfcimageprovider.h"
+#include "wfcstructs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,10 +44,8 @@ extern "C" {
  *
  *  \return Number of IDs written.
  */
-OWF_API_CALL WFCint
-WFC_Devices_GetIds(WFCint* idList,
-                   WFCint listCapacity,
-                   const WFCint* filterList);
+OWF_API_CALL WFCint WFC_Devices_GetIds(WFCint* idList, WFCint listCapacity,
+                                       const WFCint* filterList);
 
 /*!
  *  \brief Create instance of a device whose ID
@@ -59,16 +57,14 @@ WFC_Devices_GetIds(WFCint* idList,
  *  \return Handle to created device or WFC_INVALID_HANDLE
  *
  */
-OWF_API_CALL WFCint
-WFC_Device_Create(WFCint deviceId);
+OWF_API_CALL WFCint WFC_Device_Create(WFCint deviceId);
 
 /*!
  *  \brief Destroy device, or rather queue it for destruction.
  *
  *  \param device Device
  */
-OWF_API_CALL void
-WFC_Device_Destroy(WFC_DEVICE* device);
+OWF_API_CALL void WFC_Device_Destroy(WFC_DEVICE* device);
 
 /*!
  *  \brief Set error code for device.
@@ -82,9 +78,8 @@ WFC_Device_Destroy(WFC_DEVICE* device);
  *  \param code Error to set
  *
  */
-OWF_API_CALL void OWF_APIENTRY
-WFC_Device_SetError(WFCDevice dev,
-                    WFCErrorCode code);
+OWF_API_CALL void OWF_APIENTRY WFC_Device_SetError(WFCDevice dev,
+                                                   WFCErrorCode code);
 
 /*!
  *  \brief Read and reset last error code from device.
@@ -93,8 +88,7 @@ WFC_Device_SetError(WFCDevice dev,
  *
  *  \return WFCErrorCode
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetError(WFC_DEVICE* device);
+OWF_API_CALL WFCErrorCode WFC_Device_GetError(WFC_DEVICE* device);
 
 /*!
  *  \brief Find device object by handle
@@ -103,8 +97,7 @@ WFC_Device_GetError(WFC_DEVICE* device);
  *
  *  \return Mathing device object or NULL
  */
-OWF_API_CALL WFC_DEVICE*
-WFC_Device_FindByHandle(WFCDevice dev);
+OWF_API_CALL WFC_DEVICE* WFC_Device_FindByHandle(WFCDevice dev);
 
 /*!
  *  \brief Get device attribute
@@ -115,10 +108,9 @@ WFC_Device_FindByHandle(WFCDevice dev);
  *
  *  \return WFCErrorCode
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetAttribi(WFC_DEVICE* device,
-                      WFCDeviceAttrib attrib,
-                      WFCint* value);
+OWF_API_CALL WFCErrorCode WFC_Device_GetAttribi(WFC_DEVICE* device,
+                                                WFCDeviceAttrib attrib,
+                                                WFCint* value);
 
 /*!
  *  \brief Create context on device
@@ -129,26 +121,23 @@ WFC_Device_GetAttribi(WFC_DEVICE* device,
  *
  *  \return New context
  */
-OWF_API_CALL WFC_CONTEXT*
-WFC_Device_CreateContext(WFC_DEVICE* device,
-                         WFCNativeStreamType stream,
-                         WFCContextType type,
-                         WFCint screenNum);
+OWF_API_CALL WFC_CONTEXT* WFC_Device_CreateContext(WFC_DEVICE* device,
+                                                   WFCNativeStreamType stream,
+                                                   WFCContextType type,
+                                                   WFCint screenNum);
 
 /*!
  *  \brief Destroy context from device
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyContext(WFC_DEVICE* device,
-                          WFCContext context);
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyContext(WFC_DEVICE* device,
+                                                    WFCContext context);
 
 /*!
  *  \brief Destroy all device's contexts
  *
  *  \param device Device object
  */
-OWF_API_CALL void
-WFC_Device_DestroyContexts(WFC_DEVICE* device);
+OWF_API_CALL void WFC_Device_DestroyContexts(WFC_DEVICE* device);
 
 /*!
  *  \brief Find context context object by handle
@@ -159,9 +148,8 @@ WFC_Device_DestroyContexts(WFC_DEVICE* device);
  *  \return Corresponding context object or NULL
  *  if handle is invalid.
  */
-OWF_API_CALL WFC_CONTEXT*
-WFC_Device_FindContext(WFC_DEVICE* device,
-                       WFCContext context);
+OWF_API_CALL WFC_CONTEXT* WFC_Device_FindContext(WFC_DEVICE* device,
+                                                 WFCContext context);
 
 /*!
  *  \brief Create new element
@@ -171,8 +159,8 @@ WFC_Device_FindContext(WFC_DEVICE* device,
  *
  *  \return New element or NULL
  */
-OWF_API_CALL WFC_ELEMENT*
-WFC_Device_CreateElement(WFC_DEVICE* device, WFC_CONTEXT* context);
+OWF_API_CALL WFC_ELEMENT* WFC_Device_CreateElement(WFC_DEVICE* device,
+                                                   WFC_CONTEXT* context);
 
 /*!
  *  \brief Destroy element
@@ -180,17 +168,15 @@ WFC_Device_CreateElement(WFC_DEVICE* device, WFC_CONTEXT* context);
  *  \param device
  *  \param element
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyElement(WFC_DEVICE* device,
-                          WFCElement element);
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyElement(WFC_DEVICE* device,
+                                                    WFCElement element);
 
 /*!
  *  \brief Destroy all elements from device
  *
  *  \param device Device
  */
-OWF_API_CALL void
-WFC_Device_DestroyElements(WFC_DEVICE* device);
+OWF_API_CALL void WFC_Device_DestroyElements(WFC_DEVICE* device);
 
 /*!
  *  \brief Find element by handle
@@ -200,9 +186,8 @@ WFC_Device_DestroyElements(WFC_DEVICE* device);
  *
  *  \return Element object
  */
-OWF_API_CALL WFC_ELEMENT*
-WFC_Device_FindElement(WFC_DEVICE* device,
-                       WFCElement el);
+OWF_API_CALL WFC_ELEMENT* WFC_Device_FindElement(WFC_DEVICE* device,
+                                                 WFCElement el);
 
 /*!
  *  \brief Set element integer vector attribute
@@ -217,106 +202,88 @@ WFC_Device_FindElement(WFC_DEVICE* device,
  *  WFC_ERROR_INVALID_ARGUMENT if values is NULL or if the count doesn't match
  *  the attribute's size; WFC_ERROR_BAD_HANDLE if element handle is invalid.
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_SetElementAttribiv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              const WFCint* values);
+OWF_API_CALL WFCErrorCode WFC_Device_SetElementAttribiv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        const WFCint* values);
 
 /*!
  *  \brief Set element attribute
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_SetElementAttribfv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              const WFCfloat* values);
+OWF_API_CALL WFCErrorCode WFC_Device_SetElementAttribfv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        const WFCfloat* values);
 /*!
  *  \brief Get element attribute
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetElementAttribiv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              WFCint* values);
+OWF_API_CALL WFCErrorCode WFC_Device_GetElementAttribiv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        WFCint* values);
 /*!
  *  \brief Get element attribute
  */
-OWF_API_CALL WFCErrorCode
-WFC_Device_GetElementAttribfv(WFC_DEVICE* device,
-                              WFCElement element,
-                              WFCElementAttrib attrib,
-                              WFCint count,
-                              WFCfloat* values);
+OWF_API_CALL WFCErrorCode WFC_Device_GetElementAttribfv(WFC_DEVICE* device,
+                                                        WFCElement element,
+                                                        WFCElementAttrib attrib,
+                                                        WFCint count,
+                                                        WFCfloat* values);
 
-OWF_API_CALL OWF_STREAM*
-WFC_Device_CreateStream(WFC_DEVICE* device,
-                        WFC_CONTEXT* context,
-                        WFCNativeStreamType stream,
-                        WFCboolean write);
+OWF_API_CALL OWF_STREAM* WFC_Device_CreateStream(WFC_DEVICE* device,
+                                                 WFC_CONTEXT* context,
+                                                 WFCNativeStreamType stream,
+                                                 WFCboolean write);
 
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyStream(WFC_DEVICE* device,
-                         OWF_STREAM* stream);
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyStream(WFC_DEVICE* device,
+                                                   OWF_STREAM* stream);
 
 /*!
  *  \brief Destroy all image providers from device
  *
  *  \param device Device
  */
-OWF_API_CALL void
-WFC_Device_DestroyImageProviders(WFC_DEVICE* device);
+OWF_API_CALL void WFC_Device_DestroyImageProviders(WFC_DEVICE* device);
 
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_FindImageProvider(WFC_DEVICE* device,
-                             WFCHandle handle,
-                             WFC_IMAGE_PROVIDER_TYPE type);
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_FindImageProvider(
+    WFC_DEVICE* device, WFCHandle handle, WFC_IMAGE_PROVIDER_TYPE type);
 
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_CreateSource(WFC_DEVICE* device,
-                        WFC_CONTEXT* context,
-                        WFCNativeStreamType stream);
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_CreateSource(
+    WFC_DEVICE* device, WFC_CONTEXT* context, WFCNativeStreamType stream);
 
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_CreateMask(WFC_DEVICE* device,
-                      WFC_CONTEXT* context,
-                      WFCNativeStreamType stream);
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_CreateMask(
+    WFC_DEVICE* device, WFC_CONTEXT* context, WFCNativeStreamType stream);
 
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroySource(WFC_DEVICE* device, WFCSource source);
+OWF_API_CALL WFCErrorCode WFC_Device_DestroySource(WFC_DEVICE* device,
+                                                   WFCSource source);
 
-OWF_API_CALL WFCErrorCode
-WFC_Device_DestroyMask(WFC_DEVICE* device, WFCMask mask);
+OWF_API_CALL WFCErrorCode WFC_Device_DestroyMask(WFC_DEVICE* device,
+                                                 WFCMask mask);
 
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_FindSource(WFC_DEVICE* device, WFCSource source);
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_FindSource(WFC_DEVICE* device,
+                                                       WFCSource source);
 
-OWF_API_CALL WFC_IMAGE_PROVIDER*
-WFC_Device_FindMask(WFC_DEVICE* device, WFCMask mask);
+OWF_API_CALL WFC_IMAGE_PROVIDER* WFC_Device_FindMask(WFC_DEVICE* device,
+                                                     WFCMask mask);
 
-OWF_API_CALL void
-WFC_Device_EnableContentNotifications(WFC_DEVICE* device,
-                                      WFC_CONTEXT* context,
-                                      WFCboolean enable);
+OWF_API_CALL void WFC_Device_EnableContentNotifications(WFC_DEVICE* device,
+                                                        WFC_CONTEXT* context,
+                                                        WFCboolean enable);
 
-OWF_API_CALL WFCboolean
-WFC_Device_StreamIsTarget(WFC_DEVICE* device,
-                          WFCNativeStreamType stream);
+OWF_API_CALL WFCboolean WFC_Device_StreamIsTarget(WFC_DEVICE* device,
+                                                  WFCNativeStreamType stream);
 
-OWF_API_CALL WFC_CONTEXT*
-WFC_Device_FindContextByScreen(WFC_DEVICE* device,
-                               WFCint screenNumber);
+OWF_API_CALL WFC_CONTEXT* WFC_Device_FindContextByScreen(WFC_DEVICE* device,
+                                                         WFCint screenNumber);
 
-OWF_API_CALL void
-WFC_Device_DestroyContextElements(WFC_DEVICE* device,
-                                  WFC_CONTEXT* context);
+OWF_API_CALL void WFC_Device_DestroyContextElements(WFC_DEVICE* device,
+                                                    WFC_CONTEXT* context);
 
-OWF_API_CALL void
-WFC_Device_DestroyContextImageProviders(WFC_DEVICE* device,
-                                        WFC_CONTEXT* context);
+OWF_API_CALL void WFC_Device_DestroyContextImageProviders(WFC_DEVICE* device,
+                                                          WFC_CONTEXT* context);
 
 #ifdef __cplusplus
 }

@@ -24,78 +24,71 @@
  *
  *  \brief SI Element handling
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
+#include "wfcelement.h"
 
 #include <WF/wfc.h>
-
-#include "wfcelement.h"
-#include "wfccontext.h"
-#include "wfcdevice.h"
-#include "wfcstructs.h"
-#include "wfcimageprovider.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "owfattributes.h"
+#include "owfdebug.h"
 #include "owfmemory.h"
 #include "owfobject.h"
 #include "owfstream.h"
-#include "owfdebug.h"
+#include "wfccontext.h"
+#include "wfcdevice.h"
+#include "wfcimageprovider.h"
+#include "wfcstructs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define FIRST_ELEMENT_HANDLE    3000
+#define FIRST_ELEMENT_HANDLE 3000
 
-#define FAIL_IF(c,e)        if (c) { return e; }
+#define FAIL_IF(c, e) \
+    if (c) {          \
+        return e;     \
+    }
 
-
-static const WFCbitfield    validTransparencyModes[] = {
-                                WFC_TRANSPARENCY_NONE,
-                                WFC_TRANSPARENCY_ELEMENT_GLOBAL_ALPHA,
-                                WFC_TRANSPARENCY_SOURCE,
-                                WFC_TRANSPARENCY_MASK,
-                                WFC_TRANSPARENCY_ELEMENT_GLOBAL_ALPHA |
-                                    WFC_TRANSPARENCY_SOURCE,
-                                WFC_TRANSPARENCY_ELEMENT_GLOBAL_ALPHA |
-                                    WFC_TRANSPARENCY_MASK
-                            };
+static const WFCbitfield validTransparencyModes[] = {
+    WFC_TRANSPARENCY_NONE,
+    WFC_TRANSPARENCY_ELEMENT_GLOBAL_ALPHA,
+    WFC_TRANSPARENCY_SOURCE,
+    WFC_TRANSPARENCY_MASK,
+    WFC_TRANSPARENCY_ELEMENT_GLOBAL_ALPHA | WFC_TRANSPARENCY_SOURCE,
+    WFC_TRANSPARENCY_ELEMENT_GLOBAL_ALPHA | WFC_TRANSPARENCY_MASK};
 
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-void
-WFC_Element_Initialize(WFC_ELEMENT* element)
-{
-    element->dstRect[0]         = 0;
-    element->dstRect[1]         = 0;
-    element->dstRect[2]         = 0;
-    element->dstRect[3]         = 0;
-    element->srcRect[0]         = 0;
-    element->srcRect[1]         = 0;
-    element->srcRect[2]         = 0;
-    element->srcRect[3]         = 0;
+void WFC_Element_Initialize(WFC_ELEMENT* element) {
+    element->dstRect[0] = 0;
+    element->dstRect[1] = 0;
+    element->dstRect[2] = 0;
+    element->dstRect[3] = 0;
+    element->srcRect[0] = 0;
+    element->srcRect[1] = 0;
+    element->srcRect[2] = 0;
+    element->srcRect[3] = 0;
 
-    element->source             = WFC_INVALID_HANDLE;
-    element->sourceFlip         = WFC_FALSE;
-    element->sourceRotation     = WFC_ROTATION_0;
-    element->sourceScaleFilter  = WFC_SCALE_FILTER_NONE;
-    element->transparencyTypes  = 0;
-    element->globalAlpha        = OWF_ALPHA_MAX_VALUE;
-    element->maskHandle         = WFC_INVALID_HANDLE;
-    element->sourceHandle       = WFC_INVALID_HANDLE;
+    element->source = WFC_INVALID_HANDLE;
+    element->sourceFlip = WFC_FALSE;
+    element->sourceRotation = WFC_ROTATION_0;
+    element->sourceScaleFilter = WFC_SCALE_FILTER_NONE;
+    element->transparencyTypes = 0;
+    element->globalAlpha = OWF_ALPHA_MAX_VALUE;
+    element->maskHandle = WFC_INVALID_HANDLE;
+    element->sourceHandle = WFC_INVALID_HANDLE;
 }
 
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Element_Destroy(WFC_ELEMENT* element)
-{
-    if (element)
-    {
+OWF_API_CALL void WFC_Element_Destroy(WFC_ELEMENT* element) {
+    if (element) {
         DPRINT(("WFC_Element_Destroy"));
 
         DPRINT(("  element = %p (%d)", element, element->handle));
@@ -104,25 +97,17 @@ WFC_Element_Destroy(WFC_ELEMENT* element)
         DESTROY(element->cachedMask);
 
         DPRINT(("  cachedSource = %p (%d)", element->cachedSource,
-                                            element->cachedSource ?
-                                                element->cachedSource->handle :
-                                                0));
+                element->cachedSource ? element->cachedSource->handle : 0));
         DPRINT(("  cachedMask = %p (%d)", element->cachedMask,
-                                          element->cachedMask ?
-                                              element->cachedMask->handle :
-                                              0));
+                element->cachedMask ? element->cachedMask->handle : 0));
 
         DESTROY(element->source);
         DESTROY(element->mask);
 
         DPRINT(("  source = %p (%d)", element->source,
-                                      element->source ?
-                                          element->source->handle :
-                                          0));
+                element->source ? element->source->handle : 0));
         DPRINT(("  mask = %p (%d)", element->mask,
-                                    element->mask ?
-                                        element->mask->handle :
-                                        0));
+                element->mask ? element->mask->handle : 0));
         DESTROY(element->context);
 
         OWF_Pool_PutObject(element);
@@ -136,16 +121,13 @@ WFC_Element_Destroy(WFC_ELEMENT* element)
  *
  *  \return New element object or NULL
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_ELEMENT*
-WFC_Element_Create(WFC_CONTEXT* context)
-{
-    static WFCint           nextElementHandle = FIRST_ELEMENT_HANDLE;
-    WFC_ELEMENT*            element;
+OWF_API_CALL WFC_ELEMENT* WFC_Element_Create(WFC_CONTEXT* context) {
+    static WFCint nextElementHandle = FIRST_ELEMENT_HANDLE;
+    WFC_ELEMENT* element;
 
     element = OWF_Pool_GetObject(context->elementPool);
 
-    if (element)
-    {
+    if (element) {
         WFC_Element_Initialize(element);
 
         element->handle = nextElementHandle++;
@@ -159,11 +141,9 @@ WFC_Element_Create(WFC_CONTEXT* context)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFC_ELEMENT*
-WFC_Element_Clone(WFC_ELEMENT* element)
-{
-    WFC_ELEMENT*        clone;
-    WFC_CONTEXT*        context;
+OWF_API_CALL WFC_ELEMENT* WFC_Element_Clone(WFC_ELEMENT* element) {
+    WFC_ELEMENT* clone;
+    WFC_CONTEXT* context;
 
     OWF_ASSERT(element);
 
@@ -173,32 +153,30 @@ WFC_Element_Clone(WFC_ELEMENT* element)
     context = CONTEXT(element->context);
     clone = OWF_Pool_GetObject(context->elementPool);
 
-    if (clone)
-    {
+    if (clone) {
         WFC_Element_Initialize(clone);
 
-        clone->handle           = element->handle;
+        clone->handle = element->handle;
 
-        clone->sourceFlip       = element->sourceFlip;
-        clone->sourceRotation   = element->sourceRotation;
-        clone->sourceScaleFilter= element->sourceScaleFilter;
-        clone->transparencyTypes= element->transparencyTypes;
-        clone->globalAlpha      = element->globalAlpha;
-        clone->maskHandle       = element->maskHandle;
-        clone->sourceHandle     = element->sourceHandle;
+        clone->sourceFlip = element->sourceFlip;
+        clone->sourceRotation = element->sourceRotation;
+        clone->sourceScaleFilter = element->sourceScaleFilter;
+        clone->transparencyTypes = element->transparencyTypes;
+        clone->globalAlpha = element->globalAlpha;
+        clone->maskHandle = element->maskHandle;
+        clone->sourceHandle = element->sourceHandle;
 
         ADDREF(clone->cachedMask, element->cachedMask);
         ADDREF(clone->cachedSource, element->cachedSource);
 
-        ADDREF(clone->mask,     element->mask);
-        ADDREF(clone->source,   element->source);
+        ADDREF(clone->mask, element->mask);
+        ADDREF(clone->source, element->source);
         clone->device = element->device;
 
-        ADDREF(clone->context,  element->context);
+        ADDREF(clone->context, element->context);
 
-        memcpy(clone->srcRect,  element->srcRect, 4 * sizeof(WFCfloat));
-        memcpy(clone->dstRect,  element->dstRect, 4 * sizeof(WFCfloat));
-
+        memcpy(clone->srcRect, element->srcRect, 4 * sizeof(WFCfloat));
+        memcpy(clone->dstRect, element->dstRect, 4 * sizeof(WFCfloat));
     }
 
     return clone;
@@ -208,8 +186,7 @@ WFC_Element_Clone(WFC_ELEMENT* element)
  *
  *----------------------------------------------------------------------------*/
 static WFCboolean WFC_Element_ClampRectangle(const char* rtype,
-                                             WFCfloat* rect)
-{
+                                             WFCfloat* rect) {
     /*
      * int -> float conversion:
      * ------------------------
@@ -221,19 +198,18 @@ static WFCboolean WFC_Element_ClampRectangle(const char* rtype,
      *
      */
 
-    const WFCfloat          LIMIT = 1.6777216E7f;
-    WFCint                  i;
-    WFCboolean              clamped = WFC_FALSE;
+    const WFCfloat LIMIT = 1.6777216E7f;
+    WFCint i;
+    WFCboolean clamped = WFC_FALSE;
 
-    for (i = 0; i < 4; i++)
-    {
-        if (fabs(rect[i]) > LIMIT)
-        {
+    for (i = 0; i < 4; i++) {
+        if (fabs(rect[i]) > LIMIT) {
             static const char* coord[4] = {"x", "y", "width", "height"};
 
-            DPRINT(("  Warning: Precision loss in element's %s rectangle's "
-                    "%s coordinate.",
-                    rtype, coord[i]));
+            DPRINT(
+                ("  Warning: Precision loss in element's %s rectangle's "
+                 "%s coordinate.",
+                 rtype, coord[i]));
 
             rect[i] = rect[i] < 0 ? -LIMIT : LIMIT;
 
@@ -254,21 +230,16 @@ static WFCboolean WFC_Element_ClampRectangle(const char* rtype,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static WFCErrorCode
-WFC_Element_ValidateSourceRectangle(WFC_ELEMENT* element,
-                                    WFCfloat* rect)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
+static WFCErrorCode WFC_Element_ValidateSourceRectangle(WFC_ELEMENT* element,
+                                                        WFCfloat* rect) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     OWF_ASSERT(element);
     OWF_ASSERT(rect);
 
-    if (rect[0] < 0.0f || rect[1] < 0.0f || rect[2] < 0.0f || rect[3] < 0.0f)
-    {
+    if (rect[0] < 0.0f || rect[1] < 0.0f || rect[2] < 0.0f || rect[3] < 0.0f) {
         result = WFC_ERROR_ILLEGAL_ARGUMENT;
-    }
-    else if (WFC_Element_ClampRectangle("source", rect))
-    {
+    } else if (WFC_Element_ClampRectangle("source", rect)) {
         result = WFC_ERROR_NONE;
     }
     return result;
@@ -277,11 +248,9 @@ WFC_Element_ValidateSourceRectangle(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static WFCErrorCode
-WFC_Element_ValidateDestinationRectangle(WFC_ELEMENT* element,
-                                         WFCfloat* rect)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
+static WFCErrorCode WFC_Element_ValidateDestinationRectangle(
+    WFC_ELEMENT* element, WFCfloat* rect) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     OWF_ASSERT(element);
     OWF_ASSERT(rect);
@@ -289,12 +258,9 @@ WFC_Element_ValidateDestinationRectangle(WFC_ELEMENT* element,
     DPRINT(("WFC_Element_ValidateDestinationRectangle(element = %d)",
             element->handle));
 
-    if (rect[2] < 0.0f || rect[3] < 0.0f)
-    {
+    if (rect[2] < 0.0f || rect[3] < 0.0f) {
         result = WFC_ERROR_ILLEGAL_ARGUMENT;
-    }
-    else if (WFC_Element_ClampRectangle("destination", rect))
-    {
+    } else if (WFC_Element_ClampRectangle("destination", rect)) {
         /* ... return error or something here? */
         result = WFC_ERROR_NONE;
     }
@@ -314,86 +280,70 @@ WFC_Element_ValidateDestinationRectangle(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static WFCErrorCode
-WFC_Element_ValidateScalarAttributei(WFC_ELEMENT* element,
-                                     WFCElementAttrib attrib,
-                                     WFCint value)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
+static WFCErrorCode WFC_Element_ValidateScalarAttributei(
+    WFC_ELEMENT* element, WFCElementAttrib attrib, WFCint value) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     OWF_ASSERT(element);
 
-    switch (attrib)
-    {
-        case WFC_ELEMENT_SOURCE:
-        {
+    switch (attrib) {
+        case WFC_ELEMENT_SOURCE: {
             WFC_IMAGE_PROVIDER* source;
 
-            source = WFC_Device_FindImageProvider(element->device,
-                                                  value,
+            source = WFC_Device_FindImageProvider(element->device, value,
                                                   WFC_IMAGE_SOURCE);
 
-            result = BOOLEAN_TO_ERROR((WFC_INVALID_HANDLE == value) ||
-                                      ((WFC_INVALID_HANDLE != value) &&
-                                       (NULL != source)));
+            result = BOOLEAN_TO_ERROR(
+                (WFC_INVALID_HANDLE == value) ||
+                ((WFC_INVALID_HANDLE != value) && (NULL != source)));
             break;
         }
 
-        case WFC_ELEMENT_MASK:
-        {
+        case WFC_ELEMENT_MASK: {
             WFC_IMAGE_PROVIDER* mask;
 
-            mask = WFC_Device_FindImageProvider(element->device,
-                                                value,
+            mask = WFC_Device_FindImageProvider(element->device, value,
                                                 WFC_IMAGE_MASK);
 
-            result = BOOLEAN_TO_ERROR((WFC_INVALID_HANDLE == value) ||
-                                      ((WFC_INVALID_HANDLE != value) &&
-                                       (NULL != mask)));
+            result = BOOLEAN_TO_ERROR(
+                (WFC_INVALID_HANDLE == value) ||
+                ((WFC_INVALID_HANDLE != value) && (NULL != mask)));
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_ROTATION:
-        {
-            WFCRotation rotation = (WFCRotation) value;
+        case WFC_ELEMENT_SOURCE_ROTATION: {
+            WFCRotation rotation = (WFCRotation)value;
 
-            result = BOOLEAN_TO_ERROR((WFC_ROTATION_0    == rotation ||
-                                       WFC_ROTATION_90   == rotation ||
-                                       WFC_ROTATION_180  == rotation ||
-                                       WFC_ROTATION_270  == rotation));
+            result = BOOLEAN_TO_ERROR(
+                (WFC_ROTATION_0 == rotation || WFC_ROTATION_90 == rotation ||
+                 WFC_ROTATION_180 == rotation || WFC_ROTATION_270 == rotation));
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_SCALE_FILTER:
-        {
-            WFCScaleFilter  filter = (WFCScaleFilter) value;
+        case WFC_ELEMENT_SOURCE_SCALE_FILTER: {
+            WFCScaleFilter filter = (WFCScaleFilter)value;
 
-            result = BOOLEAN_TO_ERROR((WFC_SCALE_FILTER_NONE     == filter ||
-                                       WFC_SCALE_FILTER_FASTER   == filter ||
-                                       WFC_SCALE_FILTER_BETTER   == filter));
+            result = BOOLEAN_TO_ERROR((WFC_SCALE_FILTER_NONE == filter ||
+                                       WFC_SCALE_FILTER_FASTER == filter ||
+                                       WFC_SCALE_FILTER_BETTER == filter));
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_FLIP:
-        {
-            WFCboolean  flip = (WFCboolean) value;
+        case WFC_ELEMENT_SOURCE_FLIP: {
+            WFCboolean flip = (WFCboolean)value;
 
-            result = BOOLEAN_TO_ERROR((WFC_TRUE == flip ||
-                                       WFC_FALSE == flip));
+            result = BOOLEAN_TO_ERROR((WFC_TRUE == flip || WFC_FALSE == flip));
             break;
         }
 
-        case WFC_ELEMENT_TRANSPARENCY_TYPES:
-        {
-            WFCint          ii;
-            WFCint          count = sizeof(validTransparencyModes) /
-                                    sizeof(WFCbitfield);
-            WFCbitfield     types = (WFCbitfield) value;
+        case WFC_ELEMENT_TRANSPARENCY_TYPES: {
+            WFCint ii;
+            WFCint count = sizeof(validTransparencyModes) / sizeof(WFCbitfield);
+            WFCbitfield types = (WFCbitfield)value;
 
             result = WFC_ERROR_ILLEGAL_ARGUMENT;
             for (ii = 0; ii < count; ii++) {
-                if (types == validTransparencyModes[ii])
-                {
+                if (types == validTransparencyModes[ii]) {
                     result = WFC_ERROR_NONE;
                     break;
                 }
@@ -401,8 +351,7 @@ WFC_Element_ValidateScalarAttributei(WFC_ELEMENT* element,
             break;
         }
 
-        default:
-        {
+        default: {
             result = WFC_ERROR_BAD_ATTRIBUTE;
             break;
         }
@@ -413,19 +362,14 @@ WFC_Element_ValidateScalarAttributei(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static WFCErrorCode
-WFC_Element_ValidateScalarAttributef(WFC_ELEMENT* element,
-                                     WFCElementAttrib attrib,
-                                     WFCfloat value)
-{
-    WFCErrorCode          result = WFC_ERROR_NONE;
+static WFCErrorCode WFC_Element_ValidateScalarAttributef(
+    WFC_ELEMENT* element, WFCElementAttrib attrib, WFCfloat value) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     OWF_ASSERT(element);
 
-    switch (attrib)
-    {
-        case WFC_ELEMENT_GLOBAL_ALPHA:
-        {
+    switch (attrib) {
+        case WFC_ELEMENT_GLOBAL_ALPHA: {
             result = BOOLEAN_TO_ERROR(value >= OWF_ALPHA_MIN_VALUE &&
                                       value <= OWF_ALPHA_MAX_VALUE);
             break;
@@ -437,15 +381,13 @@ WFC_Element_ValidateScalarAttributef(WFC_ELEMENT* element,
         case WFC_ELEMENT_SOURCE_SCALE_FILTER:
         case WFC_ELEMENT_TRANSPARENCY_TYPES:
         case WFC_ELEMENT_SOURCE:
-        case WFC_ELEMENT_MASK:
-        {
+        case WFC_ELEMENT_MASK: {
             /* NOTE! special early out here. */
             result = WFC_ERROR_BAD_ATTRIBUTE;
-			break;
+            break;
         }
 
-        default:
-        {
+        default: {
             result = WFC_ERROR_ILLEGAL_ARGUMENT;
             break;
         }
@@ -457,28 +399,23 @@ WFC_Element_ValidateScalarAttributef(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-static void
-WFC_Element_SetElementImageProvider(WFC_ELEMENT* element,
-                                    WFC_IMAGE_PROVIDER_TYPE type,
-                                    WFCHandle handle)
-{
-    WFC_IMAGE_PROVIDER*     provider;
+static void WFC_Element_SetElementImageProvider(WFC_ELEMENT* element,
+                                                WFC_IMAGE_PROVIDER_TYPE type,
+                                                WFCHandle handle) {
+    WFC_IMAGE_PROVIDER* provider;
 
     OWF_ASSERT(element);
 
     provider = WFC_Device_FindImageProvider(element->device, handle, type);
 
-    switch (type)
-    {
-        case WFC_IMAGE_SOURCE:
-        {
+    switch (type) {
+        case WFC_IMAGE_SOURCE: {
             DESTROY(element->cachedSource);
             ADDREF(element->cachedSource, provider);
             element->sourceHandle = handle;
             break;
         }
-        case WFC_IMAGE_MASK:
-        {
+        case WFC_IMAGE_MASK: {
             DESTROY(element->cachedMask);
             ADDREF(element->cachedMask, provider);
             element->maskHandle = handle;
@@ -496,24 +433,19 @@ WFC_Element_SetElementImageProvider(WFC_ELEMENT* element,
  *  \param values           Attribute vector value
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Element_SetAttribiv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        const WFCint* values)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
-
+OWF_API_CALL WFCErrorCode WFC_Element_SetAttribiv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  const WFCint* values) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     FAIL_IF(NULL == values, WFC_ERROR_ILLEGAL_ARGUMENT);
 
-    switch (attrib)
-    {
+    switch (attrib) {
         /* Vector attributes */
         case WFC_ELEMENT_SOURCE_RECTANGLE:
-        case WFC_ELEMENT_DESTINATION_RECTANGLE:
-        {
-            WFCfloat                rect[4];
+        case WFC_ELEMENT_DESTINATION_RECTANGLE: {
+            WFCfloat rect[4];
 
             rect[0] = values[0];
             rect[1] = values[1];
@@ -524,73 +456,56 @@ WFC_Element_SetAttribiv(WFC_ELEMENT* element,
             break;
         }
 
-        case WFC_ELEMENT_GLOBAL_ALPHA:
-        {
-            WFCfloat    fvalue = values[0] / (WFCfloat) OWF_BYTE_MAX_VALUE;
+        case WFC_ELEMENT_GLOBAL_ALPHA: {
+            WFCfloat fvalue = values[0] / (WFCfloat)OWF_BYTE_MAX_VALUE;
 
-            result = WFC_Element_SetAttribfv(element,
-                                             attrib,
-                                             1,
-                                             &fvalue);
+            result = WFC_Element_SetAttribfv(element, attrib, 1, &fvalue);
             break;
         }
 
         /* Scalar attributes */
-        default:
-        {
-            WFCint          value;
+        default: {
+            WFCint value;
 
             FAIL_IF(1 != count, WFC_ERROR_ILLEGAL_ARGUMENT);
 
             value = values[0];
 
             /* Validate the value thus ensuring it is safe to change it */
-            result = WFC_Element_ValidateScalarAttributei(element,
-                                                          attrib,
-                                                          value);
-            if (WFC_ERROR_NONE != result)
-            {
+            result =
+                WFC_Element_ValidateScalarAttributei(element, attrib, value);
+            if (WFC_ERROR_NONE != result) {
                 break;
             }
 
-            switch (attrib)
-            {
-                case WFC_ELEMENT_SOURCE:
-                {
-                    WFC_Element_SetElementImageProvider(element,
-                                                        WFC_IMAGE_SOURCE,
+            switch (attrib) {
+                case WFC_ELEMENT_SOURCE: {
+                    WFC_Element_SetElementImageProvider(
+                        element, WFC_IMAGE_SOURCE, value);
+                    break;
+                }
+                case WFC_ELEMENT_MASK: {
+                    WFC_Element_SetElementImageProvider(element, WFC_IMAGE_MASK,
                                                         value);
                     break;
                 }
-                case WFC_ELEMENT_MASK:
-                {
-                    WFC_Element_SetElementImageProvider(element,
-                                                        WFC_IMAGE_MASK,
-                                                        value);
-                    break;
-                }
-                case WFC_ELEMENT_SOURCE_FLIP:
-                {
+                case WFC_ELEMENT_SOURCE_FLIP: {
                     element->sourceFlip = value;
                     break;
                 }
-                case WFC_ELEMENT_SOURCE_ROTATION:
-                {
+                case WFC_ELEMENT_SOURCE_ROTATION: {
                     element->sourceRotation = value;
                     break;
                 }
-                case WFC_ELEMENT_SOURCE_SCALE_FILTER:
-                {
+                case WFC_ELEMENT_SOURCE_SCALE_FILTER: {
                     element->sourceScaleFilter = value;
                     break;
                 }
-                case WFC_ELEMENT_TRANSPARENCY_TYPES:
-                {
+                case WFC_ELEMENT_TRANSPARENCY_TYPES: {
                     element->transparencyTypes = value;
                     break;
                 }
-                default:
-                {
+                default: {
                     result = WFC_ERROR_BAD_ATTRIBUTE;
                     break;
                 }
@@ -605,86 +520,73 @@ WFC_Element_SetAttribiv(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Element_SetAttribfv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        const WFCfloat* values)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
+OWF_API_CALL WFCErrorCode WFC_Element_SetAttribfv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  const WFCfloat* values) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     FAIL_IF(NULL == values, WFC_ERROR_ILLEGAL_ARGUMENT);
 
-    switch (attrib)
-    {
+    switch (attrib) {
         /* Vector attributes */
         case WFC_ELEMENT_SOURCE_RECTANGLE:
-        case WFC_ELEMENT_DESTINATION_RECTANGLE:
-        {
-            WFCfloat        clamped[4];
+        case WFC_ELEMENT_DESTINATION_RECTANGLE: {
+            WFCfloat clamped[4];
 
             FAIL_IF(4 != count, WFC_ERROR_ILLEGAL_ARGUMENT);
 
             memcpy(clamped, values, 4 * sizeof(WFCfloat));
 
-            if (WFC_ELEMENT_SOURCE_RECTANGLE == attrib)
-            {
+            if (WFC_ELEMENT_SOURCE_RECTANGLE == attrib) {
                 /* this clamps the rectangle, in case it has values that
                  * cause precision loss or other fuzzy behaviour. */
                 result = WFC_Element_ValidateSourceRectangle(element, clamped);
 
-                if (WFC_ERROR_NONE == result)
-                {
+                if (WFC_ERROR_NONE == result) {
                     memcpy(element->srcRect, clamped, 4 * sizeof(WFCfloat));
 
                     DPRINT(("  Source rectangle set to (%.2f,%.2f,%.2f,%.2f)",
                             clamped[0], clamped[1], clamped[2], clamped[3]));
+                } else {
+                    DPRINT(
+                        ("  Source rectangle (%.2f,%.2f,%.2f,%.2f) is "
+                         "invalid",
+                         values[0], values[1], values[2], values[3]));
                 }
-                else
-                {
-                    DPRINT(("  Source rectangle (%.2f,%.2f,%.2f,%.2f) is " \
-                            "invalid",
-                            values[0], values[1], values[2], values[3]));
-                }
-            }
-            else
-            {
-                result = WFC_Element_ValidateDestinationRectangle(element,
-                                                                  clamped);
-                if (WFC_ERROR_NONE == result)
-                {
+            } else {
+                result =
+                    WFC_Element_ValidateDestinationRectangle(element, clamped);
+                if (WFC_ERROR_NONE == result) {
                     memcpy(element->dstRect, clamped, 4 * sizeof(WFCfloat));
 
-                    DPRINT(("  Destination rectangle set to " \
-                            "(%.2f,%.2f,%.2f,%.2f)",
-                            clamped[0], clamped[1], clamped[2], clamped[3]));
-                }
-                else
-                {
-                    DPRINT(("  Destination rectangle (%.2f,%.2f,%.2f,%.2f) is "
-                            "invalid",
-                            values[0], values[1], values[2], values[3]));
+                    DPRINT(
+                        ("  Destination rectangle set to "
+                         "(%.2f,%.2f,%.2f,%.2f)",
+                         clamped[0], clamped[1], clamped[2], clamped[3]));
+                } else {
+                    DPRINT(
+                        ("  Destination rectangle (%.2f,%.2f,%.2f,%.2f) is "
+                         "invalid",
+                         values[0], values[1], values[2], values[3]));
                 }
             }
             break;
         }
 
         /* scalar attributes */
-        case WFC_ELEMENT_GLOBAL_ALPHA:
-        {
+        case WFC_ELEMENT_GLOBAL_ALPHA: {
             /* values[0] must be [0, 1] */
-            WFCfloat        value = values[0];
+            WFCfloat value = values[0];
 
             /* value is [0, 1] map to [0, OWF_ALPHA_MAX] */
             value = value * OWF_ALPHA_MAX_VALUE;
 
             /* validate the value */
-            result = WFC_Element_ValidateScalarAttributef(element,
-                                                          attrib,
-                                                          value);
+            result =
+                WFC_Element_ValidateScalarAttributef(element, attrib, value);
 
-            if (WFC_ERROR_NONE != result)
-            {
+            if (WFC_ERROR_NONE != result) {
                 /* invalid value for attribute, out we go */
                 break;
             }
@@ -693,8 +595,7 @@ WFC_Element_SetAttribfv(WFC_ELEMENT* element,
             break;
         }
 
-        default:
-        {
+        default: {
             result = WFC_ERROR_BAD_ATTRIBUTE;
             break;
         }
@@ -706,29 +607,23 @@ WFC_Element_SetAttribfv(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  * Attribute getters
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Element_GetAttribiv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        WFCint* values)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
-
+OWF_API_CALL WFCErrorCode WFC_Element_GetAttribiv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  WFCint* values) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     FAIL_IF(NULL == values, WFC_ERROR_ILLEGAL_ARGUMENT);
 
-    switch (attrib)
-    {
+    switch (attrib) {
         /* Vector attributes */
         case WFC_ELEMENT_SOURCE_RECTANGLE:
-        case WFC_ELEMENT_DESTINATION_RECTANGLE:
-        {
-            WFCfloat        rect[4] = {0.0, 0.0, 0.0, 0.0};
+        case WFC_ELEMENT_DESTINATION_RECTANGLE: {
+            WFCfloat rect[4] = {0.0, 0.0, 0.0, 0.0};
 
             result = WFC_Element_GetAttribfv(element, attrib, count, rect);
 
-            if (WFC_ERROR_NONE == result)
-            {
+            if (WFC_ERROR_NONE == result) {
                 values[0] = floor(rect[0]);
                 values[1] = floor(rect[1]);
                 values[2] = floor(rect[2]);
@@ -738,54 +633,44 @@ WFC_Element_GetAttribiv(WFC_ELEMENT* element,
         }
 
         /* Scalar attributes */
-        default:
-        {
+        default: {
             FAIL_IF(1 != count, WFC_ERROR_ILLEGAL_ARGUMENT);
 
-            switch (attrib)
-            {
+            switch (attrib) {
                 /* pure int attributes */
-                case WFC_ELEMENT_SOURCE:
-                {
+                case WFC_ELEMENT_SOURCE: {
                     *values = element->sourceHandle;
                     break;
                 }
-                case WFC_ELEMENT_MASK:
-                {
+                case WFC_ELEMENT_MASK: {
                     *values = element->maskHandle;
                     break;
                 }
-                case WFC_ELEMENT_SOURCE_FLIP:
-                {
+                case WFC_ELEMENT_SOURCE_FLIP: {
                     *values = element->sourceFlip;
                     break;
                 }
-                case WFC_ELEMENT_SOURCE_ROTATION:
-                {
+                case WFC_ELEMENT_SOURCE_ROTATION: {
                     *values = element->sourceRotation;
                     break;
                 }
-                case WFC_ELEMENT_SOURCE_SCALE_FILTER:
-                {
+                case WFC_ELEMENT_SOURCE_SCALE_FILTER: {
                     *values = element->sourceScaleFilter;
                     break;
                 }
-                case WFC_ELEMENT_TRANSPARENCY_TYPES:
-                {
+                case WFC_ELEMENT_TRANSPARENCY_TYPES: {
                     *values = element->transparencyTypes;
                     break;
                 }
-                case WFC_ELEMENT_GLOBAL_ALPHA:
-                {
-                    WFCfloat    fvalue;
+                case WFC_ELEMENT_GLOBAL_ALPHA: {
+                    WFCfloat fvalue;
 
                     WFC_Element_GetAttribfv(element, attrib, 1, &fvalue);
                     *values = floor(OWF_BYTE_MAX_VALUE * fvalue /
                                     OWF_ALPHA_MAX_VALUE);
                     break;
                 }
-                default:
-                {
+                default: {
                     result = WFC_ERROR_BAD_ATTRIBUTE;
                     break;
                 }
@@ -800,33 +685,26 @@ WFC_Element_GetAttribiv(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCErrorCode
-WFC_Element_GetAttribfv(WFC_ELEMENT* element,
-                        WFCElementAttrib attrib,
-                        WFCint count,
-                        WFCfloat* values)
-{
-    WFCErrorCode            result = WFC_ERROR_NONE;
+OWF_API_CALL WFCErrorCode WFC_Element_GetAttribfv(WFC_ELEMENT* element,
+                                                  WFCElementAttrib attrib,
+                                                  WFCint count,
+                                                  WFCfloat* values) {
+    WFCErrorCode result = WFC_ERROR_NONE;
 
     FAIL_IF(NULL == values, WFC_ERROR_ILLEGAL_ARGUMENT);
 
-    switch (attrib)
-    {
+    switch (attrib) {
         /* Vector attributes */
         case WFC_ELEMENT_SOURCE_RECTANGLE:
-        case WFC_ELEMENT_DESTINATION_RECTANGLE:
-        {
+        case WFC_ELEMENT_DESTINATION_RECTANGLE: {
             FAIL_IF(4 != count, WFC_ERROR_ILLEGAL_ARGUMENT);
 
-            if (WFC_ELEMENT_SOURCE_RECTANGLE == attrib)
-            {
+            if (WFC_ELEMENT_SOURCE_RECTANGLE == attrib) {
                 values[0] = element->srcRect[0];
                 values[1] = element->srcRect[1];
                 values[2] = element->srcRect[2];
                 values[3] = element->srcRect[3];
-            }
-            else
-            {
+            } else {
                 values[0] = element->dstRect[0];
                 values[1] = element->dstRect[1];
                 values[2] = element->dstRect[2];
@@ -836,17 +714,13 @@ WFC_Element_GetAttribfv(WFC_ELEMENT* element,
         }
 
         /* Scalar attributes */
-        default:
-        {
-            switch (attrib)
-            {
-                case WFC_ELEMENT_GLOBAL_ALPHA:
-                {
+        default: {
+            switch (attrib) {
+                case WFC_ELEMENT_GLOBAL_ALPHA: {
                     *values = element->globalAlpha;
                     break;
                 }
-                default:
-                {
+                default: {
                     result = WFC_ERROR_BAD_ATTRIBUTE;
                     break;
                 }
@@ -862,171 +736,148 @@ WFC_Element_GetAttribfv(WFC_ELEMENT* element,
  *  Attribute checkers to use during commit to check element
  *  for inconsistencies.
  *----------------------------------------------------------------------------*/
-static WFCboolean
-WFC_Element_CheckAttribute(WFC_ELEMENT* element,
-                           WFCElementAttrib attrib)
-{
-#define VALIDATE_SCALAR_I(v)    \
+static WFCboolean WFC_Element_CheckAttribute(WFC_ELEMENT* element,
+                                             WFCElementAttrib attrib) {
+#define VALIDATE_SCALAR_I(v)                                     \
     (WFC_Element_ValidateScalarAttributei(element, attrib, v) == \
-            WFC_ERROR_NONE ? WFC_TRUE : WFC_FALSE)
-#define VALIDATE_SCALAR_F(v)    \
+             WFC_ERROR_NONE                                      \
+         ? WFC_TRUE                                              \
+         : WFC_FALSE)
+#define VALIDATE_SCALAR_F(v)                                     \
     (WFC_Element_ValidateScalarAttributef(element, attrib, v) == \
-            WFC_ERROR_NONE ? WFC_TRUE : WFC_FALSE)
+             WFC_ERROR_NONE                                      \
+         ? WFC_TRUE                                              \
+         : WFC_FALSE)
 
-    WFCboolean              result = WFC_TRUE;
+    WFCboolean result = WFC_TRUE;
 
-    DPRINT(("WFC_Element_CheckAttribute(%08x,%0x)",
-           element, attrib));
+    DPRINT(("WFC_Element_CheckAttribute(%08x,%0x)", element, attrib));
 
-    switch (attrib)
-    {
+    switch (attrib) {
         /*
         INTEGER-ATTRIBUTES
         */
-        case WFC_ELEMENT_SOURCE:
-        {
+        case WFC_ELEMENT_SOURCE: {
             /* Validated when the attribute was modified */
             break;
         }
 
-        case WFC_ELEMENT_MASK:
-        {
+        case WFC_ELEMENT_MASK: {
             /* Validated when the attribute was modified */
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_FLIP:
-        {
+        case WFC_ELEMENT_SOURCE_FLIP: {
             result = VALIDATE_SCALAR_I(element->sourceFlip);
-            if (!result)
-            {
+            if (!result) {
                 DPRINT(("  Element source flipping is invalid (%d)",
                         element->sourceFlip));
             }
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_ROTATION:
-        {
+        case WFC_ELEMENT_SOURCE_ROTATION: {
             result = VALIDATE_SCALAR_I(element->sourceRotation);
 
-            if (!result)
-            {
+            if (!result) {
                 DPRINT(("  Element source rotation is invalid (%d)",
                         element->sourceRotation));
             }
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_SCALE_FILTER:
-        {
+        case WFC_ELEMENT_SOURCE_SCALE_FILTER: {
             result = VALIDATE_SCALAR_I(element->sourceScaleFilter);
 
-            if (!result)
-            {
+            if (!result) {
                 DPRINT(("  Element source scale filter is invalid (%d)",
                         element->sourceScaleFilter));
             }
             break;
         }
 
-        case WFC_ELEMENT_TRANSPARENCY_TYPES:
-        {
+        case WFC_ELEMENT_TRANSPARENCY_TYPES: {
             result = VALIDATE_SCALAR_I(element->transparencyTypes);
 
-            if (!result)
-            {
+            if (!result) {
                 DPRINT(("  Element transparency type is invalid (%x)",
                         element->transparencyTypes));
             }
             break;
         }
 
-        case WFC_ELEMENT_GLOBAL_ALPHA:
-        {
+        case WFC_ELEMENT_GLOBAL_ALPHA: {
             result = VALIDATE_SCALAR_F(element->globalAlpha);
-            if (!result)
-            {
+            if (!result) {
                 DPRINT(("  Element global alpha is invalid (%d)",
                         element->globalAlpha));
             }
             break;
         }
 
-        case WFC_ELEMENT_DESTINATION_RECTANGLE:
-        {
+        case WFC_ELEMENT_DESTINATION_RECTANGLE: {
             WFC_IMAGE_PROVIDER* mask;
 
-            if (element->dstRect[2] < 0 || element->dstRect[3] < 0)
-            {
-                DPRINT(("  Element destination rectangle is completely out of "
-                        "the target area"));
+            if (element->dstRect[2] < 0 || element->dstRect[3] < 0) {
+                DPRINT(
+                    ("  Element destination rectangle is completely out of "
+                     "the target area"));
                 result = WFC_FALSE;
                 break;
             }
 
             result = WFC_Element_CheckAttribute(element, WFC_ELEMENT_MASK);
 
-            if (result)
-            {
-                mask = WFC_Device_FindMask(element->device,
-                                           element->maskHandle);
-                if (WFC_INVALID_HANDLE != element->maskHandle && NULL != mask)
-                {
-                    WFCint  maskWidth, maskHeight;
+            if (result) {
+                mask =
+                    WFC_Device_FindMask(element->device, element->maskHandle);
+                if (WFC_INVALID_HANDLE != element->maskHandle && NULL != mask) {
+                    WFCint maskWidth, maskHeight;
 
                     DPRINT(("  Element has a mask"));
                     /* if the element has a mask, then width & height must match
                        the dimensions of that mask */
-                    OWF_Stream_GetSize(mask->stream,
-                                       &maskWidth, &maskHeight);
+                    OWF_Stream_GetSize(mask->stream, &maskWidth, &maskHeight);
 
                     if (element->dstRect[2] != maskWidth ||
-                        element->dstRect[3] != maskHeight)
-                    {
+                        element->dstRect[3] != maskHeight) {
                         DPRINT(("  Mask size (%dx%d) != element size (%d,%d)",
-                               maskWidth, maskHeight,
-                               (int)element->dstRect[2],
-                               (int)element->dstRect[3]));
+                                maskWidth, maskHeight, (int)element->dstRect[2],
+                                (int)element->dstRect[3]));
                         result = WFC_FALSE;
                         break;
                     }
-                }
-                else if (WFC_INVALID_HANDLE != element->maskHandle && !mask)
-                {
-                    DPRINT(("  Mask handle is valid, but mask object " \
-                           "couldn't be found"));
+                } else if (WFC_INVALID_HANDLE != element->maskHandle && !mask) {
+                    DPRINT(
+                        ("  Mask handle is valid, but mask object "
+                         "couldn't be found"));
                 }
             }
             break;
         }
 
-        case WFC_ELEMENT_SOURCE_RECTANGLE:
-        {
+        case WFC_ELEMENT_SOURCE_RECTANGLE: {
             WFC_IMAGE_PROVIDER* source;
 
-            source = WFC_Device_FindImageProvider(element->device,
-                                                  element->sourceHandle,
-                                                  WFC_IMAGE_SOURCE);
+            source = WFC_Device_FindImageProvider(
+                element->device, element->sourceHandle, WFC_IMAGE_SOURCE);
 
             result = WFC_TRUE;
 
-            if (source)
-            {
-                WFCint  sourceWidth, sourceHeight;
+            if (source) {
+                WFCint sourceWidth, sourceHeight;
 
                 OWF_Stream_GetSize(source->stream, &sourceWidth, &sourceHeight);
 
-                if ((element->srcRect[0] < 0) ||
-                    (element->srcRect[1] < 0) ||
+                if ((element->srcRect[0] < 0) || (element->srcRect[1] < 0) ||
                     (element->srcRect[0] + element->srcRect[2]) > sourceWidth ||
-                    (element->srcRect[1] + element->srcRect[3]) > sourceHeight)
-                {
+                    (element->srcRect[1] + element->srcRect[3]) >
+                        sourceHeight) {
                     DPRINT(("  Source rectangle out of bounds"));
                     DPRINT(("  (%f,%f,%f,%f), source size %dx%d",
-                           element->srcRect[0], element->srcRect[1],
-                           element->srcRect[2], element->srcRect[3],
-                           sourceWidth, sourceHeight));
+                            element->srcRect[0], element->srcRect[1],
+                            element->srcRect[2], element->srcRect[3],
+                            sourceWidth, sourceHeight));
                     result = WFC_FALSE;
                     break;
                 }
@@ -1034,8 +885,7 @@ WFC_Element_CheckAttribute(WFC_ELEMENT* element,
             break;
         }
 
-        case WFC_ELEMENT_FORCE_32BIT:
-        {
+        case WFC_ELEMENT_FORCE_32BIT: {
             /* to keep compiler happy */
             OWF_ASSERT(0);
             break;
@@ -1051,14 +901,12 @@ WFC_Element_CheckAttribute(WFC_ELEMENT* element,
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL WFCboolean
-WFC_Element_HasConflicts(WFC_ELEMENT* element)
-{
-#define CHECK(x) \
-    if (!WFC_Element_CheckAttribute(element, x)) \
-    {\
-        DPRINT(("Element %d: Conflict in attribute %08x", element->handle, x));\
-        return WFC_TRUE; \
+OWF_API_CALL WFCboolean WFC_Element_HasConflicts(WFC_ELEMENT* element) {
+#define CHECK(x)                                                             \
+    if (!WFC_Element_CheckAttribute(element, x)) {                           \
+        DPRINT(                                                              \
+            ("Element %d: Conflict in attribute %08x", element->handle, x)); \
+        return WFC_TRUE;                                                     \
     }
 
     CHECK(WFC_ELEMENT_SOURCE);
@@ -1080,9 +928,7 @@ WFC_Element_HasConflicts(WFC_ELEMENT* element)
 /*---------------------------------------------------------------------------
  *
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-WFC_Element_Commit(WFC_ELEMENT* element)
-{
+OWF_API_CALL void WFC_Element_Commit(WFC_ELEMENT* element) {
     OWF_ASSERT(element);
 
     DPRINT(("WFC_Element_Commit(element = %d)\n", element->handle));
@@ -1092,13 +938,11 @@ WFC_Element_Commit(WFC_ELEMENT* element)
      * is changed.
      */
 
-    if (element->cachedSource != element->source)
-    {
+    if (element->cachedSource != element->source) {
         element->source = element->cachedSource;
     }
 
-    if (element->cachedMask != element->mask)
-    {
+    if (element->cachedMask != element->mask) {
         element->mask = element->cachedMask;
     }
 
@@ -1116,15 +960,12 @@ WFC_Element_Commit(WFC_ELEMENT* element)
     element->cachedSource = NULL;
     element->cachedMask = NULL;
 
-    DPRINT(("  new source   = %d\n", element->source ?
-                                     element->source->handle : 0));
-    DPRINT(("  new mask     = %d\n", element->mask ?
-                                     element->mask->handle : 0));
+    DPRINT(("  new source   = %d\n",
+            element->source ? element->source->handle : 0));
+    DPRINT(
+        ("  new mask     = %d\n", element->mask ? element->mask->handle : 0));
 }
-
-
 
 #ifdef __cplusplus
 }
 #endif
-

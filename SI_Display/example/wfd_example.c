@@ -25,44 +25,43 @@
  * \author Lars Remes <lars.remes@symbio.com>
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include "WF/wfd.h"
 #include "owfimage.h"
 #include "wfd_logo.h"
 
-#define FAIL_IF(c, m) \
-    if (c) { \
-        printf(m); printf("\r\n"); \
-        goto CLEANUP; \
+#define FAIL_IF(c, m)   \
+    if (c) {            \
+        printf(m);      \
+        printf("\r\n"); \
+        goto CLEANUP;   \
     }
-#define CHECK_ERROR(c, m) \
+#define CHECK_ERROR(c, m)   \
     err = wfdGetError(dev); \
-    if (err != c) { \
-        printf(m); printf("\r\n"); \
-        goto CLEANUP; \
+    if (err != c) {         \
+        printf(m);          \
+        printf("\r\n");     \
+        goto CLEANUP;       \
     }
 
 /*!
  * Creates a native image from pixel data.
  * This function is WFD implementation specific.
  */
-WFDEGLImage createNativeImage(int width,
-                              int height,
-                              void* data)
-{
+WFDEGLImage createNativeImage(int width, int height, void *data) {
     OWF_IMAGE_FORMAT imgf;
-    OWF_IMAGE* image = NULL;
+    OWF_IMAGE *image = NULL;
     WFDint stride, numBytes;
 
-    imgf.pixelFormat   = OWF_IMAGE_ARGB8888;
-    imgf.linear        = OWF_FALSE;
+    imgf.pixelFormat = OWF_IMAGE_ARGB8888;
+    imgf.linear = OWF_FALSE;
     imgf.premultiplied = OWF_TRUE;
-    imgf.rowPadding    = OWF_Image_GetFormatPadding(imgf.pixelFormat);
+    imgf.rowPadding = OWF_Image_GetFormatPadding(imgf.pixelFormat);
 
     image = OWF_Image_Create(width, height, &imgf, NULL, 0);
     assert(image != OWF_INVALID_HANDLE);
@@ -85,20 +84,18 @@ WFDEGLImage createNativeImage(int width,
     return image;
 }
 
-void destroyNativeImage(WFDEGLImage image)
-{
-    if (image != NULL)
-    {
-        OWF_Image_Destroy((OWF_IMAGE*)image);
+void destroyNativeImage(WFDEGLImage image) {
+    if (image != NULL) {
+        OWF_Image_Destroy((OWF_IMAGE *)image);
         image = NULL;
     }
 }
 
-#define PRINT_ATTRIB(attrib) \
-    printf("%s: %d\r\n", "" # attrib, wfdGetPortModeAttribi(dev, port, mode, attrib));
+#define PRINT_ATTRIB(attrib)         \
+    printf("%s: %d\r\n", "" #attrib, \
+           wfdGetPortModeAttribi(dev, port, mode, attrib));
 
-void printPortModeInfo(WFDDevice dev, WFDPort port, WFDPortMode mode)
-{
+void printPortModeInfo(WFDDevice dev, WFDPort port, WFDPortMode mode) {
     PRINT_ATTRIB(WFD_PORT_MODE_WIDTH);
     PRINT_ATTRIB(WFD_PORT_MODE_HEIGHT);
     PRINT_ATTRIB(WFD_PORT_MODE_FLIP_MIRROR_SUPPORT);
@@ -107,18 +104,16 @@ void printPortModeInfo(WFDDevice dev, WFDPort port, WFDPortMode mode)
     PRINT_ATTRIB(WFD_PORT_MODE_INTERLACED);
 }
 
-
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     WFDint numDevs = 0;
-    WFDint* devIds = NULL;
+    WFDint *devIds = NULL;
     WFDint size = 0;
     WFDint numPorts = 0;
-    WFDint* portIds = NULL;
+    WFDint *portIds = NULL;
     WFDint numPipelines = 0;
-    WFDint* pipelineIds = NULL;
+    WFDint *pipelineIds = NULL;
     WFDint numPortModes = 0;
-    WFDPortMode* portModes = NULL;
+    WFDPortMode *portModes = NULL;
     WFDint attribValue = 0;
     WFDDevice dev = WFD_INVALID_HANDLE;
     WFDErrorCode err = WFD_ERROR_NONE;
@@ -126,8 +121,8 @@ int main(int argc, char **argv)
     WFDPipeline pipeline = WFD_INVALID_HANDLE;
     WFDSource source = WFD_INVALID_HANDLE;
     WFDEGLImage image = NULL;
-    WFDint rect[4] = { 0, 0, 0, 0 };
-    WFDfloat clearColor[3] = { 1.0f, 1.0f, 1.0f };
+    WFDint rect[4] = {0, 0, 0, 0};
+    WFDfloat clearColor[3] = {1.0f, 1.0f, 1.0f};
 
     printf("OpenWF Display example application.\r\n");
     printf("Copyright (c) 2009 The Khronos Group Inc.\r\n");
@@ -141,7 +136,8 @@ int main(int argc, char **argv)
         /*
          * Select correct device and create it:
          * dev = wfdCreateDevice(devIds[i], NULL);
-         * FAIL_IF(dev == WFD_INVALID_HANDLE, "Failed to create default device.");
+         * FAIL_IF(dev == WFD_INVALID_HANDLE, "Failed to create default
+         * device.");
          */
         free(devIds);
         devIds = NULL;
@@ -200,10 +196,12 @@ int main(int argc, char **argv)
     source = wfdCreateSourceFromImage(dev, pipeline, image, NULL);
     CHECK_ERROR(WFD_ERROR_NONE, "Failed to create source from image.");
 
-    wfdSetPipelineAttribi(dev, pipeline, WFD_PIPELINE_TRANSPARENCY_ENABLE, WFD_TRANSPARENCY_SOURCE_COLOR);
+    wfdSetPipelineAttribi(dev, pipeline, WFD_PIPELINE_TRANSPARENCY_ENABLE,
+                          WFD_TRANSPARENCY_SOURCE_COLOR);
     CHECK_ERROR(WFD_ERROR_NONE, "Failed to enable transparency.");
 
-    wfdBindSourceToPipeline(dev, pipeline, source, WFD_TRANSITION_IMMEDIATE, NULL);
+    wfdBindSourceToPipeline(dev, pipeline, source, WFD_TRANSITION_IMMEDIATE,
+                            NULL);
     CHECK_ERROR(WFD_ERROR_NONE, "Failed to bind image.");
 
     wfdBindPipelineToPort(dev, port, pipeline);
@@ -213,10 +211,12 @@ int main(int argc, char **argv)
     rect[1] = 0;
     rect[2] = 250;
     rect[3] = 91;
-    wfdSetPipelineAttribiv(dev, pipeline, WFD_PIPELINE_SOURCE_RECTANGLE, 4, rect);
+    wfdSetPipelineAttribiv(dev, pipeline, WFD_PIPELINE_SOURCE_RECTANGLE, 4,
+                           rect);
     CHECK_ERROR(WFD_ERROR_NONE, "Failed to set source rectangle.");
 
-    wfdSetPipelineAttribiv(dev, pipeline, WFD_PIPELINE_DESTINATION_RECTANGLE, 4, rect);
+    wfdSetPipelineAttribiv(dev, pipeline, WFD_PIPELINE_DESTINATION_RECTANGLE, 4,
+                           rect);
     CHECK_ERROR(WFD_ERROR_NONE, "Failed to set destination rectangle.");
 
     free(pipelineIds);
@@ -231,13 +231,14 @@ int main(int argc, char **argv)
 CLEANUP:
     if (pipeline != WFD_INVALID_HANDLE) {
         /* Example of how to release a pipeline */
-        wfdBindMaskToPipeline(dev, pipeline, WFD_INVALID_HANDLE, WFD_TRANSITION_IMMEDIATE);
-        wfdBindSourceToPipeline(dev, pipeline, WFD_INVALID_HANDLE, WFD_TRANSITION_IMMEDIATE, NULL);
+        wfdBindMaskToPipeline(dev, pipeline, WFD_INVALID_HANDLE,
+                              WFD_TRANSITION_IMMEDIATE);
+        wfdBindSourceToPipeline(dev, pipeline, WFD_INVALID_HANDLE,
+                                WFD_TRANSITION_IMMEDIATE, NULL);
 
         /* Changes can also be applied to pipeline only */
         wfdDeviceCommit(dev, WFD_COMMIT_PIPELINE, pipeline);
-        if (wfdGetError(dev) != WFD_ERROR_NONE)
-        {
+        if (wfdGetError(dev) != WFD_ERROR_NONE) {
             printf("Failed to commit changes");
         }
 
@@ -249,13 +250,11 @@ CLEANUP:
         /* Example of how to release a port */
         /* turn port off */
         wfdSetPortAttribi(dev, port, WFD_PORT_POWER_MODE, WFD_POWER_MODE_OFF);
-        if (wfdGetError(dev) != WFD_ERROR_NONE)
-        {
+        if (wfdGetError(dev) != WFD_ERROR_NONE) {
             printf("Failed to set port power mode OFF.\r\n");
         }
         wfdDeviceCommit(dev, WFD_COMMIT_ENTIRE_PORT, port);
-        if (wfdGetError(dev) != WFD_ERROR_NONE)
-        {
+        if (wfdGetError(dev) != WFD_ERROR_NONE) {
             printf("Failed to commit port changes.\r\n");
         }
 
@@ -263,8 +262,7 @@ CLEANUP:
         port = WFD_INVALID_HANDLE;
     }
 
-    if (source != WFD_INVALID_HANDLE)
-    {
+    if (source != WFD_INVALID_HANDLE) {
         wfdDestroySource(dev, source);
         source = WFD_INVALID_HANDLE;
     }
@@ -274,26 +272,22 @@ CLEANUP:
         dev = WFD_INVALID_HANDLE;
     }
 
-    if (portModes != NULL)
-    {
+    if (portModes != NULL) {
         free(portModes);
         portModes = NULL;
     }
 
-    if (devIds != NULL)
-    {
+    if (devIds != NULL) {
         free(devIds);
         devIds = NULL;
     }
 
-    if (pipelineIds != NULL)
-    {
+    if (pipelineIds != NULL) {
         free(pipelineIds);
         pipelineIds = NULL;
     }
 
-    if (portIds != NULL)
-    {
+    if (portIds != NULL) {
         free(portIds);
         portIds = NULL;
     }

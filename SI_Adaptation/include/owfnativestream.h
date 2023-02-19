@@ -39,24 +39,22 @@
  *
  */
 
-#include "owfsemaphore.h"
-#include "owflinkedlist.h"
-#include "owfimage.h"
-#include "owftypes.h"
-
 #include "EGL/egl.h"
 #include "EGL/eglext.h"
+#include "owfimage.h"
+#include "owflinkedlist.h"
+#include "owfsemaphore.h"
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum
-{
-    OWF_STREAM_ERROR_NONE               = 0,
-    OWF_STREAM_ERROR_INVALID_STREAM     = -1,
-    OWF_STREAM_ERROR_INVALID_OBSERVER   = -2,
-    OWF_STREAM_ERROR_OUT_OF_MEMORY      = -3
+typedef enum {
+    OWF_STREAM_ERROR_NONE = 0,
+    OWF_STREAM_ERROR_INVALID_STREAM = -1,
+    OWF_STREAM_ERROR_INVALID_OBSERVER = -2,
+    OWF_STREAM_ERROR_OUT_OF_MEMORY = -3
 } OWF_STREAM_ERROR;
 
 /*!---------------------------------------------------------------------------
@@ -70,27 +68,22 @@ typedef enum
  *  \param Handle to newly created stream or OWF_INVALID_HANDLe if no
  *  stream could be created.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWFNativeStreamType
-owfNativeStreamCreateImageStream(OWFint width,
-                                 OWFint height,
-                                 const OWF_IMAGE_FORMAT* format,
-                                 OWFint nbufs);
+OWF_PUBLIC OWFNativeStreamType owfNativeStreamCreateImageStream(
+    OWFint width, OWFint height, const OWF_IMAGE_FORMAT *format, OWFint nbufs);
 
 /*!---------------------------------------------------------------------------
  *  Increase stream's reference count
  *
  *  \param stream           Stream handle
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamAddReference(OWFNativeStreamType stream);
+OWF_API_CALL void owfNativeStreamAddReference(OWFNativeStreamType stream);
 
 /*!---------------------------------------------------------------------------
  *  Decrease stream's reference count
  *
  *  \param stream           Stream handle
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamRemoveReference(OWFNativeStreamType stream);
+OWF_API_CALL void owfNativeStreamRemoveReference(OWFNativeStreamType stream);
 
 /*!----------------------------------------------------------------------------
  *  Destroy stream. The stream isn't necessarily immediately destroyed, but
@@ -98,9 +91,7 @@ owfNativeStreamRemoveReference(OWFNativeStreamType stream);
  *
  *  \param stream           Stream handle
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamDestroy(OWFNativeStreamType stream);
-
+OWF_PUBLIC void owfNativeStreamDestroy(OWFNativeStreamType stream);
 
 /*!---------------------------------------------------------------------------
  * Get stream's image header
@@ -120,13 +111,11 @@ owfNativeStreamDestroy(OWFNativeStreamType stream);
  * parameters (stream_handle, &width, &height, NULL, NULL, NULL);
  *
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamGetHeader(OWFNativeStreamType stream,
-                           OWFint* width,
-                           OWFint* height,
-                           OWFint* stride,
-                           OWF_IMAGE_FORMAT* format,
-                           OWFint* pixelSize);
+OWF_PUBLIC void owfNativeStreamGetHeader(OWFNativeStreamType stream,
+                                         OWFint *width, OWFint *height,
+                                         OWFint *stride,
+                                         OWF_IMAGE_FORMAT *format,
+                                         OWFint *pixelSize);
 
 /*!---------------------------------------------------------------------------
  *  Acquire read buffer from stream
@@ -146,9 +135,8 @@ owfNativeStreamAcquireReadBuffer(OWFNativeStreamType stream);
  *  \param stream           Stream handle
  *  \param buf              Buffer handle
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamReleaseReadBuffer(OWFNativeStreamType stream,
-                                 OWFNativeStreamBuffer buf);
+OWF_PUBLIC void owfNativeStreamReleaseReadBuffer(OWFNativeStreamType stream,
+                                                 OWFNativeStreamBuffer buf);
 
 /*!---------------------------------------------------------------------------
  *  Acquires writable buffer from a stream. The caller has exclusive access
@@ -182,11 +170,10 @@ owfNativeStreamAcquireWriteBuffer(OWFNativeStreamType stream);
  *  \param sync             Optional EGLSync object which is signaled when
  *                          the buffer is consumed or dropped.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void
-owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
-                                  OWFNativeStreamBuffer buf,
-                                  EGLDisplay dpy,
-                                  EGLSyncKHR sync);
+OWF_PUBLIC void owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
+                                                  OWFNativeStreamBuffer buf,
+                                                  EGLDisplay dpy,
+                                                  EGLSyncKHR sync);
 
 /*!---------------------------------------------------------------------------
  *  Register stream content observer (append to chain). The observer will
@@ -198,10 +185,8 @@ owfNativeStreamReleaseWriteBuffer(OWFNativeStreamType stream,
  *  \param data             Optional data to pass to observer callback
  *                          function when event is dispatched.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWF_STREAM_ERROR
-owfNativeStreamAddObserver(OWFNativeStreamType stream,
-                           OWFStreamCallback observer,
-                           void* data);
+OWF_PUBLIC OWF_STREAM_ERROR owfNativeStreamAddObserver(
+    OWFNativeStreamType stream, OWFStreamCallback observer, void *data);
 
 /*!---------------------------------------------------------------------------
  *  Remove stream content observer.
@@ -224,13 +209,12 @@ owfNativeStreamAddObserver(OWFNativeStreamType stream,
  *   The issue can be fixed by adding sync object handle into the interface
  *   of this function. Sync object must be passed to the static comparison
  *   function (ObserversEqual). Implementator must take into account that
- *   when the stream is destroyed, all observers of that stream must be destroyed.
+ *   when the stream is destroyed, all observers of that stream must be
+ *destroyed.
  *
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC OWF_STREAM_ERROR
-owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
-                              OWFStreamCallback observer,
-			      void* clientdata);
+OWF_PUBLIC OWF_STREAM_ERROR owfNativeStreamRemoveObserver(
+    OWFNativeStreamType stream, OWFStreamCallback observer, void *clientdata);
 
 /*!---------------------------------------------------------------------------
  *  Enable/disable stream content notifications.
@@ -239,9 +223,8 @@ owfNativeStreamRemoveObserver(OWFNativeStreamType stream,
  *  \param send             Boolean value indicating whether the stream should
  *                          send content notifications to its observers.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamEnableUpdateNotifications(OWFNativeStreamType stream,
-                                         OWFboolean send);
+OWF_API_CALL void owfNativeStreamEnableUpdateNotifications(
+    OWFNativeStreamType stream, OWFboolean send);
 
 /*!---------------------------------------------------------------------------
  *  Return pointer to stream buffer's pixel data. The buffer must be
@@ -252,10 +235,8 @@ owfNativeStreamEnableUpdateNotifications(OWFNativeStreamType stream,
  *
  *  \return Pointer to buffers pixel data.
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamSetBlocking(OWFNativeStreamType stream,
-                           OWFboolean blocking);
-
+OWF_API_CALL void owfNativeStreamSetBlocking(OWFNativeStreamType stream,
+                                             OWFboolean blocking);
 
 /*!---------------------------------------------------------------------------
  *  Return pointer to stream buffer's pixel data. The buffer must be
@@ -266,9 +247,8 @@ owfNativeStreamSetBlocking(OWFNativeStreamType stream,
  *
  *  \return Pointer to buffers pixel data.
  *----------------------------------------------------------------------------*/
-OWF_PUBLIC void*
-owfNativeStreamGetBufferPtr(OWFNativeStreamType stream,
-                            OWFNativeStreamBuffer buffer);
+OWF_PUBLIC void *owfNativeStreamGetBufferPtr(OWFNativeStreamType stream,
+                                             OWFNativeStreamBuffer buffer);
 
 /*!---------------------------------------------------------------------------
  *  Set/reset stream's protection flag. This flag is used for preventing the
@@ -278,9 +258,8 @@ owfNativeStreamGetBufferPtr(OWFNativeStreamType stream,
  *  \param stream           Stream handle
  *  \param flag             Protection status
  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfNativeStreamSetProtectionFlag(OWFNativeStreamType stream,
-                                 OWFboolean flag);
+OWF_API_CALL void owfNativeStreamSetProtectionFlag(OWFNativeStreamType stream,
+                                                   OWFboolean flag);
 
 /*!---------------------------------------------------------------------------
  *  Get stream's protection status.
@@ -292,18 +271,17 @@ owfNativeStreamSetProtectionFlag(OWFNativeStreamType stream,
 OWF_API_CALL OWFboolean
 owfNativeStreamGetProtectionFlag(OWFNativeStreamType stream);
 
- /*!---------------------------------------------------------------------------
+/*!---------------------------------------------------------------------------
  *  Sets (internal) target stream flip state
  *
  *  \param stream           Stream handle
  *
-  *----------------------------------------------------------------------------*/
-OWF_API_CALL void
-owfSetStreamFlipState(OWFNativeStreamType stream, OWFboolean flip);
+ *----------------------------------------------------------------------------*/
+OWF_API_CALL void owfSetStreamFlipState(OWFNativeStreamType stream,
+                                        OWFboolean flip);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

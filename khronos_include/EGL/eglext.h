@@ -39,95 +39,117 @@ extern "C" {
 
 #ifndef EGL_KHR_config_attribs
 #define EGL_KHR_config_attribs 1
-#define EGL_CONFORMANT_KHR          0x3042  /* EGLConfig attribute */
-#define EGL_VG_COLORSPACE_LINEAR_BIT_KHR    0x0020  /* EGL_SURFACE_TYPE bitfield */
-#define EGL_VG_ALPHA_FORMAT_PRE_BIT_KHR     0x0040  /* EGL_SURFACE_TYPE bitfield */
+#define EGL_CONFORMANT_KHR 0x3042 /* EGLConfig attribute */
+#define EGL_VG_COLORSPACE_LINEAR_BIT_KHR                                    \
+    0x0020                                     /* EGL_SURFACE_TYPE bitfield \
+                                                */
+#define EGL_VG_ALPHA_FORMAT_PRE_BIT_KHR 0x0040 /* EGL_SURFACE_TYPE bitfield */
 #endif
 
 #ifndef EGL_KHR_lock_surface
 #define EGL_KHR_lock_surface 1
-#define EGL_READ_SURFACE_BIT_KHR        0x0001  /* EGL_LOCK_USAGE_HINT_KHR bitfield */
-#define EGL_WRITE_SURFACE_BIT_KHR       0x0002  /* EGL_LOCK_USAGE_HINT_KHR bitfield */
-#define EGL_LOCK_SURFACE_BIT_KHR        0x0080  /* EGL_SURFACE_TYPE bitfield */
-#define EGL_OPTIMAL_FORMAT_BIT_KHR      0x0100  /* EGL_SURFACE_TYPE bitfield */
-#define EGL_MATCH_FORMAT_KHR            0x3043  /* EGLConfig attribute */
-#define EGL_FORMAT_RGB_565_EXACT_KHR        0x30C0  /* EGL_MATCH_FORMAT_KHR value */
-#define EGL_FORMAT_RGB_565_KHR          0x30C1  /* EGL_MATCH_FORMAT_KHR value */
-#define EGL_FORMAT_RGBA_8888_EXACT_KHR      0x30C2  /* EGL_MATCH_FORMAT_KHR value */
-#define EGL_FORMAT_RGBA_8888_KHR        0x30C3  /* EGL_MATCH_FORMAT_KHR value */
-#define EGL_MAP_PRESERVE_PIXELS_KHR     0x30C4  /* eglLockSurfaceKHR attribute */
-#define EGL_LOCK_USAGE_HINT_KHR         0x30C5  /* eglLockSurfaceKHR attribute */
-#define EGL_BITMAP_POINTER_KHR          0x30C6  /* eglQuerySurface attribute */
-#define EGL_BITMAP_PITCH_KHR            0x30C7  /* eglQuerySurface attribute */
-#define EGL_BITMAP_ORIGIN_KHR           0x30C8  /* eglQuerySurface attribute */
-#define EGL_BITMAP_PIXEL_RED_OFFSET_KHR     0x30C9  /* eglQuerySurface attribute */
-#define EGL_BITMAP_PIXEL_GREEN_OFFSET_KHR   0x30CA  /* eglQuerySurface attribute */
-#define EGL_BITMAP_PIXEL_BLUE_OFFSET_KHR    0x30CB  /* eglQuerySurface attribute */
-#define EGL_BITMAP_PIXEL_ALPHA_OFFSET_KHR   0x30CC  /* eglQuerySurface attribute */
-#define EGL_BITMAP_PIXEL_LUMINANCE_OFFSET_KHR   0x30CD  /* eglQuerySurface attribute */
-#define EGL_LOWER_LEFT_KHR          0x30CE  /* EGL_BITMAP_ORIGIN_KHR value */
-#define EGL_UPPER_LEFT_KHR          0x30CF  /* EGL_BITMAP_ORIGIN_KHR value */
+#define EGL_READ_SURFACE_BIT_KHR 0x0001 /* EGL_LOCK_USAGE_HINT_KHR bitfield */
+#define EGL_WRITE_SURFACE_BIT_KHR                                             \
+    0x0002                                /* EGL_LOCK_USAGE_HINT_KHR bitfield \
+                                           */
+#define EGL_LOCK_SURFACE_BIT_KHR 0x0080   /* EGL_SURFACE_TYPE bitfield */
+#define EGL_OPTIMAL_FORMAT_BIT_KHR 0x0100 /* EGL_SURFACE_TYPE bitfield */
+#define EGL_MATCH_FORMAT_KHR 0x3043       /* EGLConfig attribute */
+#define EGL_FORMAT_RGB_565_EXACT_KHR 0x30C0    /* EGL_MATCH_FORMAT_KHR value */
+#define EGL_FORMAT_RGB_565_KHR 0x30C1          /* EGL_MATCH_FORMAT_KHR value */
+#define EGL_FORMAT_RGBA_8888_EXACT_KHR 0x30C2  /* EGL_MATCH_FORMAT_KHR value */
+#define EGL_FORMAT_RGBA_8888_KHR 0x30C3        /* EGL_MATCH_FORMAT_KHR value */
+#define EGL_MAP_PRESERVE_PIXELS_KHR 0x30C4     /* eglLockSurfaceKHR attribute */
+#define EGL_LOCK_USAGE_HINT_KHR 0x30C5         /* eglLockSurfaceKHR attribute */
+#define EGL_BITMAP_POINTER_KHR 0x30C6          /* eglQuerySurface attribute */
+#define EGL_BITMAP_PITCH_KHR 0x30C7            /* eglQuerySurface attribute */
+#define EGL_BITMAP_ORIGIN_KHR 0x30C8           /* eglQuerySurface attribute */
+#define EGL_BITMAP_PIXEL_RED_OFFSET_KHR 0x30C9 /* eglQuerySurface attribute */
+#define EGL_BITMAP_PIXEL_GREEN_OFFSET_KHR \
+    0x30CA /* eglQuerySurface attribute   \
+            */
+#define EGL_BITMAP_PIXEL_BLUE_OFFSET_KHR \
+    0x30CB /* eglQuerySurface attribute  \
+            */
+#define EGL_BITMAP_PIXEL_ALPHA_OFFSET_KHR \
+    0x30CC /* eglQuerySurface attribute   \
+            */
+#define EGL_BITMAP_PIXEL_LUMINANCE_OFFSET_KHR \
+    0x30CD                        /* eglQuerySurface attribute */
+#define EGL_LOWER_LEFT_KHR 0x30CE /* EGL_BITMAP_ORIGIN_KHR value */
+#define EGL_UPPER_LEFT_KHR 0x30CF /* EGL_BITMAP_ORIGIN_KHR value */
 #ifdef EGL_EGLEXT_PROTOTYPES
-EGLAPI EGLBoolean EGLAPIENTRY eglLockSurfaceKHR (EGLDisplay display, EGLSurface surface, const EGLint *attrib_list);
-EGLAPI EGLBoolean EGLAPIENTRY eglUnlockSurfaceKHR (EGLDisplay display, EGLSurface surface);
+EGLAPI EGLBoolean EGLAPIENTRY eglLockSurfaceKHR(EGLDisplay display,
+                                                EGLSurface surface,
+                                                const EGLint *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglUnlockSurfaceKHR(EGLDisplay display,
+                                                  EGLSurface surface);
 #endif /* EGL_EGLEXT_PROTOTYPES */
 #endif
 
 #ifndef EGL_KHR_image
 #define EGL_KHR_image 1
-#define EGL_NATIVE_PIXMAP_KHR           0x30B0  /* eglCreateImageKHR target */
+#define EGL_NATIVE_PIXMAP_KHR 0x30B0 /* eglCreateImageKHR target */
 typedef void *EGLImageKHR;
-#define EGL_NO_IMAGE_KHR            ((EGLImageKHR)0)
+#define EGL_NO_IMAGE_KHR ((EGLImageKHR)0)
 #ifdef EGL_EGLEXT_PROTOTYPES
-EGLAPI EGLImageKHR EGLAPIENTRY eglCreateImageKHR (EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list);
-EGLAPI EGLBoolean EGLAPIENTRY eglDestroyImageKHR (EGLDisplay dpy, EGLImageKHR image);
+EGLAPI EGLImageKHR EGLAPIENTRY eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx,
+                                                 EGLenum target,
+                                                 EGLClientBuffer buffer,
+                                                 const EGLint *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglDestroyImageKHR(EGLDisplay dpy,
+                                                 EGLImageKHR image);
 #endif /* EGL_EGLEXT_PROTOTYPES */
 #endif
 
 #ifndef EGL_KHR_vg_parent_image
 #define EGL_KHR_vg_parent_image 1
-#define EGL_VG_PARENT_IMAGE_KHR         0x30BA  /* eglCreateImageKHR target */
+#define EGL_VG_PARENT_IMAGE_KHR 0x30BA /* eglCreateImageKHR target */
 #endif
 
 #ifndef EGL_KHR_gl_texture_2D_image
 #define EGL_KHR_gl_texture_2D_image 1
-#define EGL_GL_TEXTURE_2D_KHR           0x30B1  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_LEVEL_KHR        0x30BC  /* eglCreateImageKHR attribute */
+#define EGL_GL_TEXTURE_2D_KHR 0x30B1    /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_LEVEL_KHR 0x30BC /* eglCreateImageKHR attribute */
 #endif
 
 #ifndef EGL_KHR_gl_texture_cubemap_image
 #define EGL_KHR_gl_texture_cubemap_image 1
-#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR  0x30B3  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X_KHR  0x30B4  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y_KHR  0x30B5  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_KHR  0x30B6  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z_KHR  0x30B7  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_KHR  0x30B8  /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR \
+    0x30B3 /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X_KHR \
+    0x30B4 /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y_KHR \
+    0x30B5 /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_KHR \
+    0x30B6 /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z_KHR \
+    0x30B7 /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_KHR \
+    0x30B8 /* eglCreateImageKHR target */
 #endif
 
 #ifndef EGL_KHR_gl_texture_3D_image
 #define EGL_KHR_gl_texture_3D_image 1
-#define EGL_GL_TEXTURE_3D_KHR           0x30B2  /* eglCreateImageKHR target */
-#define EGL_GL_TEXTURE_ZOFFSET_KHR      0x30BD  /* eglCreateImageKHR attribute */
+#define EGL_GL_TEXTURE_3D_KHR 0x30B2      /* eglCreateImageKHR target */
+#define EGL_GL_TEXTURE_ZOFFSET_KHR 0x30BD /* eglCreateImageKHR attribute */
 #endif
 
 #ifndef EGL_KHR_gl_renderbuffer_image
 #define EGL_KHR_gl_renderbuffer_image 1
-#define EGL_GL_RENDERBUFFER_KHR         0x30B9  /* eglCreateImageKHR target */
+#define EGL_GL_RENDERBUFFER_KHR 0x30B9 /* eglCreateImageKHR target */
 #endif
 
 #ifndef EGL_KHR_image_base
 #define EGL_KHR_image_base 1
 /* Most interfaces defined by EGL_KHR_image_pixmap above */
-#define EGL_IMAGE_PRESERVED_KHR         0x30D2  /* eglCreateImageKHR attribute */
+#define EGL_IMAGE_PRESERVED_KHR 0x30D2 /* eglCreateImageKHR attribute */
 #endif
 
 #ifndef EGL_KHR_image_pixmap
 #define EGL_KHR_image_pixmap 1
 /* Interfaces defined by EGL_KHR_image above */
 #endif
-
-
 
 /*
  *  EGLSync definitions from draft specification
@@ -136,7 +158,7 @@ EGLAPI EGLBoolean EGLAPIENTRY eglDestroyImageKHR (EGLDisplay dpy, EGLImageKHR im
 /*
  * EGLSyncKHR is an opaque handle to an EGL sync object
  */
-typedef void* EGLSyncKHR;
+typedef void *EGLSyncKHR;
 
 /*
  * EGLTimeKHR is a 64-bit unsigned integer representing intervals
@@ -151,14 +173,14 @@ typedef khronos_utime_nanoseconds_t EGLTimeKHR;
  *   returned in value when eglGetSyncAttribKHR is called with attribute
  *   EGL_SYNC_CONDITION_KHR:
  */
-#define  EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR    0x30F0
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR 0x30F0
 
 /*
  *   Accepted as an attribute name in the attrib_list parameter of
  *   eglCreateFenceSyncKHR, and by the attribute parameter of
  *  eglGetSyncAttribKHR:
  */
-#define  EGL_SYNC_STATUS_KHR                     0x30F1
+#define EGL_SYNC_STATUS_KHR 0x30F1
 
 /*
  *   Accepted as an attribute value in the attrib_list parameter of
@@ -167,46 +189,46 @@ typedef khronos_utime_nanoseconds_t EGLTimeKHR;
  *   when eglGetSyncAttribKHR is called with attribute
  *   EGL_SYNC_STATUS_KHR:
  */
-#define  EGL_SIGNALED_KHR                        0x30F2
-#define  EGL_UNSIGNALED_KHR                      0x30F3
+#define EGL_SIGNALED_KHR 0x30F2
+#define EGL_UNSIGNALED_KHR 0x30F3
 
 /*   Accepted as an attribute name in the <attrib_list> parameter of
  *   eglCreateFenceSyncKHR, and by the <attribute> parameter of
  *   eglGetSyncAttribKHR:
  */
-#define EGL_AUTO_RESET_KHR                      0x30F4
+#define EGL_AUTO_RESET_KHR 0x30F4
 
 /*   Accepted in the flags parameter of eglClientWaitSyncKHR: */
 
-#define  EGL_SYNC_FLUSH_COMMANDS_BIT_KHR         0x0001
+#define EGL_SYNC_FLUSH_COMMANDS_BIT_KHR 0x0001
 
 /*   Accepted in the timeout parameter of eglClientWaitSyncKHR: */
-#define EGL_FOREVER_KHR                         0xFFFFFFFFFFFFFFFFull
+#define EGL_FOREVER_KHR 0xFFFFFFFFFFFFFFFFull
 
 /*   Returned by eglClientWaitSyncKHR: */
 
-#define EGL_TIMEOUT_EXPIRED_KHR                 0x30F5
-#define EGL_CONDITION_SATISFIED_KHR             0x30F6
+#define EGL_TIMEOUT_EXPIRED_KHR 0x30F5
+#define EGL_CONDITION_SATISFIED_KHR 0x30F6
 
 /*   Accepted in the attribute parameter of eglGetSyncAttribKHR: */
 
-#define EGL_SYNC_TYPE_KHR                       0x30F7
-#define EGL_SYNC_CONDITION_KHR                  0x30F8
+#define EGL_SYNC_TYPE_KHR 0x30F7
+#define EGL_SYNC_CONDITION_KHR 0x30F8
 
 /*   Returned in value when eglGetSyncAttribKHR is called with
     attribute EGL_SYNC_TYPE_KHR: */
 
-#define EGL_SYNC_FENCE_KHR                      0x30F9
+#define EGL_SYNC_FENCE_KHR 0x30F9
 
 /*   Accepted by the <type> parameter of eglCreateSyncKHR, and returned
  *   in <value> when eglGetSyncAttribKHR is called with <attribute>
  *   EGL_SYNC_TYPE_KHR:
  */
-#define EGL_SYNC_REUSABLE_KHR			0x30FA
+#define EGL_SYNC_REUSABLE_KHR 0x30FA
 
 /*   Returned by eglCreateFenceSyncKHR in the event of an error: */
 
-#define EGL_NO_SYNC_KHR                         ((EGLSyncKHR)0)
+#define EGL_NO_SYNC_KHR ((EGLSyncKHR)0)
 
 /* API functions */
 
@@ -220,18 +242,14 @@ typedef khronos_utime_nanoseconds_t EGLTimeKHR;
  *
  * \return Returns a handle to valid sync object. If <attrib_list> is
  *  neither NULL nor empty (containing only EGL_NONE_, EGL_NO_SYNC_KHR
- * is returned. If dpy is not the name of a valid, initialized 
+ * is returned. If dpy is not the name of a valid, initialized
  * EGLDisplay, EGL_NO_SYNC_KHR is returned.
  *
  *
  *
  */
-EGLAPI EGLSyncKHR EGLAPIENTRY
-eglCreateSyncKHR( EGLDisplay dpy,
-                  EGLenum type,
-                  const EGLint *attrib_list );
-
-
+EGLAPI EGLSyncKHR EGLAPIENTRY eglCreateSyncKHR(EGLDisplay dpy, EGLenum type,
+                                               const EGLint *attrib_list);
 
 /*!
  * Is used to destroy an existing sync object. If any
@@ -243,14 +261,13 @@ eglCreateSyncKHR( EGLDisplay dpy,
  * If sync is not a valid sync object, EGL_FALSE is returned
  *
  */
-EGLAPI EGLBoolean EGLAPIENTRY
-eglDestroySyncKHR( EGLDisplay dpy, EGLSyncKHR sync );
+EGLAPI EGLBoolean EGLAPIENTRY eglDestroySyncKHR(EGLDisplay dpy,
+                                                EGLSyncKHR sync);
 
 /*!
  *
  */
-EGLAPI EGLBoolean EGLAPIENTRY
-eglFenceKHR( EGLDisplay dpy, EGLSyncKHR sync );
+EGLAPI EGLBoolean EGLAPIENTRY eglFenceKHR(EGLDisplay dpy, EGLSyncKHR sync);
 
 /*!
  *     Blocks the calling thread until the specified sync object sync
@@ -270,11 +287,9 @@ eglFenceKHR( EGLDisplay dpy, EGLSyncKHR sync );
  *  is generated and EGL_FALSE is returned.
  *
  */
-EGLAPI EGLint EGLAPIENTRY
-eglClientWaitSyncKHR( EGLDisplay dpy,
-                      EGLSyncKHR sync,
-                      EGLint flags,
-                      EGLTimeKHR timeout );
+EGLAPI EGLint EGLAPIENTRY eglClientWaitSyncKHR(EGLDisplay dpy, EGLSyncKHR sync,
+                                               EGLint flags,
+                                               EGLTimeKHR timeout);
 
 /*!
  *
@@ -290,21 +305,16 @@ eglClientWaitSyncKHR( EGLDisplay dpy,
  * If mode has invalid value, EGL_FALSE is returned.
  *
  */
-EGLAPI EGLBoolean EGLAPIENTRY
-eglSignalSyncKHR( EGLDisplay dpy,
-                  EGLSyncKHR sync,
-                  EGLenum mode );
+EGLAPI EGLBoolean EGLAPIENTRY eglSignalSyncKHR(EGLDisplay dpy, EGLSyncKHR sync,
+                                               EGLenum mode);
 
 /*!
  *
  */
-EGLAPI EGLBoolean EGLAPIENTRY
-eglGetSyncAttribKHR( EGLDisplay dpy,
-                     EGLSyncKHR sync,
-                     EGLint attribute,
-                     EGLint *value );
-
-
+EGLAPI EGLBoolean EGLAPIENTRY eglGetSyncAttribKHR(EGLDisplay dpy,
+                                                  EGLSyncKHR sync,
+                                                  EGLint attribute,
+                                                  EGLint *value);
 
 #ifdef __cplusplus
 }

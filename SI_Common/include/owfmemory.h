@@ -23,11 +23,11 @@
 #define OWFMEMORY_H_
 
 #include <stdlib.h>
+
 #include "owftypes.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define DEBUG
@@ -37,32 +37,30 @@ extern "C"
  * In debug builds we use our own memory management functions:
  */
 /* multiplication yields negative if overflowed */
-#define xalloc(n, c)        (((OWFint)n*c < c) ? NULL : OWF_Memory_Alloc(__FILE__, __LINE__, (n)*(c)))
-#define xfree(p)            OWF_Memory_Free(p)
+#define xalloc(n, c)            \
+    (((OWFint)n * c < c) ? NULL \
+                         : OWF_Memory_Alloc(__FILE__, __LINE__, (n) * (c)))
+#define xfree(p) OWF_Memory_Free(p)
 
 #else
 
-#define xalloc(n, c)        calloc(n, c);
-#define xfree(p)            free(p);
+#define xalloc(n, c) calloc(n, c);
+#define xfree(p) free(p);
 
 #endif
 
-#define NEW0N(x, n)         (x*) xalloc(sizeof(x), n)
-#define NEW0(x)             NEW0N(x, 1)
+#define NEW0N(x, n) (x *)xalloc(sizeof(x), n)
+#define NEW0(x) NEW0N(x, 1)
 
-OWF_API_CALL void*
-OWF_Memory_Alloc(const char* file, OWFint line, OWFuint32 size);
+OWF_API_CALL void *OWF_Memory_Alloc(const char *file, OWFint line,
+                                    OWFuint32 size);
 
-OWF_API_CALL void
-OWF_Memory_Free(void* ptr);
+OWF_API_CALL void OWF_Memory_Free(void *ptr);
 
-OWF_API_CALL void
-OWF_Memory_BlockDump();
-
+OWF_API_CALL void OWF_Memory_BlockDump();
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

@@ -20,17 +20,15 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
- 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <signal.h>
 
 #ifndef _XOPEN_SOURCE
 #define LIPLAP
@@ -43,77 +41,59 @@ extern "C" {
 #undef _XOPEN_SOURCE
 #endif
 
-#include "owfthread.h"
 #include "owfmemory.h"
+#include "owfthread.h"
 #include "owftypes.h"
 
-OWF_API_CALL void
-OWF_Thread_Destroy(OWF_THREAD thread)
-{
-    if (thread)
-    {
+OWF_API_CALL void OWF_Thread_Destroy(OWF_THREAD thread) {
+    if (thread) {
         OWF_Thread_Join(thread, NULL);
         xfree(thread);
     }
 }
 
-OWF_API_CALL OWF_THREAD
-OWF_Thread_Create(void* (*threadfunc)(void*), void* data)
-{
-    pthread_t*              handle;
+OWF_API_CALL OWF_THREAD OWF_Thread_Create(void *(*threadfunc)(void *),
+                                          void *data) {
+    pthread_t *handle;
 
     handle = xalloc(sizeof(pthread_t), 1);
-    if (!handle)
-    {
+    if (!handle) {
         return NULL;
     }
 
-    if (pthread_create(handle, NULL, threadfunc, data))
-    {
+    if (pthread_create(handle, NULL, threadfunc, data)) {
         xfree(handle);
         return NULL;
     }
 
-    return (OWF_THREAD) handle;
+    return (OWF_THREAD)handle;
 }
 
-OWF_API_CALL OWFint
-OWF_Thread_Join(OWF_THREAD thread, void** retval)
-{
-    OWFint          ret = EINVAL;
+OWF_API_CALL OWFint OWF_Thread_Join(OWF_THREAD thread, void **retval) {
+    OWFint ret = EINVAL;
 
-    if (!thread)
-    {
+    if (!thread) {
         return ret;
     }
-    ret = (int) pthread_join(*(pthread_t*) thread, retval);
+    ret = (int)pthread_join(*(pthread_t *)thread, retval);
     return ret;
 }
 
-OWF_API_CALL OWFint
-OWF_Thread_Cancel(OWF_THREAD thread)
-{
-    OWFint          ret = EINVAL;
+OWF_API_CALL OWFint OWF_Thread_Cancel(OWF_THREAD thread) {
+    OWFint ret = EINVAL;
 
-    if (!thread)
-    {
+    if (!thread) {
         return EINVAL;
     }
 
-    ret =  pthread_cancel(*(pthread_t*) thread);
+    ret = pthread_cancel(*(pthread_t *)thread);
 
     return ret;
 }
 
-OWF_API_CALL void
-OWF_Thread_Exit(void* retval)
-{
-    pthread_exit(retval);
-}
+OWF_API_CALL void OWF_Thread_Exit(void *retval) { pthread_exit(retval); }
 
-OWF_API_CALL void
-OWF_Thread_MicroSleep(OWFuint32 usecs)
-{
+OWF_API_CALL void OWF_Thread_MicroSleep(OWFuint32 usecs) {
 #if _POSIX_C_SOURCE >= 199309L
     struct timespec ts;
     ts.tv_sec = usecs / 1000000;
@@ -124,14 +104,8 @@ OWF_Thread_MicroSleep(OWFuint32 usecs)
 #endif
 }
 
-OWF_API_CALL void
-OWF_Thread_Sleep(OWFuint32 secs)
-{
-    sleep(secs);
-}
-
+OWF_API_CALL void OWF_Thread_Sleep(OWFuint32 secs) { sleep(secs); }
 
 #ifdef __cplusplus
 }
 #endif
-

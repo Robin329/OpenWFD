@@ -24,16 +24,14 @@
 #ifndef OWFCOND_H_
 #define OWFCOND_H_
 
-#include "owftypes.h"
 #include "owfmutex.h"
-
+#include "owftypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-typedef void* OWF_COND;
+typedef void *OWF_COND;
 
 /*! \brief Initialize a condition variable
  *
@@ -43,15 +41,13 @@ typedef void* OWF_COND;
  *  \return true or false depending whether initialization
  *  succeeded or not
  */
-OWF_API_CALL OWFboolean
-OWF_Cond_Init(OWF_COND* cond, OWF_MUTEX mutex);
+OWF_API_CALL OWFboolean OWF_Cond_Init(OWF_COND *cond, OWF_MUTEX mutex);
 
 /*! \brief Destroy a condition variable
  *
  *  \cond cond variable
  */
-OWF_API_CALL void
-OWF_Cond_Destroy(OWF_COND* cond);
+OWF_API_CALL void OWF_Cond_Destroy(OWF_COND *cond);
 
 /*! \brief Block on a condition variable
  *
@@ -68,8 +64,7 @@ OWF_Cond_Destroy(OWF_COND* cond);
  * nanoseconds has elapsed or cond is signalled. It timeout equal to
  * OWF_FOREVER, the call returns only after cond is signalled.
  */
-OWF_API_CALL OWFboolean
-OWF_Cond_Wait(OWF_COND cond, OWFtime timeout);
+OWF_API_CALL OWFboolean OWF_Cond_Wait(OWF_COND cond, OWFtime timeout);
 
 /*! \brief Signal a condition variable
  *
@@ -77,8 +72,7 @@ OWF_Cond_Wait(OWF_COND cond, OWFtime timeout);
  *
  *  Only one of waiters for cond will be woke-up
  */
-OWF_API_CALL OWFboolean
-OWF_Cond_Signal(OWF_COND cond);
+OWF_API_CALL OWFboolean OWF_Cond_Signal(OWF_COND cond);
 
 /*! \brief Signal a condition variable
  *
@@ -86,14 +80,10 @@ OWF_Cond_Signal(OWF_COND cond);
  *
  *  Wake-up all waiters of cond.
  */
-OWF_API_CALL OWFboolean
-OWF_Cond_SignalAll(OWF_COND cond);
-
+OWF_API_CALL OWFboolean OWF_Cond_SignalAll(OWF_COND cond);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #endif /* OWFCOND_H_ */

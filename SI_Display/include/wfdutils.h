@@ -29,23 +29,19 @@
 #ifndef WFDUTIL_H_
 #define WFDUTIL_H_
 
-#include "wfdstructs.h"
-
 #include "owfattributes.h"
 #include "owfimage.h"
-
+#include "wfdstructs.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-
-#define RECT_SIZE    4 /* rectangle vector size */
+#define RECT_SIZE 4 /* rectangle vector size */
 #define RECT_OFFSETX 0
 #define RECT_OFFSETY 1
-#define RECT_WIDTH   2
-#define RECT_HEIGHT  3
+#define RECT_WIDTH 2
+#define RECT_HEIGHT 3
 
 #define BG_SIZE 3 /* background color vector size */
 
@@ -61,8 +57,7 @@ typedef void (*ATTR_ACCESSOR)(void);
  * \return true or false
  */
 OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Util_ValidAccessorForAttrib(WFDint attrib,
-                                ATTR_ACCESSOR func) OWF_APIEXIT;
+WFD_Util_ValidAccessorForAttrib(WFDint attrib, ATTR_ACCESSOR func) OWF_APIEXIT;
 
 /*! \brief Convert an error code
  *
@@ -86,10 +81,8 @@ WFD_Util_AttrEc2WfdEc(OWF_ATTRIBUTE_LIST_STATUS attrError) OWF_APIEXIT;
  *
  *  \return true or false
  */
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Util_ValidAttributeForEvent(WFDEventType eventType,
-                                WFDEventAttrib attrib) OWF_APIEXIT;
-
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Util_ValidAttributeForEvent(
+    WFDEventType eventType, WFDEventAttrib attrib) OWF_APIEXIT;
 
 /*! \brief Convert a float to unsigned byte
  *
@@ -97,10 +90,10 @@ WFD_Util_ValidAttributeForEvent(WFDEventType eventType,
  *
  *  \return 8-bit unsigned value
  */
-OWF_API_CALL WFDuint8 OWF_APIENTRY
-WFD_Util_Float2Byte(WFDfloat f) OWF_APIEXIT;
+OWF_API_CALL WFDuint8 OWF_APIENTRY WFD_Util_Float2Byte(WFDfloat f) OWF_APIEXIT;
 
-/*! \brief Convert background color from floating point vector presentation to 32-bit integer presentation.
+/*! \brief Convert background color from floating point vector presentation to
+ * 32-bit integer presentation.
  *
  *
  *  \param count Number of elements in value array. Must always be 3.
@@ -113,7 +106,8 @@ WFD_Util_Float2Byte(WFDfloat f) OWF_APIEXIT;
 OWF_API_CALL WFDint OWF_APIENTRY
 WFD_Util_BgFv2Int(WFDint count, const WFDfloat* value) OWF_APIEXIT;
 
-/*! \brief Convert background color from  32-bit integer presentation to floating point vector presentation.
+/*! \brief Convert background color from  32-bit integer presentation to
+ * floating point vector presentation.
  *
  *  \param value 32-bit value to be converted
  *  \param count Number of elements in result array. Should be at least 3 and
@@ -122,20 +116,24 @@ WFD_Util_BgFv2Int(WFDint count, const WFDfloat* value) OWF_APIEXIT;
  *  floating point representation when this routine returns.
  *
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Util_BgInt2Fv(WFDint value, WFDint count, WFDfloat* result) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Util_BgInt2Fv(WFDint value, WFDint count,
+                                                 WFDfloat* result) OWF_APIEXIT;
 
-/*! \brief Convert background color from  32-bit integer vector presentation to floating point  vector presentation.
+/*! \brief Convert background color from  32-bit integer vector presentation to
+ * floating point  vector presentation.
  *
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Util_BgFv2Iv(WFDint count, const WFDfloat* value, WFDint* result) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Util_BgFv2Iv(WFDint count,
+                                                const WFDfloat* value,
+                                                WFDint* result) OWF_APIEXIT;
 
-/*! \brief   Convert background color from floating point vector presentation to  32-bit integer  vector presentation..
+/*! \brief   Convert background color from floating point vector presentation to
+ * 32-bit integer  vector presentation..
  *
  */
-OWF_API_CALL void OWF_APIENTRY
-WFD_Util_BgIv2Fv(WFDint count, const WFDint* value, WFDfloat* result) OWF_APIEXIT;
+OWF_API_CALL void OWF_APIENTRY WFD_Util_BgIv2Fv(WFDint count,
+                                                const WFDint* value,
+                                                WFDfloat* result) OWF_APIEXIT;
 
 /*! \brief Initialize an scratch buffer array
  *
@@ -146,22 +144,19 @@ WFD_Util_BgIv2Fv(WFDint count, const WFDint* value, WFDfloat* result) OWF_APIEXI
  *
  */
 
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Util_InitScratchBuffer(OWF_IMAGE** scratchArray,
-                           WFDint arraySize,
-                           WFDint w, WFDint h) OWF_APIEXIT;
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Util_InitScratchBuffer(
+    OWF_IMAGE** scratchArray, WFDint arraySize, WFDint w, WFDint h) OWF_APIEXIT;
 
-/*! \brief Check if given color can be used as transparent source color for a pipeline
+/*! \brief Check if given color can be used as transparent source color for a
+ * pipeline
  *
  *  See WFD_Pipeline_SetTSColor()
  *
  *  \return WFD_TRUE when color is valid
  *  \return WFD_FALSE when color is invalid
  */
-OWF_API_CALL WFDboolean OWF_APIENTRY
-WFD_Util_IsValidTSColor(WFDTSColorFormat colorFormat,
-                        WFDint count,
-                        const void* color) OWF_APIEXIT;
+OWF_API_CALL WFDboolean OWF_APIENTRY WFD_Util_IsValidTSColor(
+    WFDTSColorFormat colorFormat, WFDint count, const void* color) OWF_APIEXIT;
 /*! \brief Converts a color specification to internal color format
  *
  * \param colorFormat original color format
@@ -170,18 +165,15 @@ WFD_Util_IsValidTSColor(WFDTSColorFormat colorFormat,
  * \param tsColor target color presentation
  */
 OWF_API_CALL void OWF_APIENTRY
-WFD_Util_ConverTSColor(WFDTSColorFormat  colorFormat,
-                       WFDint count,
-                       const void* color,
-                       WFD_TS_COLOR* tsColor) OWF_APIEXIT;
+WFD_Util_ConverTSColor(WFDTSColorFormat colorFormat, WFDint count,
+                       const void* color, WFD_TS_COLOR* tsColor) OWF_APIEXIT;
 
 /*! \brief Convert transparency feature to internal presentation.
  *
  *  \return Internal transparency presentation
  */
-OWF_API_CALL OWF_TRANSPARENCY
-WFD_Util_GetBlendMode(WFDTransparency transparency, WFDboolean hasMask) OWF_APIEXIT;
-
+OWF_API_CALL OWF_TRANSPARENCY WFD_Util_GetBlendMode(
+    WFDTransparency transparency, WFDboolean hasMask) OWF_APIEXIT;
 
 /*! \brief Check if a rectangle is fully contained inside an image
  *
@@ -192,11 +184,8 @@ WFD_Util_GetBlendMode(WFDTransparency transparency, WFDboolean hasMask) OWF_APIE
  *
  *  \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean
-WFD_Util_RectIsFullyContained(const WFDint* rect,
-                              WFDint count,
-                              WFDint width,
-                              WFDint height) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_Util_RectIsFullyContained(
+    const WFDint* rect, WFDint count, WFDint width, WFDint height) OWF_APIEXIT;
 
 /*! \brief Check rectangle values
  *
@@ -208,12 +197,11 @@ WFD_Util_RectIsFullyContained(const WFDint* rect,
  *
  *  \return WFD_TRUE or WFD_FALSE
  */
-OWF_API_CALL WFDboolean
-WFD_Util_IsRectValid(const WFDint* rect, WFDint count) OWF_APIEXIT;
+OWF_API_CALL WFDboolean WFD_Util_IsRectValid(const WFDint* rect,
+                                             WFDint count) OWF_APIEXIT;
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* WFDUTIL_H_ */

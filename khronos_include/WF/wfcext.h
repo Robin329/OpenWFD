@@ -34,22 +34,20 @@
 extern "C" {
 #endif
 
-
 /*!
  * \brief Vendor, renderer and version strings
  *
  *
  */
-static const char* wfc_strings[] =
-{
-        "Ardites",
-        "Sample Implementation",
-        "1.0",
+static const char *wfc_strings[] = {
+    "Ardites",
+    "Sample Implementation",
+    "1.0",
 };
 
-#define WFC_VENDOR_INDEX        (0)
-#define WFC_RENDERER_INDEX      (1)
-#define WFC_VERSION_INDEX       (2)
+#define WFC_VENDOR_INDEX (0)
+#define WFC_RENDERER_INDEX (1)
+#define WFC_VERSION_INDEX (2)
 
 /*!
  * \brief Names of the supported extensions
@@ -66,24 +64,20 @@ static const char* wfc_strings[] =
  * that the array IS ALWAYS null-terminated.
  */
 
-static const char* wfc_extensions[] =
-{
-     /* wfcSampleExtensionName, */
-     NULL
-};
+static const char *wfc_extensions[] = {
+    /* wfcSampleExtensionName, */
+    NULL};
 
 /*
  * Static extension declarations
  */
 
- #ifdef WFC_EXT_SampleExtension
-    WFC_API_CALL void WFC_APIENTRY
-    wfcSampleExtensionFunc() WFC_API_EXIT;
- #endif
+#ifdef WFC_EXT_SampleExtension
+WFC_API_CALL void WFC_APIENTRY wfcSampleExtensionFunc() WFC_API_EXIT;
+#endif
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* WFCEXT_H_ */
